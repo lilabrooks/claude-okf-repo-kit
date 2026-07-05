@@ -1,0 +1,335 @@
+#!/usr/bin/env bash
+# Safely install or update the Claude Code OKF kit in an existing repo.
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/update-existing-repo /path/to/existing-repo
+
+Updates an existing repo without destructive overwrites:
+- backs up files before replacing kit-managed scripts
+- merges .claude/settings.json hooks with existing settings
+- appends .gitignore entries without overwriting .gitignore
+- leaves existing Markdown and map files intact
+- writes numbered candidates when same-name files already exist
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+TARGET="$1"
+
+if [ ! -d "$TARGET" ]; then
+  printf 'Target repo does not exist: %s\n' "$TARGET" >&2
+  exit 1
+fi
+
+TARGET="$(cd "$TARGET" && pwd)"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+BACKUP_DIR="$TARGET/.okf-kit-backups/$STAMP"
+mkdir -p "$BACKUP_DIR"
+created=()
+updated=()
+skipped=()
+backed_up=()
+review=()
+
+backup_file() {
+  local path="$1"
+  [ -f "$path" ] || return 0
+  local rel="${path#"$TARGET"/}"
+  mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
+  cp "$path" "$BACKUP_DIR/$rel"
+  backed_up+=("$rel -> ${BACKUP_DIR#"$TARGET"/}/$rel")
+}
+
+numbered_path() {
+  local dest="$1"
+  local dir base ext stem candidate n
+  dir="$(dirname "$dest")"
+  base="$(basename "$dest")"
+
+  if [[ "$base" == *.* ]]; then
+    ext=".${base##*.}"
+    stem="${base%.*}"
+  else
+    ext=""
+    stem="$base"
+  fi
+
+  n=2
+  candidate="$dir/${stem}.${n}${ext}"
+  while [ -e "$candidate" ]; do
+    n=$((n + 1))
+    candidate="$dir/${stem}.${n}${ext}"
+  done
+
+  printf '%s\n' "$candidate"
+}
+
+existing_matching_candidate() {
+  local src="$1"
+  local dest="$2"
+  local dir base ext stem candidate n
+  dir="$(dirname "$dest")"
+  base="$(basename "$dest")"
+
+  if [[ "$base" == *.* ]]; then
+    ext=".${base##*.}"
+    stem="${base%.*}"
+  else
+    ext=""
+    stem="$base"
+  fi
+
+  n=2
+  while :; do
+    candidate="$dir/${stem}.${n}${ext}"
+    [ -e "$candidate" ] || break
+    if cmp -s "$src" "$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+    n=$((n + 1))
+  done
+
+  return 1
+}
+
+write_numbered_candidate() {
+  local src="$1"
+  local dest="$2"
+  local label="$3"
+  local candidate existing
+  existing="$(existing_matching_candidate "$src" "$dest" || true)"
+  if [ -n "$existing" ]; then
+    skipped+=("$label candidate already exists at ${existing#"$TARGET"/}")
+    return 0
+  fi
+
+  candidate="$(numbered_path "$dest")"
+  mkdir -p "$(dirname "$candidate")"
+  cp "$src" "$candidate"
+  review+=("$label exists; wrote candidate ${candidate#"$TARGET"/}")
+}
+
+write_numbered_content_candidate() {
+  local dest="$1"
+  local label="$2"
+  local tmp
+  tmp="$(mktemp "$BACKUP_DIR/candidate.XXXXXX")"
+  cat > "$tmp"
+  write_numbered_candidate "$tmp" "$dest" "$label"
+  rm -f "$tmp"
+}
+
+copy_with_backup() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  if [ -f "$dest" ]; then
+    if cmp -s "$src" "$dest"; then
+      skipped+=("${dest#"$TARGET"/} already current")
+      return 0
+    fi
+    backup_file "$dest"
+    updated+=("${dest#"$TARGET"/}")
+  else
+    created+=("${dest#"$TARGET"/}")
+  fi
+  cp "$src" "$dest"
+}
+
+append_gitignore_entry() {
+  local entry="$1"
+  if [ ! -f "$TARGET/.gitignore" ]; then
+    touch "$TARGET/.gitignore"
+    created+=(".gitignore")
+  fi
+
+  if grep -qxF "$entry" "$TARGET/.gitignore"; then
+    skipped+=(".gitignore already has $entry")
+  else
+    printf '%s\n' "$entry" >> "$TARGET/.gitignore"
+    updated+=(".gitignore appended $entry")
+  fi
+}
+
+merge_settings() {
+  local kit_settings="$KIT_DIR/settings.json"
+  local target_settings="$TARGET/.claude/settings.json"
+  mkdir -p "$TARGET/.claude"
+
+  if [ ! -f "$target_settings" ]; then
+    cp "$kit_settings" "$target_settings"
+    created+=(".claude/settings.json")
+    return 0
+  fi
+
+  backup_file "$target_settings"
+
+  python3 - "$kit_settings" "$target_settings" <<'PY'
+import json
+import sys
+
+kit_path, target_path = sys.argv[1], sys.argv[2]
+
+with open(kit_path, "r", encoding="utf-8") as f:
+    kit = json.load(f)
+
+with open(target_path, "r", encoding="utf-8") as f:
+    target = json.load(f)
+
+target.setdefault("hooks", {})
+
+for event, kit_entries in kit.get("hooks", {}).items():
+    target_entries = target["hooks"].setdefault(event, [])
+    existing = {
+        json.dumps(entry, sort_keys=True, separators=(",", ":"))
+        for entry in target_entries
+    }
+    for entry in kit_entries:
+        key = json.dumps(entry, sort_keys=True, separators=(",", ":"))
+        if key not in existing:
+            target_entries.append(entry)
+            existing.add(key)
+
+with open(target_path, "w", encoding="utf-8") as f:
+    json.dump(target, f, indent=2)
+    f.write("\n")
+PY
+  updated+=(".claude/settings.json merged hooks")
+}
+
+mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" "$TARGET/docs/adr"
+
+if [ -f "$TARGET/CLAUDE.md" ]; then
+  write_numbered_candidate "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md" "CLAUDE.md"
+else
+  cp "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
+  created+=("CLAUDE.md")
+fi
+
+merge_settings
+
+copy_with_backup "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
+copy_with_backup "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
+copy_with_backup "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
+
+if [ -f "$TARGET/docs/okf-map.yml" ]; then
+  write_numbered_candidate "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml" "docs/okf-map.yml"
+else
+  cp "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
+  created+=("docs/okf-map.yml")
+fi
+
+if [ ! -f "$TARGET/docs/index.md" ]; then
+  cat > "$TARGET/docs/index.md" <<'EOF'
+---
+okf_version: "0.1"
+---
+
+# Knowledge bundle
+
+- [Specs](specs/index.md)
+- [ADRs](adr/index.md)
+EOF
+  created+=("docs/index.md")
+else
+  write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" <<'EOF'
+---
+okf_version: "0.1"
+---
+
+# Knowledge bundle
+
+- [Specs](specs/index.md)
+- [ADRs](adr/index.md)
+EOF
+fi
+
+if [ ! -f "$TARGET/docs/log.md" ]; then
+  cat > "$TARGET/docs/log.md" <<'EOF'
+# Log
+EOF
+  created+=("docs/log.md")
+else
+  write_numbered_content_candidate "$TARGET/docs/log.md" "docs/log.md" <<'EOF'
+# Log
+EOF
+fi
+
+if [ ! -f "$TARGET/docs/specs/index.md" ]; then
+  cat > "$TARGET/docs/specs/index.md" <<'EOF'
+# Specs
+EOF
+  created+=("docs/specs/index.md")
+else
+  write_numbered_content_candidate "$TARGET/docs/specs/index.md" "docs/specs/index.md" <<'EOF'
+# Specs
+EOF
+fi
+
+if [ ! -f "$TARGET/docs/adr/index.md" ]; then
+  cat > "$TARGET/docs/adr/index.md" <<'EOF'
+# ADRs
+EOF
+  created+=("docs/adr/index.md")
+else
+  write_numbered_content_candidate "$TARGET/docs/adr/index.md" "docs/adr/index.md" <<'EOF'
+# ADRs
+EOF
+fi
+
+append_gitignore_entry '.claude/settings.local.json'
+append_gitignore_entry 'CLAUDE.local.md'
+append_gitignore_entry '.okf-kit-backups/'
+
+python3 -m json.tool "$TARGET/.claude/settings.json" >/dev/null
+bash -n "$TARGET/scripts/okf"
+bash -n "$TARGET/.claude/hooks/check-docs-sync.sh"
+bash -n "$TARGET/.claude/hooks/check-okf-version.sh"
+
+print_list() {
+  local title="$1"
+  shift
+  printf '\n%s\n' "$title"
+  if [ "$#" -eq 0 ]; then
+    printf '  none\n'
+    return 0
+  fi
+  local item
+  for item in "$@"; do
+    printf '  - %s\n' "$item"
+  done
+}
+
+printf '\nClaude Code OKF kit update complete\n'
+printf 'Target: %s\n' "$TARGET"
+printf 'Backups: %s\n' "${BACKUP_DIR#"$TARGET"/}"
+print_list 'Created:' "${created[@]}"
+print_list 'Updated:' "${updated[@]}"
+print_list 'Skipped:' "${skipped[@]}"
+print_list 'Backed up:' "${backed_up[@]}"
+print_list 'Needs review:' "${review[@]}"
+printf '\nVerification run:\n'
+printf '  - python3 -m json.tool .claude/settings.json\n'
+printf '  - bash -n scripts/okf\n'
+printf '  - bash -n .claude/hooks/check-docs-sync.sh\n'
+printf '  - bash -n .claude/hooks/check-okf-version.sh\n'
+printf '\nNext steps:\n'
+printf '  1. Review numbered candidate files listed above.\n'
+printf '  2. Merge any desired candidate content into existing files.\n'
+printf '  3. Run bash scripts/okf check-stale.\n'

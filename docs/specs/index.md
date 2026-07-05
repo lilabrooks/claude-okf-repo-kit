@@ -1,0 +1,7 @@
+# Specs
+
+- [Repo kit packaging](repo-kit-packaging.md): installable files, source-kit layout, and target repo destinations.
+- [Installer scripts](installer-scripts.md): safe automation for new and existing target repos.
+- [OKF helper command](okf-helper-command.md): behavior for `check-stale`, `draft`, and `adr-suggest`.
+- [Claude hooks](claude-hooks.md): Stop and SessionStart hook behavior.
+- [Validation workflow](validation-workflow.md): Makefile validation and smoke tests.

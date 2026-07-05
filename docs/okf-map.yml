@@ -1,0 +1,83 @@
+# Source-to-knowledge map for this source kit repo.
+
+mappings:
+  - source: "README.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0001-source-kit-layout.md"
+
+  - source: "Claude Code OKF Kit Guide.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0001-source-kit-layout.md"
+
+  - source: "CLAUDE.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/claude-hooks.md"
+      - "docs/adr/0001-source-kit-layout.md"
+
+  - source: "templates/CLAUDE.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/claude-hooks.md"
+      - "docs/adr/0001-source-kit-layout.md"
+
+  - source: "settings.json"
+    docs:
+      - "docs/specs/claude-hooks.md"
+      - "docs/adr/0003-claude-hook-guardrails.md"
+
+  - source: "scripts/check-docs-sync.sh"
+    docs:
+      - "docs/specs/claude-hooks.md"
+      - "docs/adr/0003-claude-hook-guardrails.md"
+
+  - source: "scripts/check-okf-version.sh"
+    docs:
+      - "docs/specs/claude-hooks.md"
+      - "docs/adr/0003-claude-hook-guardrails.md"
+
+  - source: "scripts/okf"
+    docs:
+      - "docs/specs/okf-helper-command.md"
+      - "docs/adr/0002-repo-local-bash-helper.md"
+
+  - source: "scripts/create-new-repo"
+    docs:
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0005-safe-installer-scripts.md"
+
+  - source: "scripts/update-existing-repo"
+    docs:
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0005-safe-installer-scripts.md"
+
+  - source: "okf-map.yml"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0001-source-kit-layout.md"
+
+  - source: "Makefile"
+    docs:
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0004-source-kit-validation-makefile.md"
+      - "docs/specs/installer-scripts.md"
+
+  - source: "scripts/check-md-links.py"
+    docs:
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0004-source-kit-validation-makefile.md"
+
+  - source: ".github/workflows/test.yml"
+    docs:
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0004-source-kit-validation-makefile.md"

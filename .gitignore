@@ -1,0 +1,11 @@
+.DS_Store
+.obsidian/
+.claude/settings.local.json
+CLAUDE.local.md
+.okf-kit-backups/
+.env
+.env.*
+!.env.example
+*.log
+__pycache__/
+*.py[cod]

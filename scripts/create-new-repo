@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Create a new repo with the Claude Code OKF kit installed.
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/create-new-repo /path/to/new-repo
+
+Creates the target directory if needed. The target must be empty, except for an
+optional .git directory. Existing non-empty repos should use:
+
+  bash scripts/update-existing-repo /path/to/existing-repo
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+TARGET="$1"
+
+mkdir -p "$TARGET"
+TARGET="$(cd "$TARGET" && pwd)"
+
+if find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | grep -q .; then
+  printf 'Target is not empty: %s\n' "$TARGET" >&2
+  printf 'Use bash scripts/update-existing-repo for existing repos.\n' >&2
+  exit 1
+fi
+
+mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" "$TARGET/docs/adr"
+created=()
+updated=()
+skipped=()
+
+copy_created() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  created+=("${dest#"$TARGET"/}")
+}
+
+append_gitignore_entry() {
+  local entry="$1"
+  if grep -qxF "$entry" "$TARGET/.gitignore"; then
+    skipped+=(".gitignore already has $entry")
+  else
+    printf '%s\n' "$entry" >> "$TARGET/.gitignore"
+    updated+=(".gitignore appended $entry")
+  fi
+}
+
+copy_created "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
+copy_created "$KIT_DIR/settings.json" "$TARGET/.claude/settings.json"
+copy_created "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
+copy_created "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
+copy_created "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
+copy_created "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
+
+cat > "$TARGET/docs/index.md" <<'EOF'
+---
+okf_version: "0.1"
+---
+
+# Knowledge bundle
+
+- [Specs](specs/index.md)
+- [ADRs](adr/index.md)
+EOF
+created+=("docs/index.md")
+
+cat > "$TARGET/docs/log.md" <<'EOF'
+# Log
+EOF
+created+=("docs/log.md")
+
+cat > "$TARGET/docs/specs/index.md" <<'EOF'
+# Specs
+EOF
+created+=("docs/specs/index.md")
+
+cat > "$TARGET/docs/adr/index.md" <<'EOF'
+# ADRs
+EOF
+created+=("docs/adr/index.md")
+
+touch "$TARGET/.gitignore"
+created+=(".gitignore")
+append_gitignore_entry '.claude/settings.local.json'
+append_gitignore_entry 'CLAUDE.local.md'
+append_gitignore_entry '.okf-kit-backups/'
+
+if [ ! -d "$TARGET/.git" ]; then
+  git -C "$TARGET" init -q
+  created+=(".git/")
+else
+  skipped+=(".git/ already exists")
+fi
+
+python3 -m json.tool "$TARGET/.claude/settings.json" >/dev/null
+bash -n "$TARGET/scripts/okf"
+bash -n "$TARGET/.claude/hooks/check-docs-sync.sh"
+bash -n "$TARGET/.claude/hooks/check-okf-version.sh"
+
+print_list() {
+  local title="$1"
+  shift
+  printf '\n%s\n' "$title"
+  if [ "$#" -eq 0 ]; then
+    printf '  none\n'
+    return 0
+  fi
+  local item
+  for item in "$@"; do
+    printf '  - %s\n' "$item"
+  done
+}
+
+printf '\nClaude Code OKF kit repo created\n'
+printf 'Target: %s\n' "$TARGET"
+print_list 'Created:' "${created[@]}"
+print_list 'Updated:' "${updated[@]}"
+print_list 'Skipped:' "${skipped[@]}"
+printf '\nVerification run:\n'
+printf '  - python3 -m json.tool .claude/settings.json\n'
+printf '  - bash -n scripts/okf\n'
+printf '  - bash -n .claude/hooks/check-docs-sync.sh\n'
+printf '  - bash -n .claude/hooks/check-okf-version.sh\n'
+printf '\nNext steps:\n'
+printf '  1. Edit CLAUDE.md.\n'
+printf '  2. Edit docs/okf-map.yml.\n'
+printf '  3. Run bash scripts/okf check-stale.\n'
