@@ -36,7 +36,7 @@ The source repo also keeps local validation and project knowledge:
 - `scripts/check-md-links.py`
 - `.github/workflows/test.yml`
 
-The public repo presentation must include a modest README badge set for status, tests, Claude Code, OKF, Bash, specs/ADRs, and license.
+The public repo presentation must include a modest README badge set for preview status, tests, Claude Code, OKF, Bash, specs/ADRs, and license.
 
 The source repo is MIT licensed.
 
@@ -69,6 +69,8 @@ Specs and ADRs must use YAML frontmatter with at least `type:`.
 
 `README.md` must begin with a clear plain-language section that explains what the kit does before listing install files.
 
+`README.md` must include a table of contents near the top that links to the main usage and verification sections.
+
 Existing-repo instructions must avoid overwriting an existing `CLAUDE.md`, `.claude/settings.json`, `.gitignore`, specs, ADRs, map file, or log files.
 
 Existing-repo instructions must describe same-folder numbered candidates for same-name Markdown/map files.
@@ -81,8 +83,11 @@ Root `CLAUDE.md` must describe this source repo. Installers and manual install d
 
 - validating this source kit
 - automated setup for new and existing repos
+- manual setup paths
 - installing the kit into a new repo
 - installing the kit into an existing repo
+- installed target-repo ignore rules
+- this source repo's own ignore rules
 - verifying an installed target repo
 
 Target-repo verification instructions must include syntax checks for copied scripts, JSON validation for `.claude/settings.json`, and helper checks for `scripts/okf`.

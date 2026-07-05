@@ -2,6 +2,9 @@
 
 ## 2026-07-05
 
+- Clarified README setup paths, target-repo ignore rules, source-repo ignore rules, and OKF version hook behavior.
+- Added a README table of contents for faster navigation.
+- Changed the README status badge from alpha to preview.
 - Added a clearer README opening section that explains what the kit does before installation details.
 - Added Python bytecode/cache ignores and changed the syntax check to avoid writing bytecode.
 - Added quality checks for optional ShellCheck linting, Markdown links, local-path scanning, installer idempotency, and GitHub Actions validation.
