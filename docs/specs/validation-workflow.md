@@ -32,6 +32,7 @@ The validation workflow must include:
 - new-repo install simulation
 - existing-repo install simulation
 - existing-repo idempotency simulation
+- install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
 - GitHub Actions validation that runs `make test` on push and pull request
@@ -55,6 +56,15 @@ Existing-repo install simulation must verify any `CLAUDE.md` merge candidate com
 Existing-repo install simulation must verify the update script prints a clear summary with created, updated, and review-needed sections.
 
 Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, or identical numbered candidates.
+
+
+Install helper smoke tests must verify:
+
+- `scripts/install-kit` chooses new-repo mode for missing or empty targets
+- `scripts/install-kit` chooses existing-repo mode for non-empty targets
+- `scripts/verify-install` passes after installation
+- `scripts/check-placeholders` reports template placeholders after installation
+- `scripts/check-placeholders` passes after placeholders and active mappings are filled
 
 Hook smoke tests must cover:
 

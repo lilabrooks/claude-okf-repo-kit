@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# Verify that a target repo has the Claude Code OKF kit installed coherently.
+
+set -u
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/verify-install /path/to/target-repo
+
+Checks installed files, settings JSON, script syntax, required ignore entries,
+and basic OKF helper execution. It does not judge project-specific content.
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+TARGET="$1"
+if [ ! -d "$TARGET" ]; then
+  printf 'Target repo does not exist: %s\n' "$TARGET" >&2
+  exit 1
+fi
+TARGET="$(cd "$TARGET" && pwd)"
+
+passed=()
+warnings=()
+failed=()
+
+pass() { passed+=("$1"); }
+warn() { warnings+=("$1"); }
+fail() { failed+=("$1"); }
+
+check_file() {
+  local rel="$1"
+  if [ -f "$TARGET/$rel" ]; then
+    pass "$rel exists"
+  else
+    fail "$rel is missing"
+  fi
+}
+
+check_dir() {
+  local rel="$1"
+  if [ -d "$TARGET/$rel" ]; then
+    pass "$rel exists"
+  else
+    fail "$rel is missing"
+  fi
+}
+
+check_gitignore_entry() {
+  local entry="$1"
+  if [ ! -f "$TARGET/.gitignore" ]; then
+    fail ".gitignore is missing"
+  elif grep -qxF "$entry" "$TARGET/.gitignore"; then
+    pass ".gitignore has $entry"
+  else
+    fail ".gitignore is missing $entry"
+  fi
+}
+
+print_list() {
+  local title="$1"
+  shift
+  printf '\n%s\n' "$title"
+  if [ "$#" -eq 0 ]; then
+    printf '  none\n'
+    return 0
+  fi
+  local item
+  for item in "$@"; do
+    printf '  - %s\n' "$item"
+  done
+}
+
+check_file CLAUDE.md
+check_file .claude/settings.json
+check_file .claude/hooks/check-docs-sync.sh
+check_file .claude/hooks/check-okf-version.sh
+check_file scripts/okf
+check_file docs/index.md
+check_file docs/log.md
+check_file docs/specs/index.md
+check_file docs/adr/index.md
+check_file docs/okf-map.yml
+check_dir docs/specs/_drafts
+
+if [ -f "$TARGET/.claude/settings.json" ]; then
+  if python3 -m json.tool "$TARGET/.claude/settings.json" >/dev/null 2>&1; then
+    pass ".claude/settings.json is valid JSON"
+  else
+    fail ".claude/settings.json is not valid JSON"
+  fi
+
+  if python3 - "$TARGET/.claude/settings.json" <<'PY' >/dev/null 2>&1
+import json
+import sys
+
+settings = json.load(open(sys.argv[1], encoding="utf-8"))
+commands = [
+    hook.get("command", "")
+    for groups in settings.get("hooks", {}).values()
+    for group in groups
+    for hook in group.get("hooks", [])
+]
+required = [
+    'bash "${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh"',
+    'bash "${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh"',
+]
+missing = [command for command in required if command not in commands]
+if missing:
+    raise SystemExit("missing hook commands: " + ", ".join(missing))
+PY
+  then
+    pass ".claude/settings.json includes required hook commands"
+  else
+    fail ".claude/settings.json is missing one or more required hook commands"
+  fi
+fi
+
+for rel in scripts/okf .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh; do
+  if [ -f "$TARGET/$rel" ]; then
+    if bash -n "$TARGET/$rel" >/dev/null 2>&1; then
+      pass "$rel has valid shell syntax"
+    else
+      fail "$rel has shell syntax errors"
+    fi
+  fi
+done
+
+check_gitignore_entry '.claude/settings.local.json'
+check_gitignore_entry 'CLAUDE.local.md'
+check_gitignore_entry '.okf-kit-backups/'
+
+if [ -f "$TARGET/scripts/okf" ]; then
+  tmp="$(mktemp)"
+  if OKF_ROOT="$TARGET" bash "$TARGET/scripts/okf" check-stale >"$tmp" 2>&1; then
+    pass "bash scripts/okf check-stale ran"
+  else
+    warn "bash scripts/okf check-stale reported attention; inspect the target repo docs/source state"
+  fi
+  rm -f "$tmp"
+
+  tmp="$(mktemp)"
+  if OKF_ROOT="$TARGET" bash "$TARGET/scripts/okf" adr-suggest >"$tmp" 2>&1; then
+    pass "bash scripts/okf adr-suggest ran"
+  else
+    warn "bash scripts/okf adr-suggest reported attention"
+  fi
+  rm -f "$tmp"
+fi
+
+if git -C "$TARGET" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  pass "target is a Git working tree"
+  for rel in .claude/settings.local.json CLAUDE.local.md .okf-kit-backups/test; do
+    if git -C "$TARGET" check-ignore -q "$rel"; then
+      pass "git ignore check passes for $rel"
+    else
+      warn "git ignore check did not match $rel"
+    fi
+  done
+else
+  warn "target is not a Git working tree; Git ignore behavior was not checked"
+fi
+
+printf '\nClaude Code OKF kit install verification\n'
+printf 'Target: %s\n' "$TARGET"
+print_list 'Passed:' "${passed[@]}"
+print_list 'Warnings:' "${warnings[@]}"
+print_list 'Failed:' "${failed[@]}"
+
+if [ "${#failed[@]}" -gt 0 ]; then
+  printf '\nResult: failed\n'
+  exit 1
+fi
+
+printf '\nResult: passed\n'
+exit 0

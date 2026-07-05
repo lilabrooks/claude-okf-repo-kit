@@ -33,10 +33,13 @@ The source repo also keeps local validation and project knowledge:
 - `docs/`
 - `scripts/create-new-repo`
 - `scripts/update-existing-repo`
+- `scripts/install-kit`
+- `scripts/verify-install`
+- `scripts/check-placeholders`
 - `scripts/check-md-links.py`
 - `.github/workflows/test.yml`
 
-The public repo presentation must include a modest README badge set for preview status, tests, Claude Code, OKF, Bash, specs/ADRs, and license.
+The public repo presentation must include a modest README badge set for preview status, tests, Claude Code, OKF, Bash, and specs/ADRs.
 
 The source repo is MIT licensed.
 
@@ -83,6 +86,7 @@ Root `CLAUDE.md` must describe this source repo. Installers and manual install d
 
 - validating this source kit
 - automated setup for new and existing repos
+- source-only install, verify, and placeholder helper scripts
 - manual setup paths
 - installing the kit into a new repo
 - installing the kit into an existing repo

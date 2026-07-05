@@ -81,3 +81,24 @@ mappings:
     docs:
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0004-source-kit-validation-makefile.md"
+
+
+  - source: "scripts/install-kit"
+    docs:
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0005-safe-installer-scripts.md"
+
+
+  - source: "scripts/verify-install"
+    docs:
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0005-safe-installer-scripts.md"
+
+
+  - source: "scripts/check-placeholders"
+    docs:
+      - "docs/specs/installer-scripts.md"
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0005-safe-installer-scripts.md"

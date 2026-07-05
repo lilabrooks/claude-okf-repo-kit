@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Safely choose the right installer for a target repo.
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/install-kit /path/to/target-repo
+
+Chooses a safe setup path:
+- missing, empty, or .git-only target -> create-new-repo
+- existing target with files -> update-existing-repo
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TARGET="$1"
+
+if [ -e "$TARGET" ] && [ ! -d "$TARGET" ]; then
+  printf 'Target exists but is not a directory: %s\n' "$TARGET" >&2
+  exit 1
+fi
+
+if [ ! -d "$TARGET" ]; then
+  mode="new repo"
+  command=(bash "$SCRIPT_DIR/create-new-repo" "$TARGET")
+elif find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | grep -q .; then
+  mode="existing repo"
+  command=(bash "$SCRIPT_DIR/update-existing-repo" "$TARGET")
+else
+  mode="new repo"
+  command=(bash "$SCRIPT_DIR/create-new-repo" "$TARGET")
+fi
+
+printf '\nClaude Code OKF kit installer\n'
+printf 'Target: %s\n' "$TARGET"
+printf 'Mode: %s\n' "$mode"
+printf 'Command: %s\n' "${command[*]}"
+
+"${command[@]}"
+
+cat <<EOF
+
+Recommended follow-up:
+  bash "$SCRIPT_DIR/verify-install" "$TARGET"
+  bash "$SCRIPT_DIR/check-placeholders" "$TARGET"
+
+The placeholder check is expected to report items until CLAUDE.md and docs/okf-map.yml are filled in for the target repo.
+EOF

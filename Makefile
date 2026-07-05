@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-hooks smoke-okf
+.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-helpers smoke-hooks smoke-okf
 
 help:
 	@printf '%s\n' \
@@ -19,6 +19,7 @@ help:
 		'  make smoke-install   Simulate a new-repo install.' \
 		'  make smoke-existing  Simulate installing into an existing repo.' \
 		'  make smoke-idempotent Test repeated existing-repo updates.' \
+		'  make smoke-helpers    Test install, verify, and placeholder helpers.' \
 		'  make smoke-hooks     Test Stop hook block/pass behavior.' \
 		'  make smoke-okf       Test draft and ADR helper behavior.'
 
@@ -30,12 +31,15 @@ syntax:
 	@bash -n scripts/check-okf-version.sh
 	@bash -n scripts/create-new-repo
 	@bash -n scripts/update-existing-repo
+	@bash -n scripts/install-kit
+	@bash -n scripts/verify-install
+	@bash -n scripts/check-placeholders
 	@python3 -c 'from pathlib import Path; compile(Path("scripts/check-md-links.py").read_text(), "scripts/check-md-links.py", "exec")'
 	@printf 'syntax ok\n'
 
 shellcheck:
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck scripts/okf scripts/check-docs-sync.sh scripts/check-okf-version.sh scripts/create-new-repo scripts/update-existing-repo; \
+		shellcheck scripts/okf scripts/check-docs-sync.sh scripts/check-okf-version.sh scripts/create-new-repo scripts/update-existing-repo scripts/install-kit scripts/verify-install scripts/check-placeholders; \
 		printf 'shellcheck ok\n'; \
 	else \
 		printf 'shellcheck skipped (not installed)\n'; \
@@ -56,7 +60,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-hooks smoke-okf
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-helpers smoke-hooks smoke-okf
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -186,6 +190,55 @@ smoke-idempotent:
 	[ "$$(grep -cFx '.okf-kit-backups/' .gitignore)" -eq 1 ]; \
 	python3 -c 'import json; s=json.load(open(".claude/settings.json")); cmds=[hook.get("command", "") for entries in s.get("hooks", {}).values() for group in entries for hook in group.get("hooks", [])]; assert cmds.count("echo existing") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh\"") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh\"") == 1'; \
 	printf 'existing-repo idempotency smoke ok\n'
+
+smoke-helpers:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	new_target="$$tmp/new"; \
+	output=$$(bash "$(KIT_DIR)/scripts/install-kit" "$$new_target"); \
+	[[ "$$output" == *'Mode: new repo'* ]]; \
+	bash "$(KIT_DIR)/scripts/verify-install" "$$new_target" >/dev/null; \
+	if bash "$(KIT_DIR)/scripts/check-placeholders" "$$new_target" >"$$tmp/placeholders.out" 2>&1; then \
+		printf 'placeholder check should report template placeholders\n' >&2; \
+		exit 1; \
+	fi; \
+	grep -q 'CLAUDE.md still has the template comment' "$$tmp/placeholders.out"; \
+	printf '%s\n' \
+		'---' \
+		'type: Playbook' \
+		'title: Claude Code repo instructions' \
+		'description: Filled test instructions.' \
+		'tags: [claude-code]' \
+		'timestamp: 2026-07-05T00:00:00Z' \
+		'---' \
+		'' \
+		'# Master objective' \
+		'' \
+		'Current state: test repo is installed.' \
+		'Target state: test repo has filled instructions.' \
+		'Constraints: follow docs/specs/index.md.' \
+		'Done when: make test passes.' \
+		'' \
+		'# Workflow for each task' \
+		'' \
+		'1. Run make test.' \
+		'' \
+		'# Verification commands' \
+		'' \
+		'- Tests: make test' \
+		'- Lint/typecheck: make lint' \
+		'- Build: make build' \
+		> "$$new_target/CLAUDE.md"; \
+	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' > "$$new_target/docs/okf-map.yml"; \
+	bash "$(KIT_DIR)/scripts/check-placeholders" "$$new_target" >/dev/null; \
+	existing_target="$$tmp/existing"; \
+	mkdir -p "$$existing_target"; \
+	printf '%s\n' 'hello' > "$$existing_target/app.txt"; \
+	output=$$(bash "$(KIT_DIR)/scripts/install-kit" "$$existing_target"); \
+	[[ "$$output" == *'Mode: existing repo'* ]]; \
+	bash "$(KIT_DIR)/scripts/verify-install" "$$existing_target" >/dev/null; \
+	printf 'install helper smoke ok\n'
 
 smoke-hooks:
 	@set -eu; \

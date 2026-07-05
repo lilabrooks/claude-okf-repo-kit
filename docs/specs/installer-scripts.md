@@ -63,8 +63,21 @@ It must:
 - create missing docs indexes and log files without overwriting existing docs
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
 
+# Wrapper and verification helpers
+
+`bash scripts/install-kit /path/to/target-repo` must choose the safe setup path:
+
+- missing, empty, or `.git/`-only target -> `scripts/create-new-repo`
+- existing target with files -> `scripts/update-existing-repo`
+
+The wrapper must print the selected mode and delegated command before running it.
+
+`bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, shell syntax, required `.gitignore` entries, and basic `scripts/okf` execution. It must not judge project-specific content.
+
+`bash scripts/check-placeholders /path/to/target-repo` must report remaining template placeholders in `CLAUDE.md` and missing active mappings in `docs/okf-map.yml`. It must not modify files.
+
 # Validation
 
 Both installers must run syntax checks for installed scripts and JSON validation for settings.
 
-The Makefile smoke tests must exercise both installers.
+The Makefile smoke tests must exercise both installers and the source-only install, verify, and placeholder helpers.

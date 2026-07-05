@@ -6,7 +6,6 @@
 ![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)
 ![Bash](https://img.shields.io/badge/scripts-Bash-4EAA25?logo=gnubash&logoColor=white)
 ![Specs + ADRs](https://img.shields.io/badge/specs%20%2B%20ADRs-included-0A7)
-![License](https://img.shields.io/github/license/lilabrooks/claude-okf-repo-kit)
 
 ## What this kit does
 
@@ -78,10 +77,13 @@ Root `CLAUDE.md` is filled in for maintaining this source repo. Target repos rec
 
 Source-only automation scripts:
 
+- `scripts/install-kit`
 - `scripts/create-new-repo`
 - `scripts/update-existing-repo`
+- `scripts/verify-install`
+- `scripts/check-placeholders`
 
-These scripts install the kit into target repos. They do not need to be copied into target repos.
+These scripts install or check the kit in target repos. They do not need to be copied into target repos.
 
 ## How to use this kit
 
@@ -99,11 +101,19 @@ In this kit repo, installable files sit at the root for easy review. In the targ
 
 ### Automated setup
 
-For a new empty repo:
+For most repos, use the safe wrapper. It detects whether the target is new/empty or existing, then delegates to the right installer:
 
 ```bash
 KIT=/path/to/claude-okf-repo-kit
-TARGET=/path/to/new-repo
+TARGET=/path/to/target-repo
+bash "$KIT/scripts/install-kit" "$TARGET"
+```
+
+If you prefer explicit commands, use the matching installer yourself.
+
+For a new empty repo:
+
+```bash
 bash "$KIT/scripts/create-new-repo" "$TARGET"
 ```
 
@@ -112,8 +122,6 @@ The new-repo script creates the target directory if needed. The target must be e
 For an existing repo:
 
 ```bash
-KIT=/path/to/claude-okf-repo-kit
-TARGET=/path/to/existing-repo
 bash "$KIT/scripts/update-existing-repo" "$TARGET"
 ```
 
@@ -126,7 +134,16 @@ The existing-repo script avoids destructive overwrites:
 - leaves an existing `docs/okf-map.yml` untouched and writes a same-folder numbered candidate such as `docs/okf-map.2.yml`
 - prints a clear summary of created, updated, skipped, backed-up, and review-needed files
 
-After either script runs, edit `CLAUDE.md` and `docs/okf-map.yml`, then run the verification commands below.
+After installation, run the safe checks from this kit repo:
+
+```bash
+bash "$KIT/scripts/verify-install" "$TARGET"
+bash "$KIT/scripts/check-placeholders" "$TARGET"
+```
+
+`verify-install` checks the installed files, settings, shell syntax, required ignores, and helper commands. `check-placeholders` is expected to report items until `CLAUDE.md` and `docs/okf-map.yml` are filled in for the target repo.
+
+Then edit `CLAUDE.md` and `docs/okf-map.yml`, rerun the checks, and commit once the output is clean.
 
 The bootstrap instructions inside `CLAUDE.md` are still useful. They are the fallback for Claude Code when a repo was opened before the installer scripts were run. The scripts are the preferred setup path for people or automation because they validate files and protect existing repos.
 
@@ -197,14 +214,11 @@ CLAUDE.local.md
 9. Verify the target repo install:
 
 ```bash
-cd "$TARGET"
-python3 -m json.tool .claude/settings.json >/dev/null
-bash -n scripts/okf
-bash -n .claude/hooks/check-docs-sync.sh
-bash -n .claude/hooks/check-okf-version.sh
-bash scripts/okf check-stale
-bash scripts/okf adr-suggest
+bash "$KIT/scripts/verify-install" "$TARGET"
+bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
+
+The placeholder check should pass only after `CLAUDE.md` and `docs/okf-map.yml` are filled in with real target-repo details.
 
 10. Commit the kit files with your repo.
 11. Open the target repo in Claude Code and give it a task. Claude Code will read `CLAUDE.md` at session start.
@@ -267,19 +281,14 @@ for entry in '.claude/settings.local.json' 'CLAUDE.local.md' '.okf-kit-backups/'
   grep -qxF "$entry" "$TARGET/.gitignore" || printf '%s\n' "$entry" >> "$TARGET/.gitignore"
 done
 ```
-9. Run the checks from the target repo root:
+9. Run the checks from this kit repo:
 
 ```bash
-cd "$TARGET"
-python3 -m json.tool .claude/settings.json >/dev/null
-bash -n scripts/okf
-bash -n .claude/hooks/check-docs-sync.sh
-bash -n .claude/hooks/check-okf-version.sh
-bash scripts/okf check-stale
-bash scripts/okf adr-suggest
+bash "$KIT/scripts/verify-install" "$TARGET"
+bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
 
-10. Fill any remaining brackets in `CLAUDE.md`, then commit the installed files once the checks are clean.
+10. Fill any remaining brackets in `CLAUDE.md`, update `docs/okf-map.yml`, rerun the checks, then commit the installed files once the output is clean.
 
 The target repo should end up with this structure:
 
@@ -371,9 +380,21 @@ bash scripts/okf adr-suggest
 
 ## Verifying an installed target repo
 
-Run these from the target repo root after installation:
+From this kit repo, run:
 
 ```bash
+KIT=/path/to/claude-okf-repo-kit
+TARGET=/path/to/target-repo
+bash "$KIT/scripts/verify-install" "$TARGET"
+bash "$KIT/scripts/check-placeholders" "$TARGET"
+```
+
+`check-placeholders` exits nonzero while target-specific template fields remain. Treat that as a checklist, not as an installer failure.
+
+You can also run the underlying target-repo checks manually:
+
+```bash
+cd "$TARGET"
 python3 -m json.tool .claude/settings.json >/dev/null
 bash -n scripts/okf
 bash -n .claude/hooks/check-docs-sync.sh
@@ -400,7 +421,7 @@ From this source-kit repo, run:
 make test
 ```
 
-That runs shell syntax checks, optional ShellCheck linting, JSON validation, stale-reference and local-path scans, Markdown link checks, new-repo install simulation, existing-repo install simulation, installer idempotency checks, hook behavior checks, and `okf` helper smoke tests.
+That runs shell syntax checks, optional ShellCheck linting, JSON validation, stale-reference and local-path scans, Markdown link checks, new-repo install simulation, existing-repo install simulation, installer idempotency checks, install/verify/placeholder helper checks, hook behavior checks, and `okf` helper smoke tests.
 
 You can also run narrower targets:
 

@@ -22,8 +22,13 @@ Add two source-only installer scripts:
 
 - `scripts/create-new-repo`
 - `scripts/update-existing-repo`
+- `scripts/install-kit`
+- `scripts/verify-install`
+- `scripts/check-placeholders`
 
 The new-repo installer only runs on an empty target, except for an optional `.git/` directory.
+
+The wrapper script chooses between new-repo and existing-repo installers based on the target directory state. Verification and placeholder scripts provide safe post-install checks without filling project-specific content.
 
 The existing-repo installer uses backups, settings merges, same-folder numbered candidates, and `.gitignore` appends instead of destructive overwrites.
 

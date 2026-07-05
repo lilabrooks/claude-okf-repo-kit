@@ -2,6 +2,8 @@
 
 ## 2026-07-05
 
+- Removed the README license badge while keeping the MIT license file.
+- Added safe install, verification, and placeholder helper scripts with Makefile smoke coverage.
 - Clarified README setup paths, target-repo ignore rules, source-repo ignore rules, and OKF version hook behavior.
 - Added a README table of contents for faster navigation.
 - Changed the README status badge from alpha to preview.

@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Report target-repo template placeholders that still need human input.
+
+set -u
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/check-placeholders /path/to/target-repo
+
+Warns when CLAUDE.md or docs/okf-map.yml still look like the install template.
+This script does not modify files.
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+TARGET="$1"
+if [ ! -d "$TARGET" ]; then
+  printf 'Target repo does not exist: %s\n' "$TARGET" >&2
+  exit 1
+fi
+TARGET="$(cd "$TARGET" && pwd)"
+issues=()
+
+add_issue() {
+  issues+=("$1")
+}
+
+if [ ! -f "$TARGET/CLAUDE.md" ]; then
+  add_issue "CLAUDE.md is missing"
+else
+  if grep -q 'Template. Fill every \[bracket\]' "$TARGET/CLAUDE.md"; then
+    add_issue "CLAUDE.md still has the template comment"
+  fi
+  for pattern in \
+    '[what exists today, 1-2 sentences]' \
+    '[what done looks like, concrete nouns]' \
+    '[governing ADRs and specs by path]' \
+    '[verifiable criteria: test command, contract coverage, removals]' \
+    '[test command]' \
+    '[command]' \
+    '[command, if separate]'; do
+    if grep -qF "$pattern" "$TARGET/CLAUDE.md"; then
+      add_issue "CLAUDE.md still contains placeholder: $pattern"
+    fi
+  done
+fi
+
+if [ ! -f "$TARGET/docs/okf-map.yml" ]; then
+  add_issue "docs/okf-map.yml is missing"
+else
+  active_sources="$(awk '
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*-[[:space:]]*source:/ { print; found=1 }
+    END { if (!found) exit 1 }
+  ' "$TARGET/docs/okf-map.yml" 2>/dev/null)"
+  if [ -z "$active_sources" ]; then
+    add_issue "docs/okf-map.yml has no active source mappings yet"
+  fi
+  if grep -v '^[[:space:]]*#' "$TARGET/docs/okf-map.yml" | grep -q 'path/to/module'; then
+    add_issue "docs/okf-map.yml still contains the sample path/to/module mapping"
+  fi
+fi
+
+printf '\nClaude Code OKF placeholder check\n'
+printf 'Target: %s\n' "$TARGET"
+
+if [ "${#issues[@]}" -eq 0 ]; then
+  printf '\nNo template placeholders found.\n'
+  exit 0
+fi
+
+printf '\nNeeds attention:\n'
+for issue in "${issues[@]}"; do
+  printf '  - %s\n' "$issue"
+done
+
+cat <<'EOF'
+
+Next steps:
+  1. Fill CLAUDE.md with this repo's real goal, constraints, and commands.
+  2. Add real source-to-doc mappings to docs/okf-map.yml.
+  3. Run this check again.
+EOF
+
+exit 1
