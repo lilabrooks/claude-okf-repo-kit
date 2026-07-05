@@ -50,7 +50,7 @@ json:
 	@printf 'json ok\n'
 
 scan:
-	@if rg -n 'OUTPUTS|Master Objective Prompt|src/|Delete the sample|output kit|No docs/okf-map|scripts as draft|/Users/lilabrooks|Claude Agents|claude-code-okf-kit' README.md CLAUDE.md 'Claude Code OKF Kit Guide.md' docs scripts templates okf-map.yml settings.json .gitignore LICENSE .github; then \
+	@if rg -n 'OUTPUTS|Master Objective Prompt|src/|Delete the sample|output kit|No docs/okf-map|scripts as draft|/[U]sers/|/[Hh]ome/|Documents/' README.md CLAUDE.md 'Claude Code OKF Kit Guide.md' docs scripts templates okf-map.yml settings.json .gitignore LICENSE .github; then \
 		printf 'stale reference or local path scan failed\n' >&2; \
 		exit 1; \
 	fi; \

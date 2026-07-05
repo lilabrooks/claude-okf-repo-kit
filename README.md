@@ -106,7 +106,9 @@ In this kit repo, installable files sit at the root for easy review. In the targ
 For most repos, use the safe wrapper. It detects whether the target is new/empty or existing, then delegates to the right installer:
 
 ```bash
-KIT=/path/to/claude-okf-repo-kit
+git clone https://github.com/lilabrooks/claude-okf-repo-kit.git
+cd claude-okf-repo-kit
+KIT="$(pwd)"
 TARGET=/path/to/target-repo
 bash "$KIT/scripts/install-kit" "$TARGET"
 ```
@@ -155,7 +157,7 @@ The bootstrap instructions inside `CLAUDE.md` are still useful. They are the fal
 2. Set these paths in your terminal:
 
 ```bash
-KIT=/path/to/claude-okf-repo-kit
+KIT="$(pwd)"
 TARGET=/path/to/target-repo
 ```
 
@@ -233,7 +235,7 @@ The update script is the safer path for existing repos because it backs up repla
 
 ```bash
 TARGET=/path/to/target-repo
-KIT=/path/to/claude-okf-repo-kit
+KIT="$(pwd)"
 ls "$TARGET/CLAUDE.md" "$TARGET/.claude/settings.json" "$TARGET/docs" 2>/dev/null
 ```
 
@@ -385,7 +387,7 @@ bash scripts/okf adr-suggest
 From this kit repo, run:
 
 ```bash
-KIT=/path/to/claude-okf-repo-kit
+KIT="$(pwd)"
 TARGET=/path/to/target-repo
 bash "$KIT/scripts/verify-install" "$TARGET"
 bash "$KIT/scripts/check-placeholders" "$TARGET"
