@@ -4,6 +4,8 @@ title: Source kit layout
 description: Keep source-kit files reviewable at repo paths while documenting target install destinations.
 tags: [packaging, layout]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Status

@@ -1,6 +1,6 @@
 # Claude OKF repo kit
 
-[![Status](https://img.shields.io/badge/status-preview-blue)](https://github.com/lilabrooks/claude-okf-repo-kit/releases)
+[![Status](https://img.shields.io/badge/status-preview-blue)](#project-status)
 [![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml)
 [![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](https://docs.anthropic.com/en/docs/claude-code)
 [![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
@@ -47,6 +47,7 @@ This source repo also includes its own `docs/` knowledge bundle with specs and A
 - [Verifying an installed target repo](#verifying-an-installed-target-repo)
 - [Validating this kit](#validating-this-kit)
 - [References](#references)
+- [Project Status](#project-status)
 
 ## Fast verification
 
@@ -439,3 +440,7 @@ make shellcheck
 - OKF spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
 - Claude Code hooks: https://code.claude.com/docs/en/hooks
 - Claude Code settings: https://code.claude.com/docs/en/settings
+
+## Project Status
+
+This is a personal side project, maintained on a best-effort basis rather than a supported product. Tests, linting, and type-checking run on every change, but there's no SLA on response time — issues and pull requests are welcome, and may take a while to get to.

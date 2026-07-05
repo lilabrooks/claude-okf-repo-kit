@@ -4,6 +4,8 @@ title: Installer scripts
 description: Safe automation for creating new repos and updating existing repos with this kit.
 tags: [installer, bash, safety]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Purpose

@@ -4,6 +4,8 @@ title: Repo kit packaging
 description: Source-kit layout and target repo installation contract for the Claude Code OKF kit.
 tags: [claude-code, okf, packaging]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Purpose

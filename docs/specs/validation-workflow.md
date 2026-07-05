@@ -4,6 +4,8 @@ title: Validation workflow
 description: Makefile validation contract for the source kit.
 tags: [makefile, validation, smoke-tests]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Purpose
@@ -29,6 +31,7 @@ The validation workflow must include:
 - JSON validation for `settings.json`
 - stale-reference scanning for old names and local machine paths
 - source-kit smoke checks
+- OKF source-kit stale mapping and ADR suggestion checks
 - new-repo install simulation
 - existing-repo install simulation
 - existing-repo idempotency simulation
@@ -74,6 +77,8 @@ Hook smoke tests must cover:
 - README-only edits pass
 
 OKF helper smoke tests must verify draft generation and ADR suggestion behavior.
+
+This kit validates OKF helper behavior and source-to-doc freshness. Target repos that need stricter OKF frontmatter or link rules should add a repo-local docs validator to their own quality gate.
 
 Markdown link checks must ignore fenced code blocks and external URLs.
 

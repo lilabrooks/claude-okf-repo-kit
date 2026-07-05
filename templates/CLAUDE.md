@@ -4,6 +4,8 @@ title: Claude Code repo instructions
 description: Master objective, grounding rules, and workflow for Claude Code in this repository.
 tags: [claude-code, agent-instructions, adr, specs]
 timestamp: 2026-07-04T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 <!-- Template. Fill every [bracket], update the timestamp, then delete this comment.

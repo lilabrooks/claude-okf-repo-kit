@@ -4,6 +4,8 @@ title: Safe installer scripts
 description: Provide automation for new and existing repo setup without destructive overwrites.
 tags: [installer, safety, bash]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Status

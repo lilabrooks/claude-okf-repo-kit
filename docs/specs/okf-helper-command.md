@@ -4,6 +4,8 @@ title: OKF helper command
 description: Expected behavior for the repo-local scripts/okf helper.
 tags: [okf, bash, cli]
 timestamp: 2026-07-05T00:00:00Z
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Purpose

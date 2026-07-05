@@ -1,5 +1,7 @@
 ---
 okf_version: "0.1"
+owner: Lila Brooks
+deciders: [Lila Brooks]
 ---
 
 # Knowledge bundle
