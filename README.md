@@ -1,11 +1,11 @@
 # Claude OKF repo kit
 
-![Status](https://img.shields.io/badge/status-preview-blue)
-![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)
-![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)
-![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)
-![Bash](https://img.shields.io/badge/scripts-Bash-4EAA25?logo=gnubash&logoColor=white)
-![Specs + ADRs](https://img.shields.io/badge/specs%20%2B%20ADRs-included-0A7)
+[![Status](https://img.shields.io/badge/status-preview-blue)](https://github.com/lilabrooks/claude-okf-repo-kit/releases)
+[![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml)
+[![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](https://docs.anthropic.com/en/docs/claude-code)
+[![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+[![Bash](https://img.shields.io/badge/scripts-Bash-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/manual/bash.html)
+[![Specs + ADRs](https://img.shields.io/badge/specs%20%2B%20ADRs-included-0A7)](docs/)
 
 ## What this kit does
 

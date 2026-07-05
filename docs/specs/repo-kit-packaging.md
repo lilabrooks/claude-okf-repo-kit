@@ -39,7 +39,7 @@ The source repo also keeps local validation and project knowledge:
 - `scripts/check-md-links.py`
 - `.github/workflows/test.yml`
 
-The public repo presentation must include a modest README badge set for preview status, tests, Claude Code, OKF, Bash, and specs/ADRs.
+The public repo presentation must include a modest README badge set with links for preview status, GitHub Actions tests, Claude Code, OKF, Bash, and specs/ADRs.
 
 The source repo is MIT licensed.
 

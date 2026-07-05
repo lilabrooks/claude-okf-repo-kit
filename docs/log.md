@@ -2,6 +2,8 @@
 
 ## 2026-07-05
 
+- Made all README badges clickable.
+- Made the README GitHub Actions test badge clickable.
 - Removed the README license badge while keeping the MIT license file.
 - Added safe install, verification, and placeholder helper scripts with Makefile smoke coverage.
 - Clarified README setup paths, target-repo ignore rules, source-repo ignore rules, and OKF version hook behavior.
