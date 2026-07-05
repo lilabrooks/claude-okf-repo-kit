@@ -67,6 +67,8 @@ Specs and ADRs must use YAML frontmatter with at least `type:`.
 
 `README.md` must include step-by-step instructions for new repos and existing repos.
 
+`README.md` must begin with a clear plain-language section that explains what the kit does before listing install files.
+
 Existing-repo instructions must avoid overwriting an existing `CLAUDE.md`, `.claude/settings.json`, `.gitignore`, specs, ADRs, map file, or log files.
 
 Existing-repo instructions must describe same-folder numbered candidates for same-name Markdown/map files.

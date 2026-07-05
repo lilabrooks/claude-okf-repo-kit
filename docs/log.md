@@ -2,6 +2,7 @@
 
 ## 2026-07-05
 
+- Added a clearer README opening section that explains what the kit does before installation details.
 - Added Python bytecode/cache ignores and changed the syntax check to avoid writing bytecode.
 - Added quality checks for optional ShellCheck linting, Markdown links, local-path scanning, installer idempotency, and GitHub Actions validation.
 - Added an MIT license and README badges for the new `lilabrooks/claude-okf-repo-kit` GitHub repo.

@@ -8,7 +8,27 @@
 ![Specs + ADRs](https://img.shields.io/badge/specs%20%2B%20ADRs-included-0A7)
 ![License](https://img.shields.io/github/license/lilabrooks/claude-okf-repo-kit)
 
-6 install artifacts set up any new repo for spec-driven iteration with Claude Code: docs as the source of truth, self-healing documentation, OKF version tracking, stale spec checks, fact-based spec drafts, and conservative ADR suggestions.
+## What this kit does
+
+This kit sets up a repo so Claude Code works from project knowledge instead of only reading code and guessing intent.
+
+It gives your repo a small, repeatable structure:
+
+- `CLAUDE.md` tells Claude Code the project goal, rules, workflow, and verification commands.
+- `docs/specs/` holds the behavior and contracts Claude should preserve.
+- `docs/adr/` holds architecture decisions Claude should follow.
+- `docs/okf-map.yml` maps source files to the specs and ADRs that govern them.
+- `.claude/hooks/` adds guardrails that catch code changes without matching docs updates.
+- `scripts/okf` gives you local checks for stale specs, draft specs, and ADR suggestions.
+
+After installation, the normal loop is simple:
+
+1. You ask Claude Code to change the repo.
+2. Claude reads the relevant specs and ADRs before editing.
+3. If code changes, Claude updates the matching docs or adds a dated `docs/log.md` note explaining why no spec or ADR changed.
+4. The helper checks catch stale mappings, generate draft specs for poorly documented areas, and suggest ADRs only for standing decisions.
+
+Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo.
 
 This source repo also includes its own `docs/` knowledge bundle with specs and ADRs that govern the kit itself.
 
