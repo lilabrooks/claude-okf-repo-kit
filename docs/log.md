@@ -2,6 +2,7 @@
 
 ## 2026-07-05
 
+- Added a static README OKF validated badge that links to the kit validation section.
 - Added a README Project Status section and linked the preview badge to it.
 - Clarified that source-kit OKF validation covers helper behavior and stale mappings, while target repos own stricter OKF document-schema checks when needed.
 - Made all README badges clickable.
