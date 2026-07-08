@@ -3,7 +3,7 @@ type: Playbook
 title: Claude Code OKF kit repo instructions
 description: Project-specific objective, grounding rules, and workflow for maintaining this source kit.
 tags: [claude-code, okf, agent-instructions, adr, specs]
-timestamp: 2026-07-05T00:00:00Z
+timestamp: 2026-07-07T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -17,6 +17,15 @@ Target state: The source kit remains easy to review, safe to install into new or
 Constraints: Follow `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, and `docs/specs/validation-workflow.md`. Follow ADRs in `docs/adr/`. Root `templates/CLAUDE.md` is the install template for target repos; root `CLAUDE.md` is only for this source repo.
 
 Done when: `make test` passes, `bash scripts/okf check-stale` reports current mappings, and any changed behavior is reflected in the mapped spec, ADR, or `docs/log.md`.
+
+# Goal iteration
+
+`docs/GOAL.md` carries this repo's detailed goal: problem, target state, success criteria, non-goals, and the milestone backlog. The Master objective above is its one-screen summary; keep the two consistent, with `docs/GOAL.md` carrying the detail.
+
+- Read `docs/GOAL.md` before the first task of each session.
+- When asked to continue or iterate without a specific task, take the first unchecked milestone and run it through the task workflow below.
+- Check a milestone off only when its stated verification passes, then add a dated `docs/log.md` entry.
+- Changing `docs/GOAL.md` (scope, success criteria, milestone order) is the owner's decision.
 
 # Source-kit layout
 
@@ -34,7 +43,7 @@ Source-only files:
 
 - `CLAUDE.md` — this repo's project instructions.
 - `README.md` and `Claude Code OKF Kit Guide.md` — user-facing docs.
-- `docs/` — this repo's OKF specs, ADRs, log, and source map.
+- `docs/` — this repo's OKF goal, specs, ADRs, log, and source map. `docs/GOAL.md` is this repo's own goal file, distinct from the `templates/GOAL.md` install artifact.
 - `Makefile` — source-kit validation.
 - `scripts/create-new-repo` and `scripts/update-existing-repo` — source-only installer scripts.
 

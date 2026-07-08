@@ -2,6 +2,7 @@
 
 ## 2026-07-07
 
+- Dogfooded ADR 0006 in this source repo: added `docs/GOAL.md` with the kit's own goal, success criteria, non-goals, and milestone backlog (delivered milestones checked, backlog owner-managed); linked it from `docs/index.md`; root `CLAUDE.md` gained a Goal iteration section mirroring `templates/CLAUDE.md` and now distinguishes `docs/GOAL.md` (this repo's goal) from the `templates/GOAL.md` install artifact. No install behavior changed, so no spec or ADR edits were warranted.
 - Added `templates/GOAL.md`, installed to target `docs/GOAL.md`: a goal template with repo kind (app, service, or utility), problem, target state, verifiable success criteria, non-goals, constraints, and an ordered milestone backlog (ADR 0006).
 - Added a Goal iteration section to `templates/CLAUDE.md`: Claude Code reads `docs/GOAL.md` each session, takes the first unchecked milestone when asked to continue, checks it off only when its verification passes, and logs progress.
 - Both installers now install `docs/GOAL.md`; the existing-repo installer preserves an existing file and writes a numbered candidate such as `docs/GOAL.2.md`.

@@ -8,6 +8,7 @@ deciders: [Lila Brooks]
 
 This bundle governs the Claude Code OKF repo kit.
 
+- [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
 - [Change log](log.md)
