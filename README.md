@@ -15,6 +15,7 @@ This kit sets up a repo so Claude Code works from project knowledge instead of o
 It gives your repo a small, repeatable structure:
 
 - `CLAUDE.md` tells Claude Code the project goal, rules, workflow, and verification commands.
+- `docs/GOAL.md` states the goal Claude Code iterates toward for your app, service, or utility: the problem, target state, success criteria, and an ordered milestone backlog.
 - `docs/specs/` holds the behavior and contracts Claude should preserve.
 - `docs/adr/` holds architecture decisions Claude should follow.
 - `docs/okf-map.yml` maps source files to the specs and ADRs that govern them.
@@ -27,8 +28,9 @@ After installation, the normal loop is simple:
 2. Claude reads the relevant specs and ADRs before editing.
 3. If code changes, Claude updates the matching docs or adds a dated `docs/log.md` note explaining why no spec or ADR changed.
 4. The helper checks catch stale mappings, generate draft specs for poorly documented areas, and suggest ADRs only for standing decisions.
+5. When you ask Claude Code to continue without naming a task, it takes the first unchecked milestone in `docs/GOAL.md`, verifies it, checks it off, and logs the progress.
 
-Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo.
+Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo, and to iterate toward a goal you defined once instead of re-explaining it every session.
 
 This source repo also includes its own `docs/` knowledge bundle with specs and ADRs that govern the kit itself.
 
@@ -65,6 +67,7 @@ That validates script syntax, optional ShellCheck linting, `settings.json`, stal
 | File in this folder     | Destination in the repo             | Purpose                                                        |
 |-------------------------|-------------------------------------|----------------------------------------------------------------|
 | `templates/CLAUDE.md`   | `CLAUDE.md` (repo root)             | Master objective template, grounding rules, workflow. Loaded every session. |
+| `templates/GOAL.md`     | `docs/GOAL.md`                      | Goal template: repo kind, problem, target state, success criteria, milestone backlog. |
 | `settings.json`         | `.claude/settings.json`             | Registers both hooks.                                          |
 | `scripts/check-docs-sync.sh`    | `.claude/hooks/check-docs-sync.sh`  | Stop hook. Blocks missing docs updates and stale mapped docs. |
 | `scripts/check-okf-version.sh`  | `.claude/hooks/check-okf-version.sh`| SessionStart hook. Reports OKF spec version drift so Claude migrates `/docs` formatting. |
@@ -136,6 +139,7 @@ The existing-repo script avoids destructive overwrites:
 - appends required `.gitignore` entries instead of replacing `.gitignore`
 - leaves existing Markdown files untouched and writes same-folder numbered candidates such as `CLAUDE.2.md`
 - leaves an existing `docs/okf-map.yml` untouched and writes a same-folder numbered candidate such as `docs/okf-map.2.yml`
+- skips the numbered candidate when the existing file already matches the kit content, so repeated updates stay clean
 - prints a clear summary of created, updated, skipped, backed-up, and review-needed files
 
 After installation, run the safe checks from this kit repo:
@@ -145,9 +149,9 @@ bash "$KIT/scripts/verify-install" "$TARGET"
 bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
 
-`verify-install` checks the installed files, settings, shell syntax, required ignores, and helper commands. `check-placeholders` is expected to report items until `CLAUDE.md` and `docs/okf-map.yml` are filled in for the target repo.
+`verify-install` checks the installed files, settings, shell syntax, required ignores, and helper commands. `check-placeholders` is expected to report items until `CLAUDE.md`, `docs/GOAL.md`, and `docs/okf-map.yml` are filled in for the target repo.
 
-Then edit `CLAUDE.md` and `docs/okf-map.yml`, rerun the checks, and commit once the output is clean.
+Then edit `docs/GOAL.md` (the goal, success criteria, and milestones), `CLAUDE.md`, and `docs/okf-map.yml`, rerun the checks, and commit once the output is clean.
 
 The bootstrap instructions inside `CLAUDE.md` are still useful. They are the fallback for Claude Code when a repo was opened before the installer scripts were run. The scripts are the preferred setup path for people or automation because they validate files and protect existing repos.
 
@@ -176,6 +180,7 @@ cp "$KIT/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
 cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
 cp "$KIT/okf-map.yml" "$TARGET/docs/okf-map.yml"
+cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
 ```
 
 5. Add the starter docs files:
@@ -188,6 +193,7 @@ okf_version: "0.1"
 
 # Knowledge bundle
 
+- [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
 EOF
@@ -205,9 +211,10 @@ cat > "$TARGET/docs/adr/index.md" <<'EOF'
 EOF
 ```
 
-6. Edit `CLAUDE.md` in the target repo. Fill every bracket: current state, target state, constraints, done criteria, and the real test/lint/build commands. Update the timestamp and delete the template comment.
-7. Edit `docs/okf-map.yml`. Replace the commented placeholder with real repo-relative paths.
-8. Add these lines to the target repo's `.gitignore`:
+6. Edit `docs/GOAL.md` in the target repo. Fill every bracket: repo kind (app, service, or utility), problem, target state, success criteria, and an ordered milestone list Claude Code can work through. Update the timestamp and delete the template comment.
+7. Edit `CLAUDE.md` in the target repo. Fill every bracket: current state, target state, constraints, done criteria, and the real test/lint/build commands. Update the timestamp and delete the template comment.
+8. Edit `docs/okf-map.yml`. Replace the commented placeholder with real repo-relative paths.
+9. Add these lines to the target repo's `.gitignore`:
 
 ```gitignore
 .claude/settings.local.json
@@ -215,17 +222,17 @@ CLAUDE.local.md
 .okf-kit-backups/
 ```
 
-9. Verify the target repo install:
+10. Verify the target repo install:
 
 ```bash
 bash "$KIT/scripts/verify-install" "$TARGET"
 bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
 
-The placeholder check should pass only after `CLAUDE.md` and `docs/okf-map.yml` are filled in with real target-repo details.
+The placeholder check should pass only after `CLAUDE.md`, `docs/GOAL.md`, and `docs/okf-map.yml` are filled in with real target-repo details.
 
-10. Commit the kit files with your repo.
-11. Open the target repo in Claude Code and give it a task. Claude Code will read `CLAUDE.md` at session start.
+11. Commit the kit files with your repo.
+12. Open the target repo in Claude Code and give it a task, or just ask it to continue toward the goal. Claude Code will read `CLAUDE.md` at session start and take the first unchecked milestone from `docs/GOAL.md`.
 
 ### Manual existing repo
 
@@ -276,8 +283,16 @@ cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
 
 5. If the repo does not already have `docs/index.md`, `docs/log.md`, `docs/specs/index.md`, or `docs/adr/index.md`, create them using the starter files from the new-repo steps.
 6. Copy `okf-map.yml` to `docs/okf-map.yml` only if that file does not already exist. If it does exist, add any new mappings by hand.
-7. Fill in `docs/okf-map.yml` gradually. Start with the modules Claude touches most often.
-8. Append required local-file ignores without replacing `.gitignore`:
+7. Copy `templates/GOAL.md` to `docs/GOAL.md` only if that file does not already exist, then fill in the repo kind, problem, target state, success criteria, and milestones:
+
+```bash
+if [ ! -f "$TARGET/docs/GOAL.md" ]; then
+  cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+fi
+```
+
+8. Fill in `docs/okf-map.yml` gradually. Start with the modules Claude touches most often.
+9. Append required local-file ignores without replacing `.gitignore`:
 
 ```bash
 touch "$TARGET/.gitignore"
@@ -285,20 +300,21 @@ for entry in '.claude/settings.local.json' 'CLAUDE.local.md' '.okf-kit-backups/'
   grep -qxF "$entry" "$TARGET/.gitignore" || printf '%s\n' "$entry" >> "$TARGET/.gitignore"
 done
 ```
-9. Run the checks from this kit repo:
+10. Run the checks from this kit repo:
 
 ```bash
 bash "$KIT/scripts/verify-install" "$TARGET"
 bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
 
-10. Fill any remaining brackets in `CLAUDE.md`, update `docs/okf-map.yml`, rerun the checks, then commit the installed files once the output is clean.
+11. Fill any remaining brackets in `CLAUDE.md` and `docs/GOAL.md`, update `docs/okf-map.yml`, rerun the checks, then commit the installed files once the output is clean.
 
 The target repo should end up with this structure:
 
 ```
 docs/
 ├── index.md        # bundle root, declares okf_version
+├── GOAL.md         # goal, success criteria, milestone backlog
 ├── log.md          # dated changelog, newest first
 ├── okf-map.yml     # source-to-knowledge map
 ├── specs/
@@ -311,15 +327,16 @@ docs/
 ### Daily use after installation
 
 1. Open the target repo in Claude Code.
-2. Ask for changes the usual way, but point at the relevant spec or ADR when you know it:
+2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, and logs the progress in `docs/log.md`.
+3. For a specific change, ask the usual way, but point at the relevant spec or ADR when you know it:
 
 ```text
 Review /docs/specs/[module].md and implement [change] in [module path].
 ```
 
-3. Let Claude Code update code and docs together. If code changes without a `/docs` update, the Stop hook blocks the turn and tells Claude to fix the missing knowledge update.
-4. When a mapped source area changes, `bash scripts/okf check-stale` makes sure the mapped spec or ADR changed too. A dated `docs/log.md` entry is enough when no spec or ADR edit is warranted.
-5. For a new or poorly documented module, run:
+4. Let Claude Code update code and docs together. If code changes without a `/docs` update, the Stop hook blocks the turn and tells Claude to fix the missing knowledge update.
+5. When a mapped source area changes, `bash scripts/okf check-stale` makes sure the mapped spec or ADR changed too. A dated `docs/log.md` entry is enough when no spec or ADR edit is warranted.
+6. For a new or poorly documented module, run:
 
 ```bash
 bash scripts/okf draft path/to/module
@@ -327,14 +344,14 @@ bash scripts/okf draft path/to/module
 
 Review the generated file under `docs/specs/_drafts/`, rewrite it, then move it into `docs/specs/` when it is ready.
 
-6. For dependency, persistence, API, auth, deployment, worker, cache, queue, or ownership-boundary changes, run:
+7. For dependency, persistence, API, auth, deployment, worker, cache, queue, or ownership-boundary changes, run:
 
 ```bash
 bash scripts/okf adr-suggest
 ```
 
 Create an ADR only when the suggestion points to a real standing decision.
-7. Commit code, specs, ADRs, and `docs/log.md` together.
+8. Commit code, specs, ADRs, and `docs/log.md` together.
 
 ## Commit vs ignore
 

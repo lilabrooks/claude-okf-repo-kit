@@ -50,8 +50,19 @@ json:
 	@printf 'json ok\n'
 
 scan:
-	@if rg -n 'OUTPUTS|Master Objective Prompt|src/|Delete the sample|output kit|No docs/okf-map|scripts as draft|/[U]sers/|/[Hh]ome/|Documents/' README.md CLAUDE.md 'Claude Code OKF Kit Guide.md' docs scripts templates okf-map.yml settings.json .gitignore LICENSE .github; then \
+	@if command -v rg >/dev/null 2>&1; then \
+		scan_search() { rg -n "$$@"; }; \
+	else \
+		scan_search() { grep -rnEI "$$@"; }; \
+	fi; \
+	status=0; \
+	scan_search 'OUTPUTS|Master Objective Prompt|src/|Delete the sample|output kit|No docs/okf-map|scripts as draft|/[U]sers/|/[Hh]ome/|Documents/' README.md CLAUDE.md 'Claude Code OKF Kit Guide.md' docs scripts templates okf-map.yml settings.json .gitignore LICENSE .github || status=$$?; \
+	if [ "$$status" -eq 0 ]; then \
 		printf 'stale reference or local path scan failed\n' >&2; \
+		exit 1; \
+	fi; \
+	if [ "$$status" -ne 1 ]; then \
+		printf 'stale reference scan could not run (exit %s)\n' "$$status" >&2; \
 		exit 1; \
 	fi; \
 	printf 'scan ok\n'
@@ -87,6 +98,8 @@ smoke-install:
 	test -f .claude/hooks/check-okf-version.sh; \
 	test -f scripts/okf; \
 	test -f docs/index.md; \
+	test -f docs/GOAL.md; \
+	grep -q '# Milestones' docs/GOAL.md; \
 	test -f docs/log.md; \
 	test -f docs/specs/index.md; \
 	test -f docs/adr/index.md; \
@@ -110,6 +123,7 @@ smoke-existing:
 	printf '%s\n' '{"custom":true,"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo existing"}]}]}}' > .claude/settings.json; \
 	mkdir -p docs/specs docs/adr; \
 	printf '%s\n' '# Existing docs index' > docs/index.md; \
+	printf '%s\n' '# Existing goal' > docs/GOAL.md; \
 	printf '%s\n' '# Existing log' > docs/log.md; \
 	printf '%s\n' '# Existing specs index' > docs/specs/index.md; \
 	printf '%s\n' '# Existing ADR index' > docs/adr/index.md; \
@@ -137,6 +151,9 @@ smoke-existing:
 	test -f .claude/hooks/check-docs-sync.sh; \
 	test -f .claude/hooks/check-okf-version.sh; \
 	grep -q '# Existing docs index' docs/index.md; \
+	grep -q '# Existing goal' docs/GOAL.md; \
+	test -f docs/GOAL.2.md; \
+	grep -q '# Milestones' docs/GOAL.2.md; \
 	grep -q '# Existing log' docs/log.md; \
 	grep -q '# Existing specs index' docs/specs/index.md; \
 	grep -q '# Existing ADR index' docs/adr/index.md; \
@@ -175,6 +192,8 @@ smoke-idempotent:
 	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$target" >/dev/null; \
 	test -f CLAUDE.2.md; \
 	test ! -f CLAUDE.3.md; \
+	test -f docs/GOAL.md; \
+	test ! -f docs/GOAL.2.md; \
 	test -f docs/index.2.md; \
 	test ! -f docs/index.3.md; \
 	test -f docs/log.2.md; \
@@ -204,6 +223,7 @@ smoke-helpers:
 		exit 1; \
 	fi; \
 	grep -q 'CLAUDE.md still has the template comment' "$$tmp/placeholders.out"; \
+	grep -q 'docs/GOAL.md still has the template comment' "$$tmp/placeholders.out"; \
 	printf '%s\n' \
 		'---' \
 		'type: Playbook' \
@@ -231,6 +251,25 @@ smoke-helpers:
 		'- Build: make build' \
 		> "$$new_target/CLAUDE.md"; \
 	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' > "$$new_target/docs/okf-map.yml"; \
+	printf '%s\n' \
+		'---' \
+		'type: Goal' \
+		'title: Test goal' \
+		'---' \
+		'' \
+		'# Goal' \
+		'' \
+		'Kind: utility.' \
+		'Problem: test repos need a filled goal.' \
+		'' \
+		'# Success criteria' \
+		'' \
+		'- make test passes.' \
+		'' \
+		'# Milestones' \
+		'' \
+		'- [ ] Ship the first slice. Verify: make test.' \
+		> "$$new_target/docs/GOAL.md"; \
 	bash "$(KIT_DIR)/scripts/check-placeholders" "$$new_target" >/dev/null; \
 	existing_target="$$tmp/existing"; \
 	mkdir -p "$$existing_target"; \

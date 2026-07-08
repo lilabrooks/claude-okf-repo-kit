@@ -8,8 +8,8 @@ usage() {
 Usage:
   bash scripts/check-placeholders /path/to/target-repo
 
-Warns when CLAUDE.md or docs/okf-map.yml still look like the install template.
-This script does not modify files.
+Warns when CLAUDE.md, docs/GOAL.md, or docs/okf-map.yml still look like the
+install template. This script does not modify files.
 EOF
 }
 
@@ -55,6 +55,23 @@ else
   done
 fi
 
+if [ ! -f "$TARGET/docs/GOAL.md" ]; then
+  add_issue "docs/GOAL.md is missing"
+else
+  if grep -q 'Template. Fill every \[bracket\]' "$TARGET/docs/GOAL.md"; then
+    add_issue "docs/GOAL.md still has the template comment"
+  fi
+  for pattern in \
+    '[app | service | utility]' \
+    '[who has what problem, 1-2 sentences]' \
+    '[test command that passes]' \
+    '[first shippable slice + how to verify it]'; do
+    if grep -qF "$pattern" "$TARGET/docs/GOAL.md"; then
+      add_issue "docs/GOAL.md still contains placeholder: $pattern"
+    fi
+  done
+fi
+
 if [ ! -f "$TARGET/docs/okf-map.yml" ]; then
   add_issue "docs/okf-map.yml is missing"
 else
@@ -87,9 +104,10 @@ done
 cat <<'EOF'
 
 Next steps:
-  1. Fill CLAUDE.md with this repo's real goal, constraints, and commands.
-  2. Add real source-to-doc mappings to docs/okf-map.yml.
-  3. Run this check again.
+  1. Fill docs/GOAL.md with the repo's goal, success criteria, and milestones.
+  2. Fill CLAUDE.md with this repo's real objective, constraints, and commands.
+  3. Add real source-to-doc mappings to docs/okf-map.yml.
+  4. Run this check again.
 EOF
 
 exit 1

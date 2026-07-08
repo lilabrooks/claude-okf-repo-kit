@@ -23,6 +23,7 @@ Done when: `make test` passes, `bash scripts/okf check-stale` reports current ma
 Install artifacts:
 
 - `templates/CLAUDE.md` — template copied to target repo `CLAUDE.md`.
+- `templates/GOAL.md` — goal template copied to target repo `docs/GOAL.md`.
 - `settings.json` — copied to target repo `.claude/settings.json`.
 - `okf-map.yml` — copied to target repo `docs/okf-map.yml`.
 - `scripts/okf` — copied to target repo `scripts/okf`.
@@ -74,4 +75,6 @@ CLAUDE.local.md
 .env.*
 !.env.example
 *.log
+__pycache__/
+*.py[cod]
 ```

@@ -68,6 +68,8 @@ Done when: [verifiable criteria: test command, contract coverage, removals]
 
 Fill in the real commands. "Ensure all tests pass" means nothing to an agent that has to guess whether you run pytest, vitest, or make.
 
+The kit also installs `docs/GOAL.md` from `templates/GOAL.md`. That file carries the full goal definition the Master objective summarizes: the repo kind (app, service, or utility), the problem, the target state, verifiable success criteria, non-goals, constraints, and an ordered milestone backlog. The milestone list is what makes "continue" mean something across sessions — Claude Code takes the first unchecked milestone, verifies it against its stated check, checks it off, and logs the progress in `docs/log.md`. Keep the Master objective as the one-screen summary and let `docs/GOAL.md` carry the detail.
+
 ---
 
 ## 3. Per-task prompts
@@ -122,6 +124,7 @@ This repo is a source kit. Its files sit at the root so you can review them. Whe
 
 ```text
 templates/CLAUDE.md   -> CLAUDE.md
+templates/GOAL.md     -> docs/GOAL.md
 settings.json         -> .claude/settings.json
 scripts/check-docs-sync.sh    -> .claude/hooks/check-docs-sync.sh
 scripts/check-okf-version.sh  -> .claude/hooks/check-okf-version.sh
@@ -132,10 +135,11 @@ okf-map.yml           -> docs/okf-map.yml
 For a new repo:
 
 1. Run `bash /path/to/kit/scripts/create-new-repo /path/to/new-repo`.
-2. Fill in every bracket in `CLAUDE.md`.
-3. Replace the placeholder in `docs/okf-map.yml` with real source-to-doc mappings.
-4. Commit the installed files.
-5. Open the repo in Claude Code.
+2. Fill in every bracket in `docs/GOAL.md`: repo kind, problem, target state, success criteria, and milestones.
+3. Fill in every bracket in `CLAUDE.md`.
+4. Replace the placeholder in `docs/okf-map.yml` with real source-to-doc mappings.
+5. Commit the installed files.
+6. Open the repo in Claude Code and ask it to continue toward the goal, or give it a specific task.
 
 The new-repo script creates the target directory if needed, but it refuses a non-empty target except for an optional `.git/` directory.
 
@@ -149,9 +153,9 @@ For an existing repo:
 6. Confirm `.gitignore` kept existing entries and gained the kit's required local-file ignores.
 7. Add or update `docs/okf-map.yml` gradually, starting with the modules Claude changes most.
 8. Run `bash scripts/okf check-stale` and `bash scripts/okf adr-suggest` from the target repo root.
-9. Fill any remaining brackets in `CLAUDE.md`, then commit once the checks are clean.
+9. Fill any remaining brackets in `CLAUDE.md` and `docs/GOAL.md`, then commit once the checks are clean.
 
-The existing-repo script is intentionally conservative: it appends `.gitignore`, merges Claude settings, backs up replaced kit-managed scripts, and writes same-folder numbered candidates for same-name Markdown/map files.
+The existing-repo script is intentionally conservative: it appends `.gitignore`, merges Claude settings, backs up replaced kit-managed scripts, and writes same-folder numbered candidates for same-name Markdown/map files, skipping the candidate when the existing file already matches the kit content.
 
 Read `README.md` for copy-paste commands.
 

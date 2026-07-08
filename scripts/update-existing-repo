@@ -113,6 +113,10 @@ write_numbered_candidate() {
   local dest="$2"
   local label="$3"
   local candidate existing
+  if cmp -s "$src" "$dest"; then
+    skipped+=("$label already matches the kit content")
+    return 0
+  fi
   existing="$(existing_matching_candidate "$src" "$dest" || true)"
   if [ -n "$existing" ]; then
     skipped+=("$label candidate already exists at ${existing#"$TARGET"/}")
@@ -235,6 +239,13 @@ else
   created+=("docs/okf-map.yml")
 fi
 
+if [ -f "$TARGET/docs/GOAL.md" ]; then
+  write_numbered_candidate "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md" "docs/GOAL.md"
+else
+  cp "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+  created+=("docs/GOAL.md")
+fi
+
 if [ ! -f "$TARGET/docs/index.md" ]; then
   cat > "$TARGET/docs/index.md" <<'EOF'
 ---
@@ -243,6 +254,7 @@ okf_version: "0.1"
 
 # Knowledge bundle
 
+- [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
 EOF
@@ -255,6 +267,7 @@ okf_version: "0.1"
 
 # Knowledge bundle
 
+- [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
 EOF

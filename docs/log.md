@@ -1,5 +1,17 @@
 # Log
 
+## 2026-07-07
+
+- Added `templates/GOAL.md`, installed to target `docs/GOAL.md`: a goal template with repo kind (app, service, or utility), problem, target state, verifiable success criteria, non-goals, constraints, and an ordered milestone backlog (ADR 0006).
+- Added a Goal iteration section to `templates/CLAUDE.md`: Claude Code reads `docs/GOAL.md` each session, takes the first unchecked milestone when asked to continue, checks it off only when its verification passes, and logs progress.
+- Both installers now install `docs/GOAL.md`; the existing-repo installer preserves an existing file and writes a numbered candidate such as `docs/GOAL.2.md`.
+- The existing-repo installer now skips writing a numbered candidate when the existing file already matches the kit content, keeping repeated updates idempotent for kit-created files.
+- `verify-install` checks `docs/GOAL.md` exists; `check-placeholders` reports its unfilled template placeholders.
+- Updated README, guide, packaging and installer specs, source map, and Makefile smoke tests to cover the goal file.
+- Fixed `make scan` false pass: when ripgrep was not installed, the missing command looked like "no matches" and the scan reported success without running. The scan now falls back to `grep -rnEI` and fails on scanner errors instead of reporting success.
+- QA pass: starter `docs/index.md` written by installers and README manual steps now links `GOAL.md` so the bundle root index is current on install; ADR 0006 and the installer spec now state that the identical-content candidate skip applies to all installer candidate writes; README and guide mention the skip.
+- Ignore-policy audit: root `CLAUDE.md` ignore policy now includes the Python bytecode/cache entries that `.gitignore` and the packaging spec already had; `templates/CLAUDE.md` bootstrap now requires all 3 target ignore entries (adding `.okf-kit-backups/`) so bootstrapped repos pass `verify-install`. No `.gitignore` content changed; both files matched the intended policy.
+
 ## 2026-07-05
 
 - Replaced setup examples with clone-and-`KIT="$(pwd)"` commands so docs do not depend on a local checkout path.

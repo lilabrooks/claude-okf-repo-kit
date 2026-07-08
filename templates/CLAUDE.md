@@ -22,6 +22,16 @@ Constraints: [governing ADRs and specs by path]
 
 Done when: [verifiable criteria: test command, contract coverage, removals]
 
+# Goal iteration
+
+`docs/GOAL.md` defines what this repo is for: the kind of deliverable (app, service, or utility), the problem, the target state, success criteria, and an ordered milestone backlog. The Master objective above is its one-screen summary; keep the two consistent, with `docs/GOAL.md` carrying the detail.
+
+- Read `docs/GOAL.md` before the first task of each session.
+- When asked to continue or iterate without a specific task, take the first unchecked milestone and run it through the task workflow below.
+- Check a milestone off only when its stated verification passes, then add a dated `docs/log.md` entry.
+- When the code and the goal disagree, flag it. Changing `docs/GOAL.md` (scope, success criteria, milestone order) is my decision.
+- If `docs/GOAL.md` is missing, create it with these sections and fill it with me before the first milestone task: Goal (kind, problem, solution), Target state, Success criteria, Non-goals, Constraints, Milestones.
+
 # Docs bootstrap
 
 If `/docs/specs` or `/docs/adr` doesn't exist yet, create this structure before the first task:
@@ -30,7 +40,8 @@ Installer note: when setting up a repo from outside Claude Code, prefer `bash sc
 
 ```
 docs/
-├── index.md        # bundle root: declares okf_version, lists specs/ and adr/
+├── index.md        # bundle root: declares okf_version, links the bundle files
+├── GOAL.md         # goal, success criteria, milestone backlog (see Goal iteration)
 ├── log.md          # dated changelog, newest first
 ├── okf-map.yml     # maps source paths to governing specs/ADRs
 ├── specs/
@@ -62,11 +73,12 @@ Every new spec or ADR file gets YAML frontmatter with at least a `type:` field (
 - `.claude/settings.local.json` — personal overrides only. Never commit it.
 - `CLAUDE.local.md` — personal per-repo memory. Never commit it.
 
-During bootstrap, ensure `.gitignore` contains these 2 entries:
+During bootstrap, ensure `.gitignore` contains these 3 entries (the same set the installers append and `verify-install` requires):
 
 ```
 .claude/settings.local.json
 CLAUDE.local.md
+.okf-kit-backups/
 ```
 
 Everything else agent-related is committed: `CLAUDE.md`, `.claude/settings.json`, `.claude/hooks/`, `scripts/okf`, and all of `/docs`.

@@ -28,6 +28,13 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/specs/claude-hooks.md"
       - "docs/adr/0001-source-kit-layout.md"
+      - "docs/adr/0006-goal-file-template.md"
+
+  - source: "templates/GOAL.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/adr/0006-goal-file-template.md"
 
   - source: "settings.json"
     docs:

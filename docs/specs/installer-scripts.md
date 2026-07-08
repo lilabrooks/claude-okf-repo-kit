@@ -3,7 +3,7 @@ type: Spec
 title: Installer scripts
 description: Safe automation for creating new repos and updating existing repos with this kit.
 tags: [installer, bash, safety]
-timestamp: 2026-07-05T00:00:00Z
+timestamp: 2026-07-07T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -17,6 +17,8 @@ The scripts must preserve the same install contract documented in `README.md`.
 The scripts are not a replacement for the `CLAUDE.md` bootstrap instructions. They are the preferred setup path before a Claude Code session starts. The bootstrap instructions remain the in-session fallback when a repo does not yet have the expected docs tree.
 
 Installers must copy source `templates/CLAUDE.md` to target `CLAUDE.md`. They must not copy source root `CLAUDE.md`, which is project-specific to this kit repo.
+
+Installers must copy source `templates/GOAL.md` to target `docs/GOAL.md` so every installed repo starts with a goal template Claude Code can iterate toward.
 
 # New repo installer
 
@@ -40,6 +42,7 @@ It must create:
 - `docs/specs/_drafts/`
 - `docs/adr/index.md`
 - `docs/okf-map.yml`
+- `docs/GOAL.md`
 - `CLAUDE.md`
 
 It must add these ignores:
@@ -62,8 +65,12 @@ It must:
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide
 - leave an existing `CLAUDE.md` untouched and write a candidate such as `CLAUDE.2.md`
 - leave an existing `docs/okf-map.yml` untouched and write a candidate such as `docs/okf-map.2.yml`
+- leave an existing `docs/GOAL.md` untouched and write a candidate such as `docs/GOAL.2.md`; create `docs/GOAL.md` from `templates/GOAL.md` when it is missing
+- skip writing a numbered candidate when the existing file already matches the kit content byte for byte
 - create missing docs indexes and log files without overwriting existing docs
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
+
+Starter `docs/index.md` content written by either installer must link `GOAL.md`, `specs/index.md`, and `adr/index.md`.
 
 # Wrapper and verification helpers
 
@@ -76,7 +83,7 @@ The wrapper must print the selected mode and delegated command before running it
 
 `bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, shell syntax, required `.gitignore` entries, and basic `scripts/okf` execution. It must not judge project-specific content.
 
-`bash scripts/check-placeholders /path/to/target-repo` must report remaining template placeholders in `CLAUDE.md` and missing active mappings in `docs/okf-map.yml`. It must not modify files.
+`bash scripts/check-placeholders /path/to/target-repo` must report remaining template placeholders in `CLAUDE.md` and `docs/GOAL.md`, and missing active mappings in `docs/okf-map.yml`. It must not modify files.
 
 # Validation
 

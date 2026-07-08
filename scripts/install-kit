@@ -56,5 +56,5 @@ Recommended follow-up:
   bash "$SCRIPT_DIR/verify-install" "$TARGET"
   bash "$SCRIPT_DIR/check-placeholders" "$TARGET"
 
-The placeholder check is expected to report items until CLAUDE.md and docs/okf-map.yml are filled in for the target repo.
+The placeholder check is expected to report items until CLAUDE.md, docs/GOAL.md, and docs/okf-map.yml are filled in for the target repo.
 EOF

@@ -5,3 +5,4 @@
 - [0003 Claude hook guardrails](0003-claude-hook-guardrails.md): Use Claude Code hooks to block missing or stale docs updates.
 - [0004 Source-kit validation Makefile](0004-source-kit-validation-makefile.md): Validate the kit with local Make targets and temp-repo smoke tests.
 - [0005 Safe installer scripts](0005-safe-installer-scripts.md): Provide safe installer, verification, and placeholder scripts for target repos.
+- [0006 Goal file template](0006-goal-file-template.md): Capture the target repo's goal and milestone backlog in an installed `docs/GOAL.md`.

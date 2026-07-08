@@ -87,6 +87,7 @@ check_file .claude/hooks/check-docs-sync.sh
 check_file .claude/hooks/check-okf-version.sh
 check_file scripts/okf
 check_file docs/index.md
+check_file docs/GOAL.md
 check_file docs/log.md
 check_file docs/specs/index.md
 check_file docs/adr/index.md

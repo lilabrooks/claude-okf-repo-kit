@@ -3,7 +3,7 @@ type: Spec
 title: Repo kit packaging
 description: Source-kit layout and target repo installation contract for the Claude Code OKF kit.
 tags: [claude-code, okf, packaging]
-timestamp: 2026-07-05T00:00:00Z
+timestamp: 2026-07-07T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -19,6 +19,7 @@ The source kit keeps human-readable docs and install artifacts at predictable pa
 The source repo keeps these install artifacts:
 
 - `templates/CLAUDE.md`
+- `templates/GOAL.md`
 - `settings.json`
 - `okf-map.yml`
 - `scripts/okf`
@@ -50,6 +51,7 @@ The source repo is MIT licensed.
 When installed into a target repo, copy files to these destinations:
 
 - `templates/CLAUDE.md` -> `CLAUDE.md`
+- `templates/GOAL.md` -> `docs/GOAL.md`
 - `settings.json` -> `.claude/settings.json`
 - `okf-map.yml` -> `docs/okf-map.yml`
 - `scripts/okf` -> `scripts/okf`
@@ -61,12 +63,15 @@ When installed into a target repo, copy files to these destinations:
 An installed target repo must have:
 
 - `docs/index.md`
+- `docs/GOAL.md`
 - `docs/log.md`
 - `docs/specs/index.md`
 - `docs/adr/index.md`
 - `docs/okf-map.yml`
 
 Specs and ADRs must use YAML frontmatter with at least `type:`.
+
+`docs/GOAL.md` is the goal-definition file installed from `templates/GOAL.md`. It must capture the repo kind (app, service, or utility), the problem, the target state, verifiable success criteria, and an ordered milestone backlog. The installed `CLAUDE.md` must instruct Claude Code to read it each session and take the first unchecked milestone when asked to continue without a specific task.
 
 # Install docs
 

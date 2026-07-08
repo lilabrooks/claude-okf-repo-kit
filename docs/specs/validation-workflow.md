@@ -3,7 +3,7 @@ type: Spec
 title: Validation workflow
 description: Makefile validation contract for the source kit.
 tags: [makefile, validation, smoke-tests]
-timestamp: 2026-07-05T00:00:00Z
+timestamp: 2026-07-07T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -29,7 +29,7 @@ The validation workflow must include:
 - optional ShellCheck linting when ShellCheck is installed
 - Markdown local link checks
 - JSON validation for `settings.json`
-- stale-reference scanning for old names and local machine paths
+- stale-reference scanning for old names and local machine paths; the scan must run with ripgrep when installed, fall back to `grep -rnEI` otherwise, and fail rather than report success when the scanner itself cannot run
 - source-kit smoke checks
 - OKF source-kit stale mapping and ADR suggestion checks
 - new-repo install simulation
