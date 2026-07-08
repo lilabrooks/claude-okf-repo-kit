@@ -101,6 +101,7 @@ Root `CLAUDE.md` must describe this source repo. Installers and manual install d
 - installed target-repo ignore rules
 - this source repo's own ignore rules
 - verifying an installed target repo
+- this source repo's own GitHub-side settings (Dependabot and security features) that are not reproducible from a clone, with restore commands
 
 Target-repo verification instructions must include syntax checks for copied scripts, JSON validation for `.claude/settings.json`, and helper checks for `scripts/okf`.
 

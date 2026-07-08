@@ -50,6 +50,7 @@ This source repo also includes its own `docs/` knowledge bundle with specs and A
 - [Verifying an installed target repo](#verifying-an-installed-target-repo)
 - [Validating this kit](#validating-this-kit)
 - [References](#references)
+- [Repository settings](#repository-settings)
 - [Project Status](#project-status)
 
 ## Fast verification
@@ -460,6 +461,19 @@ make shellcheck
 - OKF spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
 - Claude Code hooks: https://code.claude.com/docs/en/hooks
 - Claude Code settings: https://code.claude.com/docs/en/settings
+
+## Repository settings
+
+Some of this repo's hygiene lives in GitHub settings rather than in tracked files, so it is not reproducible from a clone. `.github/dependabot.yml` (Dependabot version updates) is committed, but these are server-side toggles enabled on the GitHub repository:
+
+| Setting | State | Restore command |
+|---------|-------|-----------------|
+| Dependabot version updates | On (via `.github/dependabot.yml`) | committed to the repo |
+| Dependabot alerts | On | `gh api -X PUT repos/OWNER/REPO/vulnerability-alerts` |
+| Dependabot security updates | On | `gh api -X PUT repos/OWNER/REPO/automated-security-fixes` |
+| Secret scanning + push protection | On | GitHub Settings → Code security |
+
+These apply to this source repo only; the installers do not add Dependabot or GitHub settings to target repos.
 
 ## Project Status
 
