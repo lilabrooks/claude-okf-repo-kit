@@ -11,6 +11,7 @@
 - Fixed `make scan` false pass: when ripgrep was not installed, the missing command looked like "no matches" and the scan reported success without running. The scan now falls back to `grep -rnEI` and fails on scanner errors instead of reporting success.
 - QA pass: starter `docs/index.md` written by installers and README manual steps now links `GOAL.md` so the bundle root index is current on install; ADR 0006 and the installer spec now state that the identical-content candidate skip applies to all installer candidate writes; README and guide mention the skip.
 - Ignore-policy audit: root `CLAUDE.md` ignore policy now includes the Python bytecode/cache entries that `.gitignore` and the packaging spec already had; `templates/CLAUDE.md` bootstrap now requires all 3 target ignore entries (adding `.okf-kit-backups/`) so bootstrapped repos pass `verify-install`. No `.gitignore` content changed; both files matched the intended policy.
+- Added `.github/dependabot.yml` (weekly GitHub Actions version updates), the repo's only dependency surface. Considered and rejected Snyk: the kit has no dependency manifests, containers, or IaC, and Snyk Code does not analyze Bash; ShellCheck plus the Makefile smoke tests remain the security-relevant checks.
 
 ## 2026-07-05
 

@@ -39,6 +39,7 @@ The validation workflow must include:
 - hook behavior checks
 - `scripts/okf` command smoke checks
 - GitHub Actions validation that runs `make test` on push and pull request
+- Dependabot configuration at `.github/dependabot.yml` that keeps GitHub Actions workflow action versions current on a weekly schedule
 
 # Smoke test expectations
 

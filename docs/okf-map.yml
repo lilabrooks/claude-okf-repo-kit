@@ -89,6 +89,10 @@ mappings:
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0004-source-kit-validation-makefile.md"
 
+  - source: ".github/dependabot.yml"
+    docs:
+      - "docs/specs/validation-workflow.md"
+
 
   - source: "scripts/install-kit"
     docs:
