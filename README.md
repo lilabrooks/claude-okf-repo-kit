@@ -14,7 +14,7 @@ This kit sets up a repo so Claude Code works from project knowledge instead of o
 
 It gives your repo a small, repeatable structure:
 
-- `CLAUDE.md` tells Claude Code the project goal, rules, workflow, and verification commands.
+- `CLAUDE.md` tells Claude Code the project goal, rules, workflow, and verification commands. Its `@` imports preload `docs/GOAL.md` and the spec/ADR indexes into context at every session start, so Claude begins each session already knowing the goal and what knowledge exists without re-reading the repo.
 - `docs/GOAL.md` states the goal Claude Code iterates toward for your app, service, or utility: the problem, target state, success criteria, and an ordered milestone backlog.
 - `docs/specs/` holds the behavior and contracts Claude should preserve.
 - `docs/adr/` holds architecture decisions Claude should follow.
@@ -28,9 +28,12 @@ After installation, the normal loop is simple:
 2. Claude reads the relevant specs and ADRs before editing.
 3. If code changes, Claude updates the matching docs or adds a dated `docs/log.md` note explaining why no spec or ADR changed.
 4. The helper checks catch stale mappings, generate draft specs for poorly documented areas, and suggest ADRs only for standing decisions.
-5. When you ask Claude Code to continue without naming a task, it takes the first unchecked milestone in `docs/GOAL.md`, verifies it, checks it off, and logs the progress.
+5. When you ask Claude Code to continue without naming a task, it takes the first unchecked milestone in `docs/GOAL.md`, verifies it, checks it off, logs the progress, and moves to the next milestone until the backlog is done or a decision only you can make comes up. If a session gets cut off mid-milestone, the next session treats uncommitted changes as in-flight work and reconciles them against the backlog and the latest `docs/log.md` entry instead of starting over.
+6. Standing guardrails hold across every session: a milestone is done only when its verification passes, failing tests can't be deleted or weakened to force a green run, secrets stay out of tracked files, decision-shaped changes (dependencies, persistence, auth, APIs, deployment) are recorded as proposed ADRs for your review, and destructive or outward-facing actions wait for your explicit go-ahead.
 
-Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo, and to iterate toward a goal you defined once instead of re-explaining it every session.
+One limit to know up front: the guardrails in step 6 are instructions to Claude Code, not mechanical enforcement. The only hard gates the kit installs are the docs-sync hooks. The test, security, and destructive-action rules live in the installed `CLAUDE.md` and rely on Claude Code following them. If you need guaranteed gates — tests must pass before merge, secrets can never land in a commit — add them to your repo's own CI and branch protection on top of this kit.
+
+Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo, and to iterate toward a goal you defined once instead of re-explaining it every session. You own the goal; Claude Code makes and records the decisions that reach it, inside those guardrails.
 
 This source repo also includes its own `docs/` knowledge bundle with specs and ADRs that govern the kit itself.
 
@@ -150,9 +153,9 @@ bash "$KIT/scripts/verify-install" "$TARGET"
 bash "$KIT/scripts/check-placeholders" "$TARGET"
 ```
 
-`verify-install` checks the installed files, settings, shell syntax, required ignores, and helper commands. `check-placeholders` is expected to report items until `CLAUDE.md`, `docs/GOAL.md`, and `docs/okf-map.yml` are filled in for the target repo.
+`verify-install` checks the installed files, settings, shell syntax, required ignores, and helper commands. `check-placeholders` is expected to report items until `CLAUDE.md`, `docs/GOAL.md`, and `docs/okf-map.yml` are filled in for the target repo. The map is the one file that need not be filled on day one: in a new repo there is nothing to map until modules and specs exist, and Claude Code adds mappings during iteration as source areas gain their governing docs — so its placeholder warning is a standing reminder, not an installation failure.
 
-Then edit `docs/GOAL.md` (the goal, success criteria, and milestones), `CLAUDE.md`, and `docs/okf-map.yml`, rerun the checks, and commit once the output is clean.
+Then fill in the target repo's files. The recommended path is to open the repo in Claude Code: the installed `CLAUDE.md` makes it run a short goal interview — what you're building and for whom, the concrete done state, the mechanical verification, non-goals, which stack choices are fixed versus left to proposed ADRs, and the first shippable slice — and it drafts `docs/GOAL.md` and `CLAUDE.md` from your answers for your confirmation. Editing `docs/GOAL.md`, `CLAUDE.md`, and `docs/okf-map.yml` by hand works the same way. Either way, rerun the checks and commit once the output is clean.
 
 The bootstrap instructions inside `CLAUDE.md` are still useful. They are the fallback for Claude Code when a repo was opened before the installer scripts were run. The scripts are the preferred setup path for people or automation because they validate files and protect existing repos.
 
@@ -214,7 +217,7 @@ EOF
 
 6. Edit `docs/GOAL.md` in the target repo. Fill every bracket: repo kind (app, service, or utility), problem, target state, success criteria, and an ordered milestone list Claude Code can work through. Update the timestamp and delete the template comment.
 7. Edit `CLAUDE.md` in the target repo. Fill every bracket: current state, target state, constraints, done criteria, and the real test/lint/build commands. Update the timestamp and delete the template comment.
-8. Edit `docs/okf-map.yml`. Replace the commented placeholder with real repo-relative paths.
+8. Edit `docs/okf-map.yml`. Replace the commented placeholder with real repo-relative paths. In a brand-new repo, skip this for now: Claude Code adds mappings during iteration as modules gain specs.
 9. Add these lines to the target repo's `.gitignore`:
 
 ```gitignore
@@ -327,8 +330,8 @@ docs/
 
 ### Daily use after installation
 
-1. Open the target repo in Claude Code.
-2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, and logs the progress in `docs/log.md`.
+1. Open the target repo in Claude Code. If `docs/GOAL.md` or `CLAUDE.md` still has template brackets, Claude Code starts with the goal interview and fills them with you before any milestone work.
+2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, logs the progress in `docs/log.md`, and keeps going milestone by milestone until the backlog is done, a decision reserved for you comes up, or you stop it. Decision-shaped changes land as `status: proposed` ADRs in `docs/adr/` for your review; when every milestone is checked and the success criteria pass, it reports the goal met instead of inventing new scope.
 3. For a specific change, ask the usual way, but point at the relevant spec or ADR when you know it:
 
 ```text
@@ -381,6 +384,8 @@ This source kit repo also ignores local `.env` files, logs, Python bytecode/cach
 **Stale map check (every turn, when configured).** If `scripts/okf` and `docs/okf-map.yml` exist, the same Stop hook also runs `bash scripts/okf check-stale`. This catches the subtler case where some doc changed, but the mapped spec or ADR for the touched source area did not.
 
 **OKF version (session start).** The hook fetches the spec version from the official OKF repo (silent when offline) and compares it to `okf_version` in `docs/index.md`. When drift is detected, it adds context for Claude Code. The policy in `CLAUDE.md` tells Claude how to handle minor and major OKF version changes.
+
+These hooks are the kit's only mechanical enforcement, and they enforce docs sync only. Every other guardrail — tests passing, security rules, owner-gated destructive actions — is instruction-level in the installed `CLAUDE.md`. Repos that need hard gates add them in their own CI and branch protection.
 
 ## OKF helper commands
 

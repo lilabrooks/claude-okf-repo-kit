@@ -3,7 +3,7 @@ type: Spec
 title: Installer scripts
 description: Safe automation for creating new repos and updating existing repos with this kit.
 tags: [installer, bash, safety]
-timestamp: 2026-07-07T00:00:00Z
+timestamp: 2026-07-08T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -15,6 +15,8 @@ The source kit includes installer scripts so users do not have to manually copy 
 The scripts must preserve the same install contract documented in `README.md`.
 
 The scripts are not a replacement for the `CLAUDE.md` bootstrap instructions. They are the preferred setup path before a Claude Code session starts. The bootstrap instructions remain the in-session fallback when a repo does not yet have the expected docs tree.
+
+Installer completion output must point to the in-session goal interview as the recommended path for filling `CLAUDE.md` and `docs/GOAL.md`, with manual editing as the alternative.
 
 Installers must copy source `templates/CLAUDE.md` to target `CLAUDE.md`. They must not copy source root `CLAUDE.md`, which is project-specific to this kit repo.
 

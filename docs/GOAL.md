@@ -54,4 +54,6 @@ owner's decision.
 - [x] Source-kit validation Makefile with temp-repo smoke tests (ADR 0004). Verified: `make test`.
 - [x] Safe installer, verify, and placeholder scripts for new and existing repos (ADR 0005). Verified: `make test` installer smoke tests.
 - [x] Goal file template installed to target `docs/GOAL.md` (ADR 0006). Verified: `make test` and `scripts/verify-install`.
+- [x] Autonomous iteration contract in the installed template (ADR 0007): owner-filled bootstrap, loop-until-done milestones, proposed-ADR decision policy, and test/security/destructive-action guardrails. Verified: `make test`.
+- [x] Session context preloading (ADR 0008): `@` imports of `docs/GOAL.md` and the spec/ADR indexes in the installed template and this repo's `CLAUDE.md`, with smoke coverage. Verified: `make test`.
 - [ ] (backlog empty — new milestones are added here by the owner)

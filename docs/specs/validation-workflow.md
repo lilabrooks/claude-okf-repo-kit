@@ -3,7 +3,7 @@ type: Spec
 title: Validation workflow
 description: Makefile validation contract for the source kit.
 tags: [makefile, validation, smoke-tests]
-timestamp: 2026-07-07T00:00:00Z
+timestamp: 2026-07-08T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -48,6 +48,8 @@ New-repo install simulation must verify the target install layout and basic help
 New-repo install simulation must exercise `scripts/create-new-repo`.
 
 New-repo install simulation must verify target `CLAUDE.md` comes from `templates/CLAUDE.md`, not source root `CLAUDE.md`.
+
+New-repo install simulation must verify the installed `CLAUDE.md` carries the preloaded-context imports for `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` (ADR 0008).
 
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.
 

@@ -3,7 +3,7 @@ type: Playbook
 title: Claude Code OKF kit repo instructions
 description: Project-specific objective, grounding rules, and workflow for maintaining this source kit.
 tags: [claude-code, okf, agent-instructions, adr, specs]
-timestamp: 2026-07-07T00:00:00Z
+timestamp: 2026-07-08T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -18,12 +18,21 @@ Constraints: Follow `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-sc
 
 Done when: `make test` passes, `bash scripts/okf check-stale` reports current mappings, and any changed behavior is reflected in the mapped spec, ADR, or `docs/log.md`.
 
+# Preloaded context
+
+These imports resolve when Claude Code loads this file, so the goal and the knowledge indexes are in context at session start without a read step:
+
+@docs/GOAL.md
+@docs/specs/index.md
+@docs/adr/index.md
+
 # Goal iteration
 
 `docs/GOAL.md` carries this repo's detailed goal: problem, target state, success criteria, non-goals, and the milestone backlog. The Master objective above is its one-screen summary; keep the two consistent, with `docs/GOAL.md` carrying the detail.
 
-- Read `docs/GOAL.md` before the first task of each session.
+- `docs/GOAL.md` is preloaded by the import above. Re-read it during a session only after it changes.
 - When asked to continue or iterate without a specific task, take the first unchecked milestone and run it through the task workflow below.
+- Resuming after an interruption: at session start, if the working tree holds uncommitted changes, treat them as in-flight work from a cut-off session. Reconcile them against the first unchecked milestone and the newest `docs/log.md` entry, then finish that work or back it out before taking new work.
 - Check a milestone off only when its stated verification passes, then add a dated `docs/log.md` entry.
 - Changing `docs/GOAL.md` (scope, success criteria, milestone order) is the owner's decision.
 
@@ -49,7 +58,7 @@ Source-only files:
 
 # Grounding rules
 
-- Before changing files, read `docs/specs/index.md`, `docs/adr/index.md`, and the mapped governing docs in `docs/okf-map.yml`.
+- The spec and ADR indexes are preloaded by the imports above. Before changing files, read the mapped governing docs in `docs/okf-map.yml` for the files being touched.
 - When code and docs disagree, flag the mismatch. Do not silently pick a side.
 - If a change conflicts with an accepted ADR, stop and ask before editing. Superseding an ADR requires a new ADR.
 - Keep the root install template and this repo's project instructions distinct. Do not put project-specific source-kit goals into `templates/CLAUDE.md`.

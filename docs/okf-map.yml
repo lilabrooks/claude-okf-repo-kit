@@ -29,6 +29,8 @@ mappings:
       - "docs/specs/claude-hooks.md"
       - "docs/adr/0001-source-kit-layout.md"
       - "docs/adr/0006-goal-file-template.md"
+      - "docs/adr/0007-autonomous-iteration-guardrails.md"
+      - "docs/adr/0008-context-preloading-imports.md"
 
   - source: "templates/GOAL.md"
     docs:

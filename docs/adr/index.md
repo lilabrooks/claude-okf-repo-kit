@@ -6,3 +6,5 @@
 - [0004 Source-kit validation Makefile](0004-source-kit-validation-makefile.md): Validate the kit with local Make targets and temp-repo smoke tests.
 - [0005 Safe installer scripts](0005-safe-installer-scripts.md): Provide safe installer, verification, and placeholder scripts for target repos.
 - [0006 Goal file template](0006-goal-file-template.md): Capture the target repo's goal and milestone backlog in an installed `docs/GOAL.md`.
+- [0007 Autonomous iteration guardrails](0007-autonomous-iteration-guardrails.md): Run the installed goal loop unattended with proposed ADRs and test/security/destructive-action guardrails.
+- [0008 Context preloading via CLAUDE.md imports](0008-context-preloading-imports.md): Preload the goal file and spec/ADR indexes each session with `@` imports instead of instructed reads.

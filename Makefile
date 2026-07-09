@@ -93,6 +93,9 @@ smoke-install:
 	test -f CLAUDE.md; \
 	grep -q 'Claude Code repo instructions' CLAUDE.md; \
 	! grep -q 'Claude Code OKF kit repo instructions' CLAUDE.md; \
+	grep -q '^@docs/GOAL.md' CLAUDE.md; \
+	grep -q '^@docs/specs/index.md' CLAUDE.md; \
+	grep -q '^@docs/adr/index.md' CLAUDE.md; \
 	test -f .claude/settings.json; \
 	test -f .claude/hooks/check-docs-sync.sh; \
 	test -f .claude/hooks/check-okf-version.sh; \

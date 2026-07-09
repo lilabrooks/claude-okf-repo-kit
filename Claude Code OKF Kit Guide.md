@@ -37,9 +37,17 @@ The second version lets Claude Code measure its own progress each iteration and 
 
 ## 2. Put it in CLAUDE.md, don't paste it
 
-Claude Code reads the repo's `CLAUDE.md` automatically at session start. A pasted "master prompt" evaporates when the session ends; CLAUDE.md is always loaded. Drop the section below into your repo root `CLAUDE.md` and fill the brackets.
+Claude Code reads the repo's `CLAUDE.md` automatically at session start. A pasted "master prompt" evaporates when the session ends; CLAUDE.md is always loaded.
+
+CLAUDE.md can also import other files: a line like `@docs/GOAL.md` inlines that file's content at load time (imports resolve recursively, up to five hops). The installed template uses this to preload the goal file and the spec/ADR indexes, so every session starts with the goal, the milestone state, and a map of the knowledge bundle already in context — no read step, no relying on the agent choosing to look. Keep the imported files small; full specs and ADRs stay on disk until a task needs them, which is what keeps the context window available for the actual work.
+
+Drop the section below into your repo root `CLAUDE.md` and fill the brackets.
 
 ```markdown
+@docs/GOAL.md
+@docs/specs/index.md
+@docs/adr/index.md
+
 ## Master objective
 Current state: [what exists today]
 Target state: [what done looks like]
@@ -50,10 +58,11 @@ Done when: [verifiable criteria: test command, contract coverage, removals]
 - Before planning any change, read `/docs/specs/index.md` and `/docs/adr/index.md`,
   then the specific spec or ADR governing the files you'll touch.
 - When code and docs disagree, flag the mismatch. Don't silently pick a side.
-- If a task conflicts with an existing ADR, stop and ask before writing code.
-  Superseding an ADR is my decision, made via a new ADR file.
-- Architectural changes start with a new ADR in `/docs/adr/` for my review,
-  before any implementation.
+- If a task conflicts with an accepted ADR, stop and ask before writing code.
+  Superseding an accepted ADR is my decision, made via a new ADR file.
+- Architectural changes start with a new ADR in `/docs/adr/`, marked
+  `status: proposed`, before any implementation. Implement against it and
+  leave it flagged for my review.
 
 ## Workflow for each task
 1. Impact analysis: name the specs and ADRs that govern the target files.
@@ -68,7 +77,11 @@ Done when: [verifiable criteria: test command, contract coverage, removals]
 
 Fill in the real commands. "Ensure all tests pass" means nothing to an agent that has to guess whether you run pytest, vitest, or make.
 
-The kit also installs `docs/GOAL.md` from `templates/GOAL.md`. That file carries the full goal definition the Master objective summarizes: the repo kind (app, service, or utility), the problem, the target state, verifiable success criteria, non-goals, constraints, and an ordered milestone backlog. The milestone list is what makes "continue" mean something across sessions — Claude Code takes the first unchecked milestone, verifies it against its stated check, checks it off, and logs the progress in `docs/log.md`. Keep the Master objective as the one-screen summary and let `docs/GOAL.md` carry the detail.
+The kit also installs `docs/GOAL.md` from `templates/GOAL.md`. That file carries the full goal definition the Master objective summarizes: the repo kind (app, service, or utility), the problem, the target state, verifiable success criteria, non-goals, constraints, and an ordered milestone backlog. The milestone list is what makes "continue" mean something across sessions — Claude Code takes the first unchecked milestone, verifies it against its stated check, checks it off, logs the progress in `docs/log.md`, and moves to the next milestone until the backlog is done or a decision reserved for you comes up. Keep the Master objective as the one-screen summary and let `docs/GOAL.md` carry the detail.
+
+The installed template goes further than this excerpt. It splits ownership explicitly — you provide the goal; Claude Code makes decision-shaped changes through `status: proposed` ADRs you review later, while goal edits and accepted-ADR supersession stay yours — and it holds standing guardrails in every session: tests must pass before a milestone is checked off, failing tests can't be deleted or weakened to force green, secrets stay out of tracked files, security-sensitive changes get an `adr-suggest` check, and destructive or outward-facing actions wait for your explicit go-ahead. If the goal file still contains template brackets, Claude Code runs a short goal interview to fill them with you before iterating: what you're building and for whom, the concrete done state, the mechanical verification, non-goals, which stack choices are fixed versus left to proposed ADRs, and the first shippable slice. In an existing codebase it proposes answers from the code first and lets you correct them. Interrupted sessions resume cleanly too: at session start, uncommitted changes are treated as in-flight work from the cut-off session and reconciled against the milestone backlog and the newest `docs/log.md` entry — finished or backed out — before any new milestone starts. That combination is what lets "continue until the goal is met" run unattended without giving up the safety rails.
+
+Know the limit of those rails: they are instructions, not enforcement. The kit's hooks mechanically enforce docs sync and nothing else; the test, security, and destructive-action guardrails depend on Claude Code following `CLAUDE.md`. When a rule must be guaranteed rather than followed — tests green before merge, no secrets in commits — put it in your repo's own CI and branch protection, on top of this kit.
 
 ---
 
@@ -87,6 +100,8 @@ With CLAUDE.md carrying the objective and rules, per-task prompts stay short and
 **Architecture change (ADR first, code second):**
 
 > We want Redis caching on the API. First write a new ADR at `/docs/adr/0015-cache-strategy.md` covering topology and invalidation. After I approve it, implement the connection wrapper.
+
+That prompt gates implementation on your approval, which is worth it when you're watching. When you're not, the installed decision policy is the default instead: Claude Code writes the ADR as `status: proposed`, implements against it, and leaves it flagged for your review.
 
 For larger changes, run the first prompt in plan mode so you can review the approach before any file changes.
 
@@ -140,6 +155,8 @@ For a new repo:
 4. Replace the placeholder in `docs/okf-map.yml` with real source-to-doc mappings.
 5. Commit the installed files.
 6. Open the repo in Claude Code and ask it to continue toward the goal, or give it a specific task.
+
+Steps 2 and 3 can be delegated: open the repo in Claude Code straight after installing and the goal interview fills both files with you before the first task.
 
 The new-repo script creates the target directory if needed, but it refuses a non-empty target except for an optional `.git/` directory.
 
