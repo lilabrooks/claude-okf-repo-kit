@@ -1,5 +1,9 @@
 # Log
 
+## 2026-07-09
+
+- Added a prominent README website badge linking to the live GitHub Pages site. This only improves repo-homepage discoverability; the site source, Pages workflow, installer behavior, and documented kit contract did not change, so no spec or ADR edit was warranted.
+
 ## 2026-07-08
 
 - Added the autonomous iteration contract to `templates/CLAUDE.md` (ADR 0007), at the owner's direction, so any installed repo supports a fully spec-driven loop: the owner provides the goal, Claude Code makes and records the decisions, and iteration continues until the goal is met.
