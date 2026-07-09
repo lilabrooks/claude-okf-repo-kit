@@ -143,14 +143,14 @@
   <li><strong>Knowledge alignment</strong> — update the governing spec or ADR if behavior changed, and add a dated <code>docs/log.md</code> entry. The stale-map check catches anything missed.</li>
   <li>Check the milestone off only when its stated verification passes, then take the next one.</li>
 </ol>
-<p>The loop stops on its own in exactly three cases: the backlog is empty (Claude reports the goal met rather than inventing new scope), a decision reserved for you comes up, or you say stop.</p>
+<p>The loop stops on its own in exactly three cases: the backlog is empty, a decision reserved for you comes up, or you say stop. An empty backlog isn't a dead end — Claude reports the goal met, then proposes candidate next milestones (from the log's known items, ADR revisit triggers, and extensions inside your non-goals) and adds nothing until you choose.</p>
 
 <h3>How decisions get made</h3>
 <p>The division of labor is explicit: <strong>you own the goal; Claude Code drives the decisions that reach it — on the record.</strong></p>
 <ul>
   <li>Implementation choices inside existing specs, accepted ADRs, and the guardrails are Claude's to make without asking.</li>
   <li>Decision-shaped changes — a new dependency, persistence model, auth approach, API contract, deployment shape — start with an ADR Claude writes itself, marked <code>status: proposed</code>, covering context, decision, alternatives, consequences, and a rollback trigger. It implements against the proposed ADR and flags it for you.</li>
-  <li>You review asynchronously: scan <code>docs/adr/</code> for proposed entries and accept, request changes, or revert. Accepted ADRs become binding constraints on all future sessions.</li>
+  <li>You review asynchronously: scan <code>docs/adr/</code> for proposed entries and accept, request changes, or revert. Accepting means flipping the status to accepted — edit it yourself or tell Claude to; rejecting reverts the work per the ADR's rollback trigger. Accepted ADRs become binding constraints on all future sessions.</li>
   <li>Reserved for you alone: changing the goal, superseding an accepted ADR, and every action the guardrails gate.</li>
 </ul>
 
@@ -185,6 +185,10 @@
 <div class="qa">
   <p class="q">You say "yes" or "continue."</p>
   <p class="a">Claude runs the loop: impact analysis, smallest change, tests, docs sync, verification, honest report. Decisions it had to make along the way are waiting for you as proposed ADRs, and the log tells the story in dated entries you can read months later.</p>
+</div>
+<div class="qa">
+  <p class="q">The backlog runs out.</p>
+  <p class="a">Claude reports the goal met and stops building. Instead of inventing scope, it lays out your options: known items from the log, revisit triggers from accepted ADRs, extensions that fit your non-goals — and, flagged separately, ideas that would need you to revise a non-goal first. You pick; it drafts the chosen milestones with verifications; the loop resumes.</p>
 </div>
 <div class="qa">
   <p class="q">You come back after a week.</p>

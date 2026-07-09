@@ -48,7 +48,10 @@ Verifiable checks that prove the goal is met:
 
 Ordered backlog. When asked to continue without a specific task, Claude Code
 takes the first unchecked milestone. Check a milestone off only when its
-verification passes, and record progress in `docs/log.md`.
+verification passes, and record progress in `docs/log.md`. When the backlog
+is empty, Claude Code reports the goal met and proposes candidate milestones
+(from `docs/log.md` known items, ADR revisit triggers, and in-scope
+extensions); the owner chooses what gets added.
 
 - [ ] [first shippable slice + how to verify it]
 - [ ] [next milestone + how to verify it]
