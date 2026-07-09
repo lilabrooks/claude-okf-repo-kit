@@ -3,6 +3,7 @@
 ## 2026-07-09
 
 - Added a prominent README website badge linking to the live GitHub Pages site. This only improves repo-homepage discoverability; the site source, Pages workflow, installer behavior, and documented kit contract did not change, so no spec or ADR edit was warranted.
+- Retargeted the README Claude Code badge from the external product docs to this repo's "Daily use after installation" section so the badge explains the kit's Claude Code-specific workflow in place. Link-only documentation navigation change; no spec or ADR edit was warranted.
 
 ## 2026-07-08
 

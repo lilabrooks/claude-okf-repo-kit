@@ -3,7 +3,7 @@
 [![Status](https://img.shields.io/badge/status-preview-blue)](#project-status)
 [![Website](https://img.shields.io/badge/website-live-5D3FD3)](https://lilabrooks.github.io/claude-okf-repo-kit/)
 [![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml)
-[![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](https://docs.anthropic.com/en/docs/claude-code)
+[![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](#daily-use-after-installation)
 [![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
 [![OKF validated](https://img.shields.io/badge/OKF-validated-brightgreen)](#validating-this-kit)
 [![Bash](https://img.shields.io/badge/scripts-Bash-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/manual/bash.html)
