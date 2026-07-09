@@ -56,4 +56,5 @@ owner's decision.
 - [x] Goal file template installed to target `docs/GOAL.md` (ADR 0006). Verified: `make test` and `scripts/verify-install`.
 - [x] Autonomous iteration contract in the installed template (ADR 0007): owner-filled bootstrap, loop-until-done milestones, proposed-ADR decision policy, and test/security/destructive-action guardrails. Verified: `make test`.
 - [x] Session context preloading (ADR 0008): `@` imports of `docs/GOAL.md` and the spec/ADR indexes in the installed template and this repo's `CLAUDE.md`, with smoke coverage. Verified: `make test`.
+- [x] Source-kit website (ADR 0009): `site/` on `main` deployed by the GitHub Pages Actions workflow, documenting how Claude Code works with an installed repo. Verified: `make test`; publishing awaits the owner's Pages toggle recorded in README Repository settings.
 - [ ] (backlog empty — new milestones are added here by the owner)

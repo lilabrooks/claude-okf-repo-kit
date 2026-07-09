@@ -94,6 +94,8 @@ Source-only automation scripts:
 
 These scripts install or check the kit in target repos. They do not need to be copied into target repos.
 
+The kit's website is also source-only: its static source lives in `site/` on `main` and is published to [GitHub Pages](https://lilabrooks.github.io/claude-okf-repo-kit/) by `.github/workflows/pages.yml` (ADR 0009). Installers never copy it into target repos.
+
 ## How to use this kit
 
 Use this repo as a source kit. The easiest path is to run one installer script from this repo and point it at the repo you want to set up.
@@ -477,6 +479,7 @@ Some of this repo's hygiene lives in GitHub settings rather than in tracked file
 | Dependabot alerts | On | `gh api -X PUT repos/OWNER/REPO/vulnerability-alerts` |
 | Dependabot security updates | On | `gh api -X PUT repos/OWNER/REPO/automated-security-fixes` |
 | Secret scanning + push protection | On | GitHub Settings → Code security |
+| GitHub Pages source | GitHub Actions | GitHub Settings → Pages → Source: GitHub Actions, or `gh api -X POST repos/OWNER/REPO/pages -f build_type=workflow` |
 
 These apply to this source repo only; the installers do not add Dependabot or GitHub settings to target repos.
 

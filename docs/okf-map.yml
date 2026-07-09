@@ -91,6 +91,16 @@ mappings:
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0004-source-kit-validation-makefile.md"
 
+  - source: "site/**"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0009-github-pages-website.md"
+
+  - source: ".github/workflows/pages.yml"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0009-github-pages-website.md"
+
   - source: ".github/dependabot.yml"
     docs:
       - "docs/specs/validation-workflow.md"

@@ -41,9 +41,13 @@ The source repo also keeps local validation and project knowledge:
 - `scripts/check-placeholders`
 - `scripts/check-md-links.py`
 - `.github/workflows/test.yml`
+- `.github/workflows/pages.yml`
 - `.github/dependabot.yml`
+- `site/`
 
 The public repo presentation must include a modest README badge set with links for preview status, GitHub Actions tests, Claude Code, OKF, Bash, and specs/ADRs.
+
+The source repo publishes a website from `site/` — static, self-contained HTML with no build step — deployed to GitHub Pages by `.github/workflows/pages.yml` per ADR 0009. The site must describe how Claude Code works with an installed repo (session context, goal interview, iteration loop, decision policy, guardrails with the enforcement caveat, interruption resume) and must stay consistent with the installed template behavior. It is source-only: installers never copy it into target repos.
 
 The source repo is MIT licensed.
 
@@ -115,7 +119,7 @@ Root `CLAUDE.md` must describe this source repo. Installers and manual install d
 - installed target-repo ignore rules
 - this source repo's own ignore rules
 - verifying an installed target repo
-- this source repo's own GitHub-side settings (Dependabot and security features) that are not reproducible from a clone, with restore commands
+- this source repo's own GitHub-side settings (Dependabot, security features, and the GitHub Pages source) that are not reproducible from a clone, with restore commands
 
 Target-repo verification instructions must include syntax checks for copied scripts, JSON validation for `.claude/settings.json`, and helper checks for `scripts/okf`.
 
