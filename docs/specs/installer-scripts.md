@@ -52,6 +52,7 @@ It must add these ignores:
 - `.claude/settings.local.json`
 - `CLAUDE.local.md`
 - `.okf-kit-backups/`
+- `.DS_Store` (macOS Finder artifacts; harmless elsewhere)
 - `.env`
 - `.env.*`
 - `!.env.example` (keeps the sample env file trackable)
@@ -66,7 +67,7 @@ It must:
 - create `.okf-kit-backups/<timestamp>/`
 - back up files before replacing kit-managed scripts
 - merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
-- append the required `.gitignore` entries (the same six the new-repo installer adds) while preserving existing entries
+- append the required `.gitignore` entries (the same seven the new-repo installer adds) while preserving existing entries
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide
 - leave an existing `CLAUDE.md` untouched and write a candidate such as `CLAUDE.2.md`
 - leave an existing `docs/okf-map.yml` untouched and write a candidate such as `docs/okf-map.2.yml`

@@ -111,6 +111,7 @@ smoke-install:
 	test -f docs/specs/index.md; \
 	test -f docs/adr/index.md; \
 	test -f docs/okf-map.yml; \
+	grep -qFx '.DS_Store' .gitignore; \
 	grep -qFx '.env' .gitignore; \
 	grep -qFx '.env.*' .gitignore; \
 	grep -qFx '!.env.example' .gitignore; \
@@ -177,6 +178,7 @@ smoke-existing:
 	grep -q '.claude/settings.local.json' .gitignore; \
 	grep -q 'CLAUDE.local.md' .gitignore; \
 	grep -q '.okf-kit-backups/' .gitignore; \
+	grep -qFx '.DS_Store' .gitignore; \
 	grep -qFx '.env' .gitignore; \
 	grep -qFx '.env.*' .gitignore; \
 	grep -qFx '!.env.example' .gitignore; \
@@ -226,6 +228,7 @@ smoke-idempotent:
 	[ "$$(grep -cFx '.claude/settings.local.json' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx 'CLAUDE.local.md' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx '.okf-kit-backups/' .gitignore)" -eq 1 ]; \
+	[ "$$(grep -cFx '.DS_Store' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx '.env' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx '.env.*' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx '!.env.example' .gitignore)" -eq 1 ]; \

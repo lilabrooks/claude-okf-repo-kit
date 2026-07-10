@@ -104,6 +104,7 @@ During bootstrap, ensure `.gitignore` contains these entries (the same set the i
 .claude/settings.local.json
 CLAUDE.local.md
 .okf-kit-backups/
+.DS_Store
 .env
 .env.*
 !.env.example

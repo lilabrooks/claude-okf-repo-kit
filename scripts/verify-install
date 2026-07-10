@@ -157,6 +157,7 @@ done
 check_gitignore_entry '.claude/settings.local.json'
 check_gitignore_entry 'CLAUDE.local.md'
 check_gitignore_entry '.okf-kit-backups/'
+check_gitignore_entry '.DS_Store'
 check_gitignore_entry '.env'
 check_gitignore_entry '.env.*'
 check_gitignore_entry '!.env.example'

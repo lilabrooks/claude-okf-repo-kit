@@ -325,6 +325,7 @@ fi
 append_gitignore_entry '.claude/settings.local.json'
 append_gitignore_entry 'CLAUDE.local.md'
 append_gitignore_entry '.okf-kit-backups/'
+append_gitignore_entry '.DS_Store'
 append_gitignore_entry '.env'
 append_gitignore_entry '.env.*'
 append_gitignore_entry '!.env.example'
