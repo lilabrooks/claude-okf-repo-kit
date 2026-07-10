@@ -80,6 +80,7 @@ mappings:
       - "docs/adr/0005-safe-installer-scripts.md"
       - "docs/adr/0010-kit-version-stamp.md"
       - "docs/adr/0011-env-read-denial.md"
+      - "docs/adr/0012-candidate-refresh-manifest.md"
 
   - source: "okf-map.yml"
     docs:

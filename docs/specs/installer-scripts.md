@@ -72,7 +72,8 @@ It must:
 - leave an existing `CLAUDE.md` untouched and write a candidate such as `CLAUDE.2.md`
 - leave an existing `docs/okf-map.yml` untouched and write a candidate such as `docs/okf-map.2.yml`
 - leave an existing `docs/GOAL.md` untouched and write a candidate such as `docs/GOAL.2.md`; create `docs/GOAL.md` from `templates/GOAL.md` when it is missing
-- skip writing a numbered candidate when the existing file already matches the kit content byte for byte
+- skip writing a numbered candidate when the existing file already matches the kit content byte for byte, recording such matches in the manifest so pre-manifest candidates opt in
+- record every candidate it writes in `.okf-kit-backups/candidate-manifest` (`sha256` plus repo-relative path), and on later runs refresh in place — after a backup — a stale candidate whose digest proves it is this script's own unedited output, removing provably-ours duplicates for the same destination; owner-edited or unrecorded candidates are never touched and keep the numbered-path behavior (ADR 0012)
 - create missing docs indexes and log files without overwriting existing docs
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
 

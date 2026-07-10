@@ -36,6 +36,7 @@ The validation workflow must include:
 - new-repo install simulation
 - existing-repo install simulation
 - existing-repo idempotency simulation
+- candidate refresh simulation across kit template changes
 - install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
@@ -65,6 +66,8 @@ Existing-repo install simulation must verify any `CLAUDE.md` merge candidate com
 Existing-repo install simulation must verify the update script prints a clear summary with created, updated, and review-needed sections.
 
 Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, permission deny rules, or identical numbered candidates.
+
+Candidate refresh simulation must verify that when kit content changes between updater runs, the updater refreshes its own stale candidate in place instead of numbering past it, and that an owner-edited candidate is left untouched with a new number used instead (ADR 0012).
 
 
 Install helper smoke tests must verify:

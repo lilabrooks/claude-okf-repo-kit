@@ -40,6 +40,7 @@ fi
 TARGET="$(cd "$TARGET" && pwd)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="$TARGET/.okf-kit-backups/$STAMP"
+MANIFEST="$TARGET/.okf-kit-backups/candidate-manifest"
 mkdir -p "$BACKUP_DIR"
 created=()
 updated=()
@@ -54,6 +55,33 @@ backup_file() {
   mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
   cp "$path" "$BACKUP_DIR/$rel"
   backed_up+=("$rel -> ${BACKUP_DIR#"$TARGET"/}/$rel")
+}
+
+file_digest() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
+# The manifest records the digest of every candidate this script writes, so a
+# later run can prove a candidate is its own unedited output before touching
+# it. Owner-edited or unknown candidates never match and are left alone.
+manifest_has() {
+  local digest="$1"
+  local rel="$2"
+  [ -f "$MANIFEST" ] || return 1
+  grep -qxF "$(printf '%s\t%s' "$digest" "$rel")" "$MANIFEST"
+}
+
+manifest_record() {
+  local path="$1"
+  local rel="${path#"$TARGET"/}"
+  local digest
+  digest="$(file_digest "$path")"
+  manifest_has "$digest" "$rel" && return 0
+  printf '%s\t%s\n' "$digest" "$rel" >> "$MANIFEST"
 }
 
 numbered_path() {
@@ -113,20 +141,59 @@ write_numbered_candidate() {
   local src="$1"
   local dest="$2"
   local label="$3"
-  local candidate existing
+  local candidate existing refreshed dir base ext stem n rel digest
   if cmp -s "$src" "$dest"; then
     skipped+=("$label already matches the kit content")
     return 0
   fi
   existing="$(existing_matching_candidate "$src" "$dest" || true)"
   if [ -n "$existing" ]; then
+    manifest_record "$existing"
     skipped+=("$label candidate already exists at ${existing#"$TARGET"/}")
     return 0
   fi
 
+  # Refresh stale candidates this script itself wrote (proven by manifest
+  # digest) instead of numbering past them across kit releases. The first
+  # provably-ours candidate is refreshed in place; further provably-ours
+  # duplicates are backed up and removed. Anything else stays untouched.
+  dir="$(dirname "$dest")"
+  base="$(basename "$dest")"
+  if [[ "$base" == *.* ]]; then
+    ext=".${base##*.}"
+    stem="${base%.*}"
+  else
+    ext=""
+    stem="$base"
+  fi
+
+  refreshed=""
+  n=2
+  candidate="$dir/${stem}.${n}${ext}"
+  while [ -e "$candidate" ]; do
+    rel="${candidate#"$TARGET"/}"
+    digest="$(file_digest "$candidate")"
+    if manifest_has "$digest" "$rel"; then
+      backup_file "$candidate"
+      if [ -z "$refreshed" ]; then
+        cp "$src" "$candidate"
+        manifest_record "$candidate"
+        refreshed="$candidate"
+        review+=("$label exists; refreshed stale candidate ${rel}")
+      else
+        rm -f "$candidate"
+        updated+=("removed superseded stale candidate ${rel}")
+      fi
+    fi
+    n=$((n + 1))
+    candidate="$dir/${stem}.${n}${ext}"
+  done
+  [ -n "$refreshed" ] && return 0
+
   candidate="$(numbered_path "$dest")"
   mkdir -p "$(dirname "$candidate")"
   cp "$src" "$candidate"
+  manifest_record "$candidate"
   review+=("$label exists; wrote candidate ${candidate#"$TARGET"/}")
 }
 

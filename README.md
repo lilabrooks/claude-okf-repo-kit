@@ -150,6 +150,7 @@ The existing-repo script avoids destructive overwrites:
 - leaves existing Markdown files untouched and writes same-folder numbered candidates such as `CLAUDE.2.md`
 - leaves an existing `docs/okf-map.yml` untouched and writes a same-folder numbered candidate such as `docs/okf-map.2.yml`
 - skips the numbered candidate when the existing file already matches the kit content, so repeated updates stay clean
+- refreshes its own stale candidates in place when the kit has moved on — proven by a digest manifest under `.okf-kit-backups/`, backed up first — so candidates don't pile up across releases; a candidate you edited is never touched and a new number is used instead
 - prints a clear summary of created, updated, skipped, backed-up, and review-needed files
 
 After installation, run the safe checks from this kit repo:
@@ -382,7 +383,7 @@ git pull
 bash scripts/update-existing-repo /path/to/target-repo
 ```
 
-The updater never overwrites your files: it backs up the kit-managed scripts it replaces under `.okf-kit-backups/<timestamp>/` and writes same-folder numbered candidates (such as `CLAUDE.2.md`) for changed templates. Review the candidates, merge what you want, and delete the rest. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+The updater never overwrites your files: it backs up the kit-managed scripts it replaces under `.okf-kit-backups/<timestamp>/` and writes same-folder numbered candidates (such as `CLAUDE.2.md`) for changed templates. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
 
 ## Commit vs ignore
 

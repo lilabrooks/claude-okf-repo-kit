@@ -11,3 +11,4 @@
 - [0009 GitHub Pages website from main via Actions](0009-github-pages-website.md): Publish the kit's website from `site/` on main with the Actions Pages deployment.
 - [0010 Kit version stamp and drift reporting](0010-kit-version-stamp.md): Stamp installed repos with the kit release that produced them and report drift at session start.
 - [0011 Env-file read denial in shipped settings](0011-env-read-denial.md): Ship `permissions.deny` Read rules for local env files, making the secrets guardrail mechanical.
+- [0012 Stale-candidate refresh via digest manifest](0012-candidate-refresh-manifest.md): Refresh updater-written candidates in place (proven by content digest) instead of numbering past them each kit release.

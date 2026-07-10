@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-helpers smoke-hooks smoke-okf
+.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-helpers smoke-hooks smoke-okf
 
 help:
 	@printf '%s\n' \
@@ -19,6 +19,7 @@ help:
 		'  make smoke-install   Simulate a new-repo install.' \
 		'  make smoke-existing  Simulate installing into an existing repo.' \
 		'  make smoke-idempotent Test repeated existing-repo updates.' \
+		'  make smoke-candidates Test stale-candidate refresh across kit releases.' \
 		'  make smoke-helpers    Test install, verify, and placeholder helpers.' \
 		'  make smoke-hooks     Test Stop hook block/pass behavior.' \
 		'  make smoke-okf       Test draft and ADR helper behavior.'
@@ -72,7 +73,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-helpers smoke-hooks smoke-okf
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-helpers smoke-hooks smoke-okf
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -234,6 +235,34 @@ smoke-idempotent:
 	[ "$$(grep -cFx '!.env.example' .gitignore)" -eq 1 ]; \
 	python3 -c 'import json; s=json.load(open(".claude/settings.json")); cmds=[hook.get("command", "") for entries in s.get("hooks", {}).values() for group in entries for hook in group.get("hooks", [])]; assert cmds.count("echo existing") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh\"") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh\"") == 1; deny=s.get("permissions", {}).get("deny", []); assert deny.count("Read(./custom-secret)") == 1; assert deny.count("Read(./.env)") == 1; assert deny.count("Read(./**/.env)") == 1'; \
 	printf 'existing-repo idempotency smoke ok\n'
+
+smoke-candidates:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	kit="$$tmp/kit"; \
+	mkdir -p "$$kit/scripts" "$$kit/templates"; \
+	cp "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
+	cp "$(KIT_DIR)/templates/CLAUDE.md" "$(KIT_DIR)/templates/GOAL.md" "$$kit/templates/"; \
+	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
+	target="$$tmp/target"; \
+	mkdir -p "$$target"; \
+	printf '%s\n' '# Owner CLAUDE' > "$$target/CLAUDE.md"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	test -f "$$target/CLAUDE.2.md"; \
+	printf '%s\n' 'TEMPLATE V2 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" == *'refreshed stale candidate CLAUDE.2.md'* ]]; \
+	grep -q 'TEMPLATE V2 MARKER' "$$target/CLAUDE.2.md"; \
+	test ! -f "$$target/CLAUDE.3.md"; \
+	printf '%s\n' 'owner edit' >> "$$target/CLAUDE.2.md"; \
+	printf '%s\n' 'TEMPLATE V3 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'owner edit' "$$target/CLAUDE.2.md"; \
+	! grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.2.md"; \
+	test -f "$$target/CLAUDE.3.md"; \
+	grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.3.md"; \
+	printf 'candidate refresh smoke ok\n'
 
 smoke-helpers:
 	@set -eu; \

@@ -114,7 +114,7 @@ The installed `CLAUDE.md` must also carry the kit version policy (ADR 0010): whe
 
 Existing-repo instructions must avoid overwriting an existing `CLAUDE.md`, `.claude/settings.json`, `.gitignore`, specs, ADRs, map file, or log files.
 
-Existing-repo instructions must describe same-folder numbered candidates for same-name Markdown/map files.
+Existing-repo instructions must describe same-folder numbered candidates for same-name Markdown/map files, and the stale-candidate refresh: the updater refreshes candidates it can prove it wrote (digest manifest under `.okf-kit-backups/`) and never touches owner-edited ones (ADR 0012).
 
 Existing-repo instructions must describe `.gitignore` appends, not `.gitignore` replacement.
 
