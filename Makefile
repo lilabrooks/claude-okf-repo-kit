@@ -374,9 +374,13 @@ smoke-okf:
 	sed -i.bak 's/^status: proposed/status: accepted/' docs/adr/0001-cache-layer.md; \
 	rm -f docs/adr/0001-cache-layer.md.bak; \
 	printf '%s\n' '---' 'type: ADR' 'title: Legacy' '---' > docs/adr/0009-legacy.md; \
+	printf '%s\n' '# ADRs' > docs/adr/index.2.md; \
+	cp docs/adr/0002-second-decision.md docs/adr/0002-second-decision.2.md; \
 	output=$$(bash scripts/okf pending); \
 	[[ "$$output" != *'0001-cache-layer.md'* ]]; \
 	[[ "$$output" == *'0002-second-decision.md'* ]]; \
+	[[ "$$output" != *'index.2.md'* ]]; \
+	[[ "$$output" != *'0002-second-decision.2.md'* ]]; \
 	[[ "$$output" == *'no status field'* ]]; \
 	[[ "$$output" == *'0009-legacy.md'* ]]; \
 	bash scripts/okf new-spec payments-contract "Payments contract" >/dev/null; \

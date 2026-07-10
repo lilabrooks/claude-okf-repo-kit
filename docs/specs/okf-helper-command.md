@@ -72,4 +72,4 @@ Both commands append an entry to the matching `index.md` (creating it with its h
 
 # Pending review behavior
 
-`pending` scans `docs/adr/*.md` (excluding the index) for a frontmatter `status:` field. It lists files whose status is `proposed` with their titles, and separately flags files with no status field, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero.
+`pending` scans `docs/adr/*.md` for a frontmatter `status:` field, excluding the index and installer-written numbered review candidates (`*.N.md`), which are not live ADRs. It lists files whose status is `proposed` with their titles, and separately flags files with no status field, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero.
