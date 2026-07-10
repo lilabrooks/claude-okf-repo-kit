@@ -125,6 +125,23 @@ PY
   else
     fail ".claude/settings.json is missing one or more required hook commands"
   fi
+
+  if python3 - "$TARGET/.claude/settings.json" <<'PY' >/dev/null 2>&1
+import json
+import sys
+
+settings = json.load(open(sys.argv[1], encoding="utf-8"))
+deny = settings.get("permissions", {}).get("deny", [])
+required = ["Read(./.env)", "Read(./**/.env)"]
+missing = [rule for rule in required if rule not in deny]
+if missing:
+    raise SystemExit("missing deny rules: " + ", ".join(missing))
+PY
+  then
+    pass ".claude/settings.json denies reading local env files"
+  else
+    fail ".claude/settings.json is missing the env-file read deny rules"
+  fi
 fi
 
 for rel in scripts/okf .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh; do
@@ -140,6 +157,17 @@ done
 check_gitignore_entry '.claude/settings.local.json'
 check_gitignore_entry 'CLAUDE.local.md'
 check_gitignore_entry '.okf-kit-backups/'
+check_gitignore_entry '.env'
+check_gitignore_entry '.env.*'
+check_gitignore_entry '!.env.example'
+
+if [ -f "$TARGET/docs/index.md" ]; then
+  if grep -qE 'kit_version:[[:space:]]*"?[0-9]+\.[0-9]+\.[0-9]+"?' "$TARGET/docs/index.md"; then
+    pass "docs/index.md declares kit_version"
+  else
+    warn "docs/index.md has no kit_version stamp; kit drift reporting stays silent (merge the docs/index numbered candidate or add the field)"
+  fi
+fi
 
 if [ -f "$TARGET/scripts/okf" ]; then
   tmp="$(mktemp)"
@@ -161,13 +189,18 @@ fi
 
 if git -C "$TARGET" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   pass "target is a Git working tree"
-  for rel in .claude/settings.local.json CLAUDE.local.md .okf-kit-backups/test; do
+  for rel in .claude/settings.local.json CLAUDE.local.md .okf-kit-backups/test .env; do
     if git -C "$TARGET" check-ignore -q "$rel"; then
       pass "git ignore check passes for $rel"
     else
       warn "git ignore check did not match $rel"
     fi
   done
+  if git -C "$TARGET" check-ignore -q ".env.example"; then
+    warn ".env.example is ignored; it should stay trackable for documented sample configuration"
+  else
+    pass ".env.example stays trackable"
+  fi
 else
   warn "target is not a Git working tree; Git ignore behavior was not checked"
 fi

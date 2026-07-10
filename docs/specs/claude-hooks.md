@@ -18,8 +18,11 @@ The source `settings.json` installs:
 
 - a `SessionStart` hook for OKF version checks
 - a `Stop` hook for docs sync checks
+- `permissions.deny` rules `Read(./.env)` and `Read(./**/.env)` that block reading local env files, keeping secrets out of conversation context (ADR 0011)
 
 Hook commands must invoke scripts with `bash` so executable bits are not required.
+
+The deny set must not use an `.env.*` glob: deny rules cannot be negated, and the committed `.env.example` must stay readable so Claude Code can document and consult required variables. Repos with real-secret variant files extend the deny list in their own settings.
 
 # Stop hook
 
@@ -35,9 +38,11 @@ The hook emits JSON for Claude Code and exits successfully, allowing Claude Code
 
 `.claude/hooks/check-okf-version.sh` checks the declared `okf_version` in `docs/index.md` against the latest OKF spec version published by the official OKF repo.
 
-The hook fails silent when offline or when the upstream spec cannot be parsed.
+The same hook also checks the declared `kit_version` in `docs/index.md` — stamped by the installers — against the kit's published `VERSION` file on the source repo's main branch (ADR 0010). It stays silent when `docs/index.md` carries no `kit_version` stamp.
 
-When drift is detected, the hook injects context for Claude Code rather than modifying files directly.
+The hook fails silent when offline or when the upstream spec or version file cannot be parsed.
+
+When drift is detected, the hook injects context for Claude Code rather than modifying files directly. OKF and kit drift notes are combined into a single context injection. The installed `CLAUDE.md` version policies tell Claude Code what to do with each note.
 
 # Version migration policy
 

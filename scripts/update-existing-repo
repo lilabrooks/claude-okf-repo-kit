@@ -29,6 +29,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+KIT_VERSION="$(head -n 1 "$KIT_DIR/VERSION" 2>/dev/null || printf '0.0.0')"
 TARGET="$1"
 
 if [ ! -d "$TARGET" ]; then
@@ -210,11 +211,20 @@ for event, kit_entries in kit.get("hooks", {}).items():
             target_entries.append(entry)
             existing.add(key)
 
+kit_permissions = kit.get("permissions", {})
+if kit_permissions:
+    target_permissions = target.setdefault("permissions", {})
+    for key, kit_rules in kit_permissions.items():
+        target_rules = target_permissions.setdefault(key, [])
+        for rule in kit_rules:
+            if rule not in target_rules:
+                target_rules.append(rule)
+
 with open(target_path, "w", encoding="utf-8") as f:
     json.dump(target, f, indent=2)
     f.write("\n")
 PY
-  updated+=(".claude/settings.json merged hooks")
+  updated+=(".claude/settings.json merged hooks and permissions")
 }
 
 mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" "$TARGET/docs/adr"
@@ -247,9 +257,10 @@ else
 fi
 
 if [ ! -f "$TARGET/docs/index.md" ]; then
-  cat > "$TARGET/docs/index.md" <<'EOF'
+  cat > "$TARGET/docs/index.md" <<EOF
 ---
 okf_version: "0.1"
+kit_version: "$KIT_VERSION"
 ---
 
 # Knowledge bundle
@@ -257,12 +268,15 @@ okf_version: "0.1"
 - [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
+- [Log](log.md)
+- [Source map](okf-map.yml)
 EOF
   created+=("docs/index.md")
 else
-  write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" <<'EOF'
+  write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" <<EOF
 ---
 okf_version: "0.1"
+kit_version: "$KIT_VERSION"
 ---
 
 # Knowledge bundle
@@ -270,6 +284,8 @@ okf_version: "0.1"
 - [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
+- [Log](log.md)
+- [Source map](okf-map.yml)
 EOF
 fi
 
@@ -309,6 +325,9 @@ fi
 append_gitignore_entry '.claude/settings.local.json'
 append_gitignore_entry 'CLAUDE.local.md'
 append_gitignore_entry '.okf-kit-backups/'
+append_gitignore_entry '.env'
+append_gitignore_entry '.env.*'
+append_gitignore_entry '!.env.example'
 
 python3 -m json.tool "$TARGET/.claude/settings.json" >/dev/null
 bash -n "$TARGET/scripts/okf"

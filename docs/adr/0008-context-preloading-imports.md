@@ -6,6 +6,7 @@ tags: [claude-code, context, imports, template]
 timestamp: 2026-07-08T00:00:00Z
 owner: Lila Brooks
 deciders: [Lila Brooks]
+status: accepted
 ---
 
 # Status

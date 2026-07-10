@@ -33,6 +33,7 @@ Verifiable checks that prove the goal is met:
 
 - [test command that passes]
 - [observable behavior: endpoint responds, command produces output, flow completes]
+- [input tolerance: the realistic variants of user input work, and wrong input produces a clear error]
 - [quality bar: coverage threshold, benchmark number, size limit]
 
 # Non-goals
@@ -48,11 +49,14 @@ Verifiable checks that prove the goal is met:
 
 Ordered backlog. When asked to continue without a specific task, Claude Code
 takes the first unchecked milestone. Check a milestone off only when its
-verification passes, and record progress in `docs/log.md`. When the backlog
-is empty, Claude Code reports the goal met and proposes candidate milestones
-(from `docs/log.md` known items, ADR revisit triggers, and in-scope
-extensions); the owner chooses what gets added.
+verification passes, and record progress in `docs/log.md`. A user-facing
+milestone's verification names at least one rejected or edge input alongside
+the happy path. When the backlog is empty, Claude Code runs a first-time-user
+acceptance pass, reports the goal met, and proposes candidate milestones
+(from `docs/log.md` known items, ADR revisit triggers, acceptance-pass
+findings, and in-scope extensions); the owner chooses what gets added.
 
 - [ ] [first shippable slice + how to verify it]
 - [ ] [next milestone + how to verify it]
 - [ ] [next milestone + how to verify it]
+- [ ] README quickstart that reproduces on a clean checkout (suggested final milestone: keep, adjust, or delete). Verify: follow the README from a fresh clone; setup, test, and run steps work as written.

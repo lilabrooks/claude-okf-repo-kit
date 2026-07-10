@@ -27,6 +27,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+KIT_VERSION="$(head -n 1 "$KIT_DIR/VERSION" 2>/dev/null || printf '0.0.0')"
 TARGET="$1"
 
 mkdir -p "$TARGET"
@@ -69,9 +70,10 @@ copy_created "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
 copy_created "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
 copy_created "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
 
-cat > "$TARGET/docs/index.md" <<'EOF'
+cat > "$TARGET/docs/index.md" <<EOF
 ---
 okf_version: "0.1"
+kit_version: "$KIT_VERSION"
 ---
 
 # Knowledge bundle
@@ -79,6 +81,8 @@ okf_version: "0.1"
 - [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
+- [Log](log.md)
+- [Source map](okf-map.yml)
 EOF
 created+=("docs/index.md")
 
@@ -102,6 +106,9 @@ created+=(".gitignore")
 append_gitignore_entry '.claude/settings.local.json'
 append_gitignore_entry 'CLAUDE.local.md'
 append_gitignore_entry '.okf-kit-backups/'
+append_gitignore_entry '.env'
+append_gitignore_entry '.env.*'
+append_gitignore_entry '!.env.example'
 
 if [ ! -d "$TARGET/.git" ]; then
   git -C "$TARGET" init -q

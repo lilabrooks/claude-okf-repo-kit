@@ -31,6 +31,7 @@ mappings:
       - "docs/adr/0006-goal-file-template.md"
       - "docs/adr/0007-autonomous-iteration-guardrails.md"
       - "docs/adr/0008-context-preloading-imports.md"
+      - "docs/adr/0010-kit-version-stamp.md"
 
   - source: "templates/GOAL.md"
     docs:
@@ -42,6 +43,7 @@ mappings:
     docs:
       - "docs/specs/claude-hooks.md"
       - "docs/adr/0003-claude-hook-guardrails.md"
+      - "docs/adr/0011-env-read-denial.md"
 
   - source: "scripts/check-docs-sync.sh"
     docs:
@@ -52,6 +54,12 @@ mappings:
     docs:
       - "docs/specs/claude-hooks.md"
       - "docs/adr/0003-claude-hook-guardrails.md"
+      - "docs/adr/0010-kit-version-stamp.md"
+
+  - source: "VERSION"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0010-kit-version-stamp.md"
 
   - source: "scripts/okf"
     docs:
@@ -63,12 +71,15 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/specs/repo-kit-packaging.md"
       - "docs/adr/0005-safe-installer-scripts.md"
+      - "docs/adr/0010-kit-version-stamp.md"
 
   - source: "scripts/update-existing-repo"
     docs:
       - "docs/specs/installer-scripts.md"
       - "docs/specs/repo-kit-packaging.md"
       - "docs/adr/0005-safe-installer-scripts.md"
+      - "docs/adr/0010-kit-version-stamp.md"
+      - "docs/adr/0011-env-read-denial.md"
 
   - source: "okf-map.yml"
     docs:
@@ -118,6 +129,7 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0005-safe-installer-scripts.md"
+      - "docs/adr/0011-env-read-denial.md"
 
 
   - source: "scripts/check-placeholders"

@@ -9,3 +9,5 @@
 - [0007 Autonomous iteration guardrails](0007-autonomous-iteration-guardrails.md): Run the installed goal loop unattended with proposed ADRs and test/security/destructive-action guardrails.
 - [0008 Context preloading via CLAUDE.md imports](0008-context-preloading-imports.md): Preload the goal file and spec/ADR indexes each session with `@` imports instead of instructed reads.
 - [0009 GitHub Pages website from main via Actions](0009-github-pages-website.md): Publish the kit's website from `site/` on main with the Actions Pages deployment.
+- [0010 Kit version stamp and drift reporting](0010-kit-version-stamp.md): Stamp installed repos with the kit release that produced them and report drift at session start.
+- [0011 Env-file read denial in shipped settings](0011-env-read-denial.md): Ship `permissions.deny` Read rules for local env files, making the secrets guardrail mechanical.

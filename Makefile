@@ -35,6 +35,7 @@ syntax:
 	@bash -n scripts/verify-install
 	@bash -n scripts/check-placeholders
 	@python3 -c 'from pathlib import Path; compile(Path("scripts/check-md-links.py").read_text(), "scripts/check-md-links.py", "exec")'
+	@grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' VERSION
 	@printf 'syntax ok\n'
 
 shellcheck:
@@ -101,13 +102,21 @@ smoke-install:
 	test -f .claude/hooks/check-okf-version.sh; \
 	test -f scripts/okf; \
 	test -f docs/index.md; \
+	grep -q 'kit_version:' docs/index.md; \
+	grep -q '\[Log\](log.md)' docs/index.md; \
+	grep -q '\[Source map\](okf-map.yml)' docs/index.md; \
 	test -f docs/GOAL.md; \
 	grep -q '# Milestones' docs/GOAL.md; \
 	test -f docs/log.md; \
 	test -f docs/specs/index.md; \
 	test -f docs/adr/index.md; \
 	test -f docs/okf-map.yml; \
+	grep -qFx '.env' .gitignore; \
+	grep -qFx '.env.*' .gitignore; \
+	grep -qFx '!.env.example' .gitignore; \
 	python3 -m json.tool .claude/settings.json >/dev/null; \
+	grep -qF 'Read(./.env)' .claude/settings.json; \
+	grep -qF 'Read(./**/.env)' .claude/settings.json; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \
@@ -123,7 +132,7 @@ smoke-existing:
 	git init -q; \
 	printf '%s\n' '# Existing CLAUDE' > CLAUDE.md; \
 	mkdir -p .claude; \
-	printf '%s\n' '{"custom":true,"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo existing"}]}]}}' > .claude/settings.json; \
+	printf '%s\n' '{"custom":true,"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo existing"}]}]},"permissions":{"deny":["Read(./custom-secret)"]}}' > .claude/settings.json; \
 	mkdir -p docs/specs docs/adr; \
 	printf '%s\n' '# Existing docs index' > docs/index.md; \
 	printf '%s\n' '# Existing goal' > docs/GOAL.md; \
@@ -150,6 +159,9 @@ smoke-existing:
 	grep -q 'echo existing' .claude/settings.json; \
 	grep -q 'check-docs-sync.sh' .claude/settings.json; \
 	grep -q 'check-okf-version.sh' .claude/settings.json; \
+	grep -qF 'Read(./custom-secret)' .claude/settings.json; \
+	grep -qF 'Read(./.env)' .claude/settings.json; \
+	grep -qF 'Read(./**/.env)' .claude/settings.json; \
 	test -f scripts/okf; \
 	test -f .claude/hooks/check-docs-sync.sh; \
 	test -f .claude/hooks/check-okf-version.sh; \
@@ -165,7 +177,11 @@ smoke-existing:
 	grep -q '.claude/settings.local.json' .gitignore; \
 	grep -q 'CLAUDE.local.md' .gitignore; \
 	grep -q '.okf-kit-backups/' .gitignore; \
+	grep -qFx '.env' .gitignore; \
+	grep -qFx '.env.*' .gitignore; \
+	grep -qFx '!.env.example' .gitignore; \
 	test -f docs/index.2.md; \
+	grep -q 'kit_version:' docs/index.2.md; \
 	test -f docs/log.2.md; \
 	test -f docs/specs/index.2.md; \
 	test -f docs/adr/index.2.md; \
@@ -184,7 +200,7 @@ smoke-idempotent:
 	git init -q; \
 	printf '%s\n' '# Existing CLAUDE' > CLAUDE.md; \
 	mkdir -p .claude docs/specs docs/adr; \
-	printf '%s\n' '{"custom":true,"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo existing"}]}]}}' > .claude/settings.json; \
+	printf '%s\n' '{"custom":true,"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo existing"}]}]},"permissions":{"deny":["Read(./custom-secret)"]}}' > .claude/settings.json; \
 	printf '%s\n' '# Existing docs index' > docs/index.md; \
 	printf '%s\n' '# Existing log' > docs/log.md; \
 	printf '%s\n' '# Existing specs index' > docs/specs/index.md; \
@@ -210,7 +226,10 @@ smoke-idempotent:
 	[ "$$(grep -cFx '.claude/settings.local.json' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx 'CLAUDE.local.md' .gitignore)" -eq 1 ]; \
 	[ "$$(grep -cFx '.okf-kit-backups/' .gitignore)" -eq 1 ]; \
-	python3 -c 'import json; s=json.load(open(".claude/settings.json")); cmds=[hook.get("command", "") for entries in s.get("hooks", {}).values() for group in entries for hook in group.get("hooks", [])]; assert cmds.count("echo existing") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh\"") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh\"") == 1'; \
+	[ "$$(grep -cFx '.env' .gitignore)" -eq 1 ]; \
+	[ "$$(grep -cFx '.env.*' .gitignore)" -eq 1 ]; \
+	[ "$$(grep -cFx '!.env.example' .gitignore)" -eq 1 ]; \
+	python3 -c 'import json; s=json.load(open(".claude/settings.json")); cmds=[hook.get("command", "") for entries in s.get("hooks", {}).values() for group in entries for hook in group.get("hooks", [])]; assert cmds.count("echo existing") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh\"") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh\"") == 1; deny=s.get("permissions", {}).get("deny", []); assert deny.count("Read(./custom-secret)") == 1; assert deny.count("Read(./.env)") == 1; assert deny.count("Read(./**/.env)") == 1'; \
 	printf 'existing-repo idempotency smoke ok\n'
 
 smoke-helpers:
@@ -337,4 +356,31 @@ smoke-okf:
 	printf '%s\n' '{"dependencies":{"redis":"1.0.0"}}' > package.json; \
 	output=$$(bash scripts/okf adr-suggest); \
 	[[ "$$output" == *'Runtime dependency or package manager change'* ]]; \
+	[[ "$$output" == *'Scaffold: bash scripts/okf new-adr'* ]]; \
+	output=$$(bash scripts/okf check-stale); \
+	[[ "$$output" == *'OKF mappings are current.'* ]]; \
+	[[ "$$output" == *'no okf-map.yml mapping'* ]]; \
+	[[ "$$output" == *'package.json'* ]]; \
+	bash scripts/okf new-adr cache-layer "Cache layer" >/dev/null; \
+	test -f docs/adr/0001-cache-layer.md; \
+	grep -q 'status: proposed' docs/adr/0001-cache-layer.md; \
+	grep -q '0001 Cache layer' docs/adr/index.md; \
+	bash scripts/okf new-adr second-decision >/dev/null; \
+	test -f docs/adr/0002-second-decision.md; \
+	grep -q '0002 Second decision' docs/adr/index.md; \
+	output=$$(bash scripts/okf pending); \
+	[[ "$$output" == *'0001-cache-layer.md'* ]]; \
+	[[ "$$output" == *'0002-second-decision.md'* ]]; \
+	sed -i.bak 's/^status: proposed/status: accepted/' docs/adr/0001-cache-layer.md; \
+	rm -f docs/adr/0001-cache-layer.md.bak; \
+	printf '%s\n' '---' 'type: ADR' 'title: Legacy' '---' > docs/adr/0009-legacy.md; \
+	output=$$(bash scripts/okf pending); \
+	[[ "$$output" != *'0001-cache-layer.md'* ]]; \
+	[[ "$$output" == *'0002-second-decision.md'* ]]; \
+	[[ "$$output" == *'no status field'* ]]; \
+	[[ "$$output" == *'0009-legacy.md'* ]]; \
+	bash scripts/okf new-spec payments-contract "Payments contract" >/dev/null; \
+	test -f docs/specs/payments-contract.md; \
+	grep -q 'type: Spec' docs/specs/payments-contract.md; \
+	grep -q 'Payments contract' docs/specs/index.md; \
 	printf 'okf command smoke ok\n'

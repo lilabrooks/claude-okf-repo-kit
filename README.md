@@ -29,10 +29,10 @@ After installation, the normal loop is simple:
 2. Claude reads the relevant specs and ADRs before editing.
 3. If code changes, Claude updates the matching docs or adds a dated `docs/log.md` note explaining why no spec or ADR changed.
 4. The helper checks catch stale mappings, generate draft specs for poorly documented areas, and suggest ADRs only for standing decisions.
-5. When you ask Claude Code to continue without naming a task, it takes the first unchecked milestone in `docs/GOAL.md`, verifies it, checks it off, logs the progress, and moves to the next milestone until the backlog is done or a decision only you can make comes up. If a session gets cut off mid-milestone, the next session treats uncommitted changes as in-flight work and reconciles them against the backlog and the latest `docs/log.md` entry instead of starting over.
+5. When you ask Claude Code to continue without naming a task, it takes the first unchecked milestone in `docs/GOAL.md`, verifies it, checks it off, logs the progress, and moves to the next milestone until the backlog is done or a decision only you can make comes up. Before declaring the goal met, it runs an acceptance pass — exercising the deliverable like a first-time user, from a clean checkout through the README quickstart and realistic (including wrong) inputs — because tests prove the contract and that pass proves the experience. If a session gets cut off mid-milestone, the next session treats uncommitted changes as in-flight work and reconciles them against the backlog and the latest `docs/log.md` entry instead of starting over.
 6. Standing guardrails hold across every session: a milestone is done only when its verification passes, failing tests can't be deleted or weakened to force a green run, secrets stay out of tracked files, decision-shaped changes (dependencies, persistence, auth, APIs, deployment) are recorded as proposed ADRs for your review, and destructive or outward-facing actions wait for your explicit go-ahead.
 
-One limit to know up front: the guardrails in step 6 are instructions to Claude Code, not mechanical enforcement. The only hard gates the kit installs are the docs-sync hooks. The test, security, and destructive-action rules live in the installed `CLAUDE.md` and rely on Claude Code following them. If you need guaranteed gates — tests must pass before merge, secrets can never land in a commit — add them to your repo's own CI and branch protection on top of this kit.
+One limit to know up front: the guardrails in step 6 are instructions to Claude Code, not mechanical enforcement. The only hard gates the kit installs are the docs-sync hooks and a permissions rule that denies Claude Code reading local `.env` files (so secrets on disk stay out of conversation context). The test, wider security, and destructive-action rules live in the installed `CLAUDE.md` and rely on Claude Code following them. If you need guaranteed gates — tests must pass before merge, secrets can never land in a commit — add them to your repo's own CI and branch protection on top of this kit.
 
 Use this when you want Claude Code to keep implementation, specs, and architecture decisions in sync across a new or existing repo, and to iterate toward a goal you defined once instead of re-explaining it every session. You own the goal; Claude Code makes and records the decisions that reach it, inside those guardrails.
 
@@ -48,6 +48,7 @@ This source repo also includes its own `docs/` knowledge bundle with specs and A
   - [Manual new repo](#manual-new-repo)
   - [Manual existing repo](#manual-existing-repo)
   - [Daily use after installation](#daily-use-after-installation)
+  - [Upgrading an installed repo](#upgrading-an-installed-repo)
 - [Commit vs ignore](#commit-vs-ignore)
 - [How the hooks behave](#how-the-hooks-behave)
 - [OKF helper commands](#okf-helper-commands)
@@ -73,10 +74,10 @@ That validates script syntax, optional ShellCheck linting, `settings.json`, stal
 |-------------------------|-------------------------------------|----------------------------------------------------------------|
 | `templates/CLAUDE.md`   | `CLAUDE.md` (repo root)             | Master objective template, grounding rules, workflow. Loaded every session. |
 | `templates/GOAL.md`     | `docs/GOAL.md`                      | Goal template: repo kind, problem, target state, success criteria, milestone backlog. |
-| `settings.json`         | `.claude/settings.json`             | Registers both hooks.                                          |
+| `settings.json`         | `.claude/settings.json`             | Registers both hooks and denies reading local `.env` files.    |
 | `scripts/check-docs-sync.sh`    | `.claude/hooks/check-docs-sync.sh`  | Stop hook. Blocks missing docs updates and stale mapped docs. |
 | `scripts/check-okf-version.sh`  | `.claude/hooks/check-okf-version.sh`| SessionStart hook. Reports OKF spec version drift so Claude migrates `/docs` formatting. |
-| `scripts/okf`                   | `scripts/okf`                       | Repo-local OKF helper command: `check-stale`, `draft`, and `adr-suggest`. |
+| `scripts/okf`                   | `scripts/okf`                       | Repo-local OKF helper command: `check-stale`, `draft`, `adr-suggest`, `new-adr`, `new-spec`, and `pending`. |
 | `okf-map.yml`           | `docs/okf-map.yml`                  | Starter map from source globs to governing specs and ADRs.     |
 
 `Makefile` validates this source kit. You do not need to copy it into target repos.
@@ -94,6 +95,8 @@ Source-only automation scripts:
 - `scripts/check-placeholders`
 
 These scripts install or check the kit in target repos. They do not need to be copied into target repos.
+
+The kit's release version lives in the source-only `VERSION` file at the repo root. Installers stamp it into the target's `docs/index.md` as `kit_version`, which is what lets an installed repo notice at session start that the kit has moved on (see [Upgrading an installed repo](#upgrading-an-installed-repo)).
 
 The kit's website is also source-only: its static source lives in `site/` on `main` and is published to [GitHub Pages](https://lilabrooks.github.io/claude-okf-repo-kit/) by `.github/workflows/pages.yml` (ADR 0009). Installers never copy it into target repos.
 
@@ -142,7 +145,7 @@ bash "$KIT/scripts/update-existing-repo" "$TARGET"
 The existing-repo script avoids destructive overwrites:
 
 - backs up replaced files under `.okf-kit-backups/<timestamp>/`
-- merges `.claude/settings.json` hooks instead of replacing existing settings
+- merges `.claude/settings.json` hooks and permission rules instead of replacing existing settings
 - appends required `.gitignore` entries instead of replacing `.gitignore`
 - leaves existing Markdown files untouched and writes same-folder numbered candidates such as `CLAUDE.2.md`
 - leaves an existing `docs/okf-map.yml` untouched and writes a same-folder numbered candidate such as `docs/okf-map.2.yml`
@@ -193,9 +196,10 @@ cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
 5. Add the starter docs files:
 
 ```bash
-cat > "$TARGET/docs/index.md" <<'EOF'
+cat > "$TARGET/docs/index.md" <<EOF
 ---
 okf_version: "0.1"
+kit_version: "$(head -n 1 "$KIT/VERSION")"
 ---
 
 # Knowledge bundle
@@ -203,6 +207,8 @@ okf_version: "0.1"
 - [Goal](GOAL.md)
 - [Specs](specs/index.md)
 - [ADRs](adr/index.md)
+- [Log](log.md)
+- [Source map](okf-map.yml)
 EOF
 
 cat > "$TARGET/docs/log.md" <<'EOF'
@@ -221,12 +227,15 @@ EOF
 6. Edit `docs/GOAL.md` in the target repo. Fill every bracket: repo kind (app, service, or utility), problem, target state, success criteria, and an ordered milestone list Claude Code can work through. Update the timestamp and delete the template comment.
 7. Edit `CLAUDE.md` in the target repo. Fill every bracket: current state, target state, constraints, done criteria, and the real test/lint/build commands. Update the timestamp and delete the template comment.
 8. Edit `docs/okf-map.yml`. Replace the commented placeholder with real repo-relative paths. In a brand-new repo, skip this for now: Claude Code adds mappings during iteration as modules gain specs.
-9. Add these lines to the target repo's `.gitignore`:
+9. Add these lines to the target repo's `.gitignore` (`!.env.example` keeps the sample env file trackable):
 
 ```gitignore
 .claude/settings.local.json
 CLAUDE.local.md
 .okf-kit-backups/
+.env
+.env.*
+!.env.example
 ```
 
 10. Verify the target repo install:
@@ -272,7 +281,7 @@ if [ ! -f "$TARGET/.claude/settings.json" ]; then
 fi
 ```
 
-If the repo already has `.claude/settings.json`, merge the `hooks` block from this kit's `settings.json`. Preserve any existing hooks.
+If the repo already has `.claude/settings.json`, merge the `hooks` and `permissions` blocks from this kit's `settings.json`. Preserve any existing hooks and permission rules.
 
 4. Copy the hook scripts and helper command. Back up any existing files first:
 
@@ -303,7 +312,7 @@ fi
 
 ```bash
 touch "$TARGET/.gitignore"
-for entry in '.claude/settings.local.json' 'CLAUDE.local.md' '.okf-kit-backups/'; do
+for entry in '.claude/settings.local.json' 'CLAUDE.local.md' '.okf-kit-backups/' '.env' '.env.*' '!.env.example'; do
   grep -qxF "$entry" "$TARGET/.gitignore" || printf '%s\n' "$entry" >> "$TARGET/.gitignore"
 done
 ```
@@ -334,7 +343,7 @@ docs/
 ### Daily use after installation
 
 1. Open the target repo in Claude Code. If `docs/GOAL.md` or `CLAUDE.md` still has template brackets, Claude Code starts with the goal interview and fills them with you before any milestone work.
-2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, logs the progress in `docs/log.md`, and keeps going milestone by milestone until the backlog is done, a decision reserved for you comes up, or you stop it. Decision-shaped changes land as `status: proposed` ADRs in `docs/adr/` for your review — accept one by flipping its status to `accepted` (or just tell Claude Code to; the decision is yours, the edit can be Claude's), ask for changes, or reject it and have the work reverted per the ADR's rollback trigger. When every milestone is checked and the success criteria pass, it reports the goal met and proposes candidate next milestones — drawn from `docs/log.md` known items, ADR revisit triggers, and extensions that fit the stated non-goals, with anything needing a non-goal revision flagged separately — and adds nothing to `docs/GOAL.md` until you choose.
+2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, logs the progress in `docs/log.md`, and keeps going milestone by milestone until the backlog is done, a decision reserved for you comes up, or you stop it. Decision-shaped changes land as `status: proposed` ADRs in `docs/adr/` for your review — list them any time with `bash scripts/okf pending`, then accept one by flipping its status to `accepted` (or just tell Claude Code to; the decision is yours, the edit can be Claude's), ask for changes, or reject it and have the work reverted per the ADR's rollback trigger. When every milestone is checked and the success criteria pass, it runs an acceptance pass — exercising the deliverable like a first-time user, from a clean checkout through the README quickstart and realistic (including wrong) inputs — then reports the goal met, lists any ADRs still awaiting your review, and proposes candidate next milestones — drawn from `docs/log.md` known items, ADR revisit triggers, acceptance-pass findings, and extensions that fit the stated non-goals, with anything needing a non-goal revision flagged separately — and adds nothing to `docs/GOAL.md` until you choose.
 3. For a specific change, ask the usual way, but point at the relevant spec or ADR when you know it:
 
 ```text
@@ -357,8 +366,22 @@ Review the generated file under `docs/specs/_drafts/`, rewrite it, then move it 
 bash scripts/okf adr-suggest
 ```
 
-Create an ADR only when the suggestion points to a real standing decision.
+Create an ADR only when the suggestion points to a real standing decision, and scaffold it with `bash scripts/okf new-adr <slug> "Title"` — that numbers the file, sets `status: proposed`, lays out the required sections, and adds the index entry.
 8. Commit code, specs, ADRs, and `docs/log.md` together.
+
+### Upgrading an installed repo
+
+Installed repos are snapshots of the kit at install time. The installers stamp the kit release into the target's `docs/index.md` as `kit_version`, and the SessionStart hook compares that stamp against this repo's published `VERSION` file — when they differ, Claude Code gets a session-start note and will tell you the kit has moved on.
+
+To upgrade, pull the latest kit and re-run the safe updater:
+
+```bash
+cd claude-okf-repo-kit
+git pull
+bash scripts/update-existing-repo /path/to/target-repo
+```
+
+The updater never overwrites your files: it backs up the kit-managed scripts it replaces under `.okf-kit-backups/<timestamp>/` and writes same-folder numbered candidates (such as `CLAUDE.2.md`) for changed templates. Review the candidates, merge what you want, and delete the rest. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
 
 ## Commit vs ignore
 
@@ -375,10 +398,13 @@ The installer appends these target-repo ignore entries:
 - `.claude/settings.local.json`
 - `CLAUDE.local.md`
 - `.okf-kit-backups/`
+- `.env`
+- `.env.*`
+- `!.env.example`
 
-Claude local files are personal per-machine files. Backup folders are generated by the safe update script.
+Claude local files are personal per-machine files. Backup folders are generated by the safe update script. Env files hold secrets and stay out of version control, while `!.env.example` keeps a committed sample env file trackable so required variables stay documented with placeholder values.
 
-This source kit repo also ignores local `.env` files, logs, Python bytecode/cache files, `.DS_Store`, and `.obsidian/`. `.env.example` remains trackable for documented sample configuration.
+This source kit repo also ignores local `.env` files, logs, Python bytecode/cache files, `.DS_Store`, and `.obsidian/`.
 
 ## How the hooks behave
 
@@ -388,7 +414,11 @@ This source kit repo also ignores local `.env` files, logs, Python bytecode/cach
 
 **OKF version (session start).** The hook fetches the spec version from the official OKF repo (silent when offline) and compares it to `okf_version` in `docs/index.md`. When drift is detected, it adds context for Claude Code. The policy in `CLAUDE.md` tells Claude how to handle minor and major OKF version changes.
 
-These hooks are the kit's only mechanical enforcement, and they enforce docs sync only. Every other guardrail — tests passing, security rules, owner-gated destructive actions — is instruction-level in the installed `CLAUDE.md`. Repos that need hard gates add them in their own CI and branch protection.
+**Kit version (session start).** The same hook compares the `kit_version` stamped in `docs/index.md` against this repo's published `VERSION` file. On drift, Claude Code is told to recommend the safe updater (see [Upgrading an installed repo](#upgrading-an-installed-repo)); it never updates anything itself. Repos without the stamp get no note.
+
+**Env-file read denial (every tool call).** The installed `.claude/settings.json` also carries `permissions.deny` rules (`Read(./.env)`, `Read(./**/.env)`) so Claude Code cannot read local env files into conversation context. `.env.example` is deliberately not denied — deny rules can't be negated, and the committed sample file must stay readable. Extend the deny list in your own settings for other secret paths.
+
+The hooks and the env-file read denial are the kit's only mechanical enforcement. Every other guardrail — tests passing, wider security rules, owner-gated destructive actions — is instruction-level in the installed `CLAUDE.md`. Repos that need hard gates add them in their own CI and branch protection.
 
 ## OKF helper commands
 
@@ -400,13 +430,20 @@ Run these from the repo root:
 bash scripts/okf check-stale
 bash scripts/okf draft path/to/module
 bash scripts/okf adr-suggest
+bash scripts/okf new-adr <slug> "Title"
+bash scripts/okf new-spec <slug> "Title"
+bash scripts/okf pending
 ```
 
-`check-stale` compares changed source files against `docs/okf-map.yml`.
+`check-stale` compares changed source files against `docs/okf-map.yml`. It also prints a non-blocking note listing changed files that match no mapping, so new source areas get mapped as they gain governing docs.
 
-`draft` writes fact-based markdown drafts to `docs/specs/_drafts/`. Review and rewrite before promoting a draft into `docs/specs/`.
+`draft` writes fact-based markdown drafts to `docs/specs/_drafts/`. It is aimed at existing codebases with undocumented modules — greenfield repos usually write specs as modules land. Review and rewrite before promoting a draft into `docs/specs/`.
 
 `adr-suggest` prints ADR candidates only for decision-shaped changes: dependencies, persistence, cache/queue/worker behavior, auth/security/privacy, public API contracts, deployment, or ownership boundaries.
+
+`new-adr` scaffolds the next-numbered ADR with `status: proposed` frontmatter, the required sections (context, decision, alternatives, consequences, rollback trigger), and an index entry. `new-spec` does the same for a spec skeleton. Both refuse to overwrite existing files and leave bracketed placeholders to fill.
+
+`pending` lists ADRs still `status: proposed` — the owner's review inbox — and flags any ADR missing a status field, which would otherwise be invisible to that review.
 
 ## Verifying an installed target repo
 
@@ -439,7 +476,8 @@ Expected results:
 - JSON and shell syntax checks print no errors.
 - `check-stale` either says mappings are current or names the mapped spec/ADR to update.
 - `adr-suggest` either says no ADR-shaped changes were detected or prints conservative ADR candidates.
-- `git status --ignored` shows `.claude/settings.local.json`, `CLAUDE.local.md`, and `.okf-kit-backups/` as ignored if they exist.
+- `git status --ignored` shows `.claude/settings.local.json`, `CLAUDE.local.md`, `.okf-kit-backups/`, and `.env` as ignored if they exist; a committed `.env.example` stays tracked.
+- `verify-install` requires the settings to carry the env-file read deny rules, and warns (without failing) when `docs/index.md` lacks the `kit_version` stamp used for upgrade drift reporting.
 
 To manually test the Stop hook, edit a mapped source file and try to finish a Claude Code turn without touching `/docs`. Claude should be blocked and told to update the mapped spec/ADR or add a dated `docs/log.md` rationale. Then touch an unrelated doc: Claude should still be blocked by `check-stale`.
 

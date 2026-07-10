@@ -112,7 +112,7 @@
   <tr><td><code>docs/log.md</code></td><td>A dated changelog of what changed and why.</td></tr>
   <tr><td><code>docs/okf-map.yml</code></td><td>Which specs and ADRs govern which source areas.</td></tr>
   <tr><td><code>.claude/hooks/</code></td><td>Guardrail hooks that block ending a turn with code and docs out of sync.</td></tr>
-  <tr><td><code>scripts/okf</code></td><td>A repo-local helper: stale-mapping checks, spec drafts, ADR suggestions.</td></tr>
+  <tr><td><code>scripts/okf</code></td><td>A repo-local helper: stale-mapping checks, spec drafts, ADR suggestions, ADR/spec scaffolding, and a pending-decisions list.</td></tr>
 </table>
 
 <h2 id="how-claude-works">How Claude Code works with your repo</h2>
@@ -126,6 +126,7 @@
 <ol>
   <li>What are you building, and for whom?</li>
   <li>What exists when it's done — concretely?</li>
+  <li>What will users actually give it — realistic example inputs, including a messy or wrong one?</li>
   <li>How is that verified mechanically? What's the test command?</li>
   <li>What should this repo deliberately <em>not</em> do?</li>
   <li>Which stack and dependency choices are fixed, and which may Claude decide later through proposed ADRs?</li>
@@ -143,7 +144,7 @@
   <li><strong>Knowledge alignment</strong> — update the governing spec or ADR if behavior changed, and add a dated <code>docs/log.md</code> entry. The stale-map check catches anything missed.</li>
   <li>Check the milestone off only when its stated verification passes, then take the next one.</li>
 </ol>
-<p>The loop stops on its own in exactly three cases: the backlog is empty, a decision reserved for you comes up, or you say stop. An empty backlog isn't a dead end — Claude reports the goal met, then proposes candidate next milestones (from the log's known items, ADR revisit triggers, and extensions inside your non-goals) and adds nothing until you choose.</p>
+<p>The loop stops on its own in exactly three cases: the backlog is empty, a decision reserved for you comes up, or you say stop. An empty backlog isn't a dead end — Claude first runs an acceptance pass, exercising the deliverable the way a first-time user would (clean checkout, README quickstart, realistic and wrong inputs — tests prove the contract, this proves the experience), then reports the goal met with any still-proposed ADRs listed for your review, and proposes candidate next milestones (from the log's known items, ADR revisit triggers, acceptance-pass findings, and extensions inside your non-goals) — adding nothing until you choose.</p>
 
 <h3>How decisions get made</h3>
 <p>The division of labor is explicit: <strong>you own the goal; Claude Code drives the decisions that reach it — on the record.</strong></p>
@@ -159,14 +160,14 @@
   <ul>
     <li>Tests run after every change; a milestone with failing tests is not done.</li>
     <li>Failing tests are never deleted, skipped, or weakened to force a green run.</li>
-    <li>Secrets never enter tracked files; env and credential files are confirmed git-ignored before they're created.</li>
+    <li>Secrets never enter tracked files; env and credential files are confirmed git-ignored before they're created — and the shipped settings deny reading local <code>.env</code> files outright.</li>
     <li>Security-sensitive changes — auth, input parsing, crypto, network exposure, permissions — get an ADR check.</li>
     <li>Force pushes, data deletion, publishing, deploying, and external calls with side effects wait for your explicit go-ahead, every time.</li>
     <li>Outcomes are reported as they are: failures, partial progress, and skipped steps stay visible.</li>
   </ul>
 </div>
 <div class="card callout">
-  <p><strong>Know the limit:</strong> these guardrails are instructions, not mechanical enforcement. The kit's hooks enforce docs sync and nothing else. When a rule must be guaranteed rather than followed — tests green before merge, no secrets in commits — put it in your repo's own CI and branch protection, on top of this kit.</p>
+  <p><strong>Know the limit:</strong> these guardrails are instructions, not mechanical enforcement. The kit's mechanical gates are docs sync (hooks) and a settings rule denying reads of local <code>.env</code> files — nothing else. When a rule must be guaranteed rather than followed — tests green before merge, no secrets in commits — put it in your repo's own CI and branch protection, on top of this kit.</p>
 </div>
 
 <h3>Interruptions cost minutes, not state</h3>
@@ -188,7 +189,7 @@
 </div>
 <div class="qa">
   <p class="q">The backlog runs out.</p>
-  <p class="a">Claude reports the goal met and stops building. Instead of inventing scope, it lays out your options: known items from the log, revisit triggers from accepted ADRs, extensions that fit your non-goals — and, flagged separately, ideas that would need you to revise a non-goal first. You pick; it drafts the chosen milestones with verifications; the loop resumes.</p>
+  <p class="a">Claude runs the first-time-user acceptance pass, reports the goal met, and stops building — with any ADRs still awaiting your review listed in the report. Instead of inventing scope, it lays out your options: known items from the log, revisit triggers from accepted ADRs, findings from the acceptance pass, extensions that fit your non-goals — and, flagged separately, ideas that would need you to revise a non-goal first. You pick; it drafts the chosen milestones with verifications; the loop resumes.</p>
 </div>
 <div class="qa">
   <p class="q">You come back after a week.</p>

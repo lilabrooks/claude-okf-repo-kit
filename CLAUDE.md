@@ -54,6 +54,7 @@ Source-only files:
 - `README.md` and `Claude Code OKF Kit Guide.md` — user-facing docs.
 - `docs/` — this repo's OKF goal, specs, ADRs, log, and source map. `docs/GOAL.md` is this repo's own goal file, distinct from the `templates/GOAL.md` install artifact.
 - `Makefile` — source-kit validation.
+- `VERSION` — the kit release version; installers stamp it into targets as `kit_version`, and it must be bumped when installed behavior changes (ADR 0010).
 - `scripts/create-new-repo` and `scripts/update-existing-repo` — source-only installer scripts.
 
 # Grounding rules

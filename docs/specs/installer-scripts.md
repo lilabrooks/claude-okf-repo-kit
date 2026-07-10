@@ -52,6 +52,9 @@ It must add these ignores:
 - `.claude/settings.local.json`
 - `CLAUDE.local.md`
 - `.okf-kit-backups/`
+- `.env`
+- `.env.*`
+- `!.env.example` (keeps the sample env file trackable)
 
 # Existing repo installer
 
@@ -62,8 +65,8 @@ It must:
 - require the target directory to exist
 - create `.okf-kit-backups/<timestamp>/`
 - back up files before replacing kit-managed scripts
-- merge `.claude/settings.json` hooks while preserving existing settings
-- append required `.gitignore` entries while preserving existing entries
+- merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
+- append the required `.gitignore` entries (the same six the new-repo installer adds) while preserving existing entries
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide
 - leave an existing `CLAUDE.md` untouched and write a candidate such as `CLAUDE.2.md`
 - leave an existing `docs/okf-map.yml` untouched and write a candidate such as `docs/okf-map.2.yml`
@@ -72,7 +75,7 @@ It must:
 - create missing docs indexes and log files without overwriting existing docs
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
 
-Starter `docs/index.md` content written by either installer must link `GOAL.md`, `specs/index.md`, and `adr/index.md`.
+Starter `docs/index.md` content written by either installer must link `GOAL.md`, `specs/index.md`, `adr/index.md`, `log.md`, and `okf-map.yml`, and must declare `okf_version` plus the installing kit's `kit_version` read from the source `VERSION` file (ADR 0010). The existing-repo installer carries the same content in the numbered candidate it writes when a `docs/index.md` already exists.
 
 # Wrapper and verification helpers
 
@@ -83,7 +86,7 @@ Starter `docs/index.md` content written by either installer must link `GOAL.md`,
 
 The wrapper must print the selected mode and delegated command before running it.
 
-`bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, shell syntax, required `.gitignore` entries, and basic `scripts/okf` execution. It must not judge project-specific content.
+`bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, the env-file read deny rules, shell syntax, required `.gitignore` entries (including the env-file set), and basic `scripts/okf` execution. It must warn — not fail — when `docs/index.md` lacks a `kit_version` stamp or when `.env.example` is ignored, and it must not judge project-specific content.
 
 `bash scripts/check-placeholders /path/to/target-repo` must report remaining template placeholders in `CLAUDE.md` and `docs/GOAL.md`, and missing active mappings in `docs/okf-map.yml`. It must not modify files.
 

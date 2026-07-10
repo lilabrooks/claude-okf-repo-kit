@@ -26,6 +26,7 @@ The validation workflow must include:
 
 - shell syntax checks for scripts
 - shell syntax checks for installer scripts
+- a semver format check for the root `VERSION` file
 - optional ShellCheck linting when ShellCheck is installed
 - Markdown local link checks
 - JSON validation for `settings.json`
@@ -51,9 +52,11 @@ New-repo install simulation must verify target `CLAUDE.md` comes from `templates
 
 New-repo install simulation must verify the installed `CLAUDE.md` carries the preloaded-context imports for `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` (ADR 0008).
 
+New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) were appended (ADR 0010), and that the installed settings carry the env-file read deny rules (ADR 0011).
+
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.
 
-Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries, merges hook settings, appends required ignore entries, backs up replaced kit-managed scripts, and writes numbered candidates for same-name Markdown/map files.
+Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries (including the target's own permission rules), merges hook settings and the kit's permission deny rules, appends required ignore entries including the env-file set, backs up replaced kit-managed scripts, and writes numbered candidates for same-name Markdown/map files (the `docs/index.md` candidate carrying the `kit_version` stamp).
 
 Existing-repo install simulation must verify same-name Markdown and map conflicts produce same-folder numbered candidates.
 
@@ -61,7 +64,7 @@ Existing-repo install simulation must verify any `CLAUDE.md` merge candidate com
 
 Existing-repo install simulation must verify the update script prints a clear summary with created, updated, and review-needed sections.
 
-Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, or identical numbered candidates.
+Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, permission deny rules, or identical numbered candidates.
 
 
 Install helper smoke tests must verify:
@@ -79,7 +82,7 @@ Hook smoke tests must cover:
 - mapped implementation changes with mapped docs pass
 - README-only edits pass
 
-OKF helper smoke tests must verify draft generation and ADR suggestion behavior.
+OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale`, ADR and spec scaffolding (numbering, `status: proposed`, index entries), and the `pending` listing including its missing-status flag.
 
 This kit validates OKF helper behavior and source-to-doc freshness. Target repos that need stricter OKF frontmatter or link rules should add a repo-local docs validator to their own quality gate.
 
