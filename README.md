@@ -54,6 +54,7 @@ This source repo also includes its own `docs/` knowledge bundle with specs and A
 - [How the hooks behave](#how-the-hooks-behave)
 - [OKF helper commands](#okf-helper-commands)
 - [Verifying an installed target repo](#verifying-an-installed-target-repo)
+- [Tracking dogfood repos](#tracking-dogfood-repos)
 - [Validating this kit](#validating-this-kit)
 - [References](#references)
 - [Repository settings](#repository-settings)
@@ -498,6 +499,19 @@ Expected results:
 
 To manually test the Stop hook, edit a mapped source file and try to finish a Claude Code turn without touching `/docs`. Claude should be blocked and told to update the mapped spec/ADR or add a dated `docs/log.md` rationale. Then touch an unrelated doc: Claude should still be blocked by `check-stale`.
 
+## Tracking dogfood repos
+
+For kit maintainers who dogfood the kit in their own repos, the source-only `scripts/harvest-dogfood` reports what changed in each registered repo since the last review — no codebase exploration needed, because the installed docs-sync hook guarantees every target change leaves a `docs/log.md` trace:
+
+```bash
+bash scripts/harvest-dogfood add /path/to/installed-repo   # register at current HEAD
+bash scripts/harvest-dogfood                               # delta report for all repos
+bash scripts/harvest-dogfood mark                          # record the reviewed point
+bash scripts/harvest-dogfood list                          # show the registry
+```
+
+Per repo, the report shows commits and new `docs/log.md` entries since the last mark (lines mentioning the kit or upstreaming are flagged), kit-managed script drift with manifest provenance (matches the kit, unedited older kit output, or owner-edited), the proposed-ADR review inbox, the `kit_version` stamp vs this kit's `VERSION`, uncommitted-change and second-agent-config notes. The helper never modifies a registered repo. Its registry holds absolute local paths, so it is machine-local and git-ignored under `.okf-kit-backups/` — a fresh kit clone starts with an empty registry and repos are re-added with one command each (ADR 0014).
+
 ## Validating this kit
 
 From this source-kit repo, run:
@@ -506,7 +520,7 @@ From this source-kit repo, run:
 make test
 ```
 
-That runs shell syntax checks, optional ShellCheck linting, JSON validation, stale-reference and local-path scans, Markdown link checks, new-repo install simulation, existing-repo install simulation, installer idempotency checks, install/verify/placeholder helper checks, hook behavior checks, and `okf` helper smoke tests.
+That runs shell syntax checks, optional ShellCheck linting, JSON validation, stale-reference and local-path scans, Markdown link checks, new-repo install simulation, existing-repo install simulation, installer idempotency checks, candidate and script-provenance refresh simulations, install/verify/placeholder helper checks, hook behavior checks, `okf` helper smoke tests, and the dogfood harvest smoke check.
 
 You can also run narrower targets:
 

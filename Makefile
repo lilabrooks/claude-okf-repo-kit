@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf
+.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
@@ -23,7 +23,8 @@ help:
 		'  make smoke-scripts   Test kit-managed script provenance across releases.' \
 		'  make smoke-helpers    Test install, verify, and placeholder helpers.' \
 		'  make smoke-hooks     Test Stop hook block/pass behavior.' \
-		'  make smoke-okf       Test draft and ADR helper behavior.'
+		'  make smoke-okf       Test draft and ADR helper behavior.' \
+		'  make smoke-harvest   Test the dogfood harvest registry and report.'
 
 test: syntax shellcheck json scan links smoke
 
@@ -36,13 +37,14 @@ syntax:
 	@bash -n scripts/install-kit
 	@bash -n scripts/verify-install
 	@bash -n scripts/check-placeholders
+	@bash -n scripts/harvest-dogfood
 	@python3 -c 'from pathlib import Path; compile(Path("scripts/check-md-links.py").read_text(), "scripts/check-md-links.py", "exec")'
 	@grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' VERSION
 	@printf 'syntax ok\n'
 
 shellcheck:
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck scripts/okf scripts/check-docs-sync.sh scripts/check-okf-version.sh scripts/create-new-repo scripts/update-existing-repo scripts/install-kit scripts/verify-install scripts/check-placeholders; \
+		shellcheck scripts/okf scripts/check-docs-sync.sh scripts/check-okf-version.sh scripts/create-new-repo scripts/update-existing-repo scripts/install-kit scripts/verify-install scripts/check-placeholders scripts/harvest-dogfood; \
 		printf 'shellcheck ok\n'; \
 	else \
 		printf 'shellcheck skipped (not installed)\n'; \
@@ -74,7 +76,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -439,6 +441,43 @@ smoke-hooks:
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
 	[[ "$$output" != *'ADR review inbox'* ]]; \
 	printf 'hook smoke ok\n'
+
+smoke-harvest:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	export OKF_DOGFOOD_REGISTRY="$$tmp/registry"; \
+	target="$$tmp/dogfood-target"; \
+	bash "$(KIT_DIR)/scripts/create-new-repo" "$$target" >/dev/null; \
+	git -C "$$target" add -A; \
+	git -C "$$target" -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood" add "$$target"); \
+	[[ "$$output" == *'Registered dogfood-target'* ]]; \
+	if bash "$(KIT_DIR)/scripts/harvest-dogfood" add "$$target" >/dev/null 2>&1; then \
+		printf 'duplicate add should fail\n' >&2; exit 1; \
+	fi; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood"); \
+	[[ "$$output" == *'commits since last harvest'*': 0'* ]]; \
+	[[ "$$output" == *'matches kit'* ]]; \
+	[[ "$$output" == *'No proposed ADRs awaiting review.'* ]]; \
+	printf '%s\n' 'print(1)' > "$$target/app.py"; \
+	printf '%s\n' '' '## 2026-07-11' '' '- Widget fix; exclusion gap worth upstreaming to claude-okf-repo-kit.' >> "$$target/docs/log.md"; \
+	git -C "$$target" add -A; \
+	git -C "$$target" -c user.email=a@example.com -c user.name=A commit -q -m widget; \
+	printf '%s\n' '# local hardening' >> "$$target/.claude/hooks/check-docs-sync.sh"; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood"); \
+	[[ "$$output" == *'commits since last harvest'*': 1'* ]]; \
+	[[ "$$output" == *'widget'* ]]; \
+	[[ "$$output" == *'FLAGGED'* ]]; \
+	[[ "$$output" == *'worth upstreaming'* ]]; \
+	[[ "$$output" == *'check-docs-sync.sh: OWNER-EDITED'* ]]; \
+	[[ "$$output" == *'uncommitted changes: 1'* ]]; \
+	bash "$(KIT_DIR)/scripts/harvest-dogfood" mark >/dev/null; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood"); \
+	[[ "$$output" == *'commits since last harvest'*': 0'* ]]; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood" list); \
+	[[ "$$output" == *'dogfood-target'* ]]; \
+	printf 'dogfood harvest smoke ok\n'
 
 smoke-okf:
 	@set -eu; \

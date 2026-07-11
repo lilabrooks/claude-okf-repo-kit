@@ -5,3 +5,4 @@
 - [OKF helper command](okf-helper-command.md): behavior for `check-stale`, `draft`, and `adr-suggest`.
 - [Claude hooks](claude-hooks.md): Stop and SessionStart hook behavior.
 - [Validation workflow](validation-workflow.md): Makefile validation and smoke tests.
+- [Dogfood harvest helper](dogfood-harvest.md): registry and delta reports for tracking installed dogfood repos.

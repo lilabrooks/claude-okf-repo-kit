@@ -14,7 +14,7 @@ Current state: This repo is a source kit for installing a Claude Code OKF workfl
 
 Target state: The source kit remains easy to review, safe to install into new or existing repos, and governed by its own specs and ADRs under `docs/`.
 
-Constraints: Follow `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, and `docs/specs/validation-workflow.md`. Follow ADRs in `docs/adr/`. Root `templates/CLAUDE.md` is the install template for target repos; root `CLAUDE.md` is only for this source repo.
+Constraints: Follow `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, `docs/specs/validation-workflow.md`, and `docs/specs/dogfood-harvest.md`. Follow ADRs in `docs/adr/`. Root `templates/CLAUDE.md` is the install template for target repos; root `CLAUDE.md` is only for this source repo.
 
 Done when: `make test` passes, `bash scripts/okf check-stale` reports current mappings, and any changed behavior is reflected in the mapped spec, ADR, or `docs/log.md`.
 
@@ -56,6 +56,7 @@ Source-only files:
 - `Makefile` — source-kit validation.
 - `VERSION` — the kit release version; installers stamp it into targets as `kit_version`, and it must be bumped when installed behavior changes (ADR 0010).
 - `scripts/create-new-repo` and `scripts/update-existing-repo` — source-only installer scripts.
+- `scripts/harvest-dogfood` — source-only maintainer tool reporting deltas from registered installed repos; its registry is machine-local under the git-ignored `.okf-kit-backups/` (ADR 0014).
 
 # Grounding rules
 

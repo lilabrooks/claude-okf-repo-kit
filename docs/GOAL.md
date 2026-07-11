@@ -38,7 +38,7 @@ Solution: A reviewable source kit that installs a complete Claude Code OKF workf
 
 # Constraints
 
-- Specs: `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, `docs/specs/validation-workflow.md`.
+- Specs: `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, `docs/specs/validation-workflow.md`, `docs/specs/dogfood-harvest.md`.
 - ADRs: all accepted ADRs in `docs/adr/`.
 - Bash-only tooling; no runtime dependency manifests.
 
@@ -61,4 +61,5 @@ owner's decision.
 - [x] Env-file read denial in shipped settings (ADR 0011): `permissions.deny` Read rules for `.env` files in `settings.json`, permissions merged by the existing-repo installer, `verify-install` and smoke coverage, and the enforcement caveat updated to name both mechanical gates. Verified: `make test`.
 - [x] Stale-candidate refresh in the updater (ADR 0012): digest manifest under `.okf-kit-backups/`, in-place refresh of provably kit-written candidates with owner-edited ones untouched, smoke-tested across simulated kit releases. Verified: `make test`.
 - [x] Dogfood-driven 0.1.2 hardening from the repo-pulse and skywatch outcomes (ADR 0013): shipped-hook union (stop-loop guard, end-anchored and agent-config exclusions, portable root resolution and playbook wording), SessionStart ADR review inbox, kit-managed script provenance in both installers (manifest seeding, preserve-or-refresh updater), interview tool-availability rule, goal-met repo-hygiene candidates, starter-map granularity hint, and the optional second-agent recipe in the README. Verified: `make test`.
+- [x] Dogfood harvest tooling (ADR 0014): source-only `scripts/harvest-dogfood` with a machine-local registry under `.okf-kit-backups/`, delta reports (commits, new log entries with kit-mention flags, script provenance, ADR inbox, version stamp, agent-config surfaces), read-only against targets, with spec, smoke coverage, and README note. Verified: `make test` and a live report against the registered repos.
 - [ ] (backlog empty — new milestones are added here by the owner)

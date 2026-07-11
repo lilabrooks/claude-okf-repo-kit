@@ -38,6 +38,7 @@ The validation workflow must include:
 - existing-repo idempotency simulation
 - candidate refresh simulation across kit template changes
 - script provenance simulation across simulated kit releases (ADR 0013)
+- dogfood harvest smoke check against a temp target (ADR 0014)
 - install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
@@ -71,6 +72,8 @@ Existing-repo idempotency simulation must verify repeated updates do not duplica
 Candidate refresh simulation must verify that when kit content changes between updater runs, the updater refreshes its own stale candidate in place instead of numbering past it, and that an owner-edited candidate is left untouched with a new number used instead (ADR 0012).
 
 Script provenance simulation must verify that across a simulated kit release: an unedited kit-managed script is refreshed in place with a backup and no candidate; an owner-edited script keeps its content, with the kit version written as a same-folder numbered candidate under the review section; and a repo with no manifest takes the preserve-plus-candidate path rather than being overwritten (ADR 0013).
+
+The dogfood harvest smoke check must verify, against a temp target with the registry redirected via `OKF_DOGFOOD_REGISTRY`: registration baselines at HEAD and rejects a duplicate name, a fresh registration reports a zero commit delta with kit-managed files matching, committed target work surfaces the commit, the new `docs/log.md` lines, and the kit-mention flag, an owner-edited hook is classified as such alongside an uncommitted-changes note, and `mark` resets the delta to zero (ADR 0014).
 
 
 Install helper smoke tests must verify:

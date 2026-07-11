@@ -41,6 +41,7 @@ The source repo also keeps local validation and project knowledge:
 - `scripts/verify-install`
 - `scripts/check-placeholders`
 - `scripts/check-md-links.py`
+- `scripts/harvest-dogfood` (maintainer tool; its registry is machine-local and git-ignored, per ADR 0014)
 - `.github/workflows/test.yml`
 - `.github/workflows/pages.yml`
 - `.github/dependabot.yml`

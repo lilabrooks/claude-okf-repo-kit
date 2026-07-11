@@ -13,3 +13,4 @@
 - [0011 Env-file read denial in shipped settings](0011-env-read-denial.md): Ship `permissions.deny` Read rules for local env files, making the secrets guardrail mechanical.
 - [0012 Stale-candidate refresh via digest manifest](0012-candidate-refresh-manifest.md): Refresh updater-written candidates in place (proven by content digest) instead of numbering past them each kit release.
 - [0013 Kit-managed script refresh via manifest provenance](0013-script-provenance-refresh.md): Refresh installed kit scripts in place only when provably unedited kit output; preserve owner-edited scripts with a kit candidate for review.
+- [0014 Dogfood harvest via a machine-local registry](0014-dogfood-harvest-registry.md): Track installed dogfood repos with a git-ignored high-water-mark registry and a source-only delta-report helper.

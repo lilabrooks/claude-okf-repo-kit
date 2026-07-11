@@ -140,3 +140,8 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0005-safe-installer-scripts.md"
+
+  - source: "scripts/harvest-dogfood"
+    docs:
+      - "docs/specs/dogfood-harvest.md"
+      - "docs/adr/0014-dogfood-harvest-registry.md"

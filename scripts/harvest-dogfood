@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+# Source-only maintainer tool: harvest dogfood feedback from installed repos
+# without re-exploring their codebases. The docs-sync hook guarantees every
+# target change leaves a docs/log.md trace, so a harvest only needs the delta
+# since the last recorded high-water mark plus a few fixed state probes.
+#
+# The registry is machine-local (absolute paths never belong in the published
+# repo) and lives in the git-ignored .okf-kit-backups/ of this kit clone, one
+# line per repo: name<TAB>path<TAB>last_harvest_sha<TAB>kit_version_stamp.
+# This script never modifies a registered target repo.
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bash scripts/harvest-dogfood                  Report deltas for all registered repos
+  bash scripts/harvest-dogfood add <path> [name]  Register a repo at its current HEAD
+  bash scripts/harvest-dogfood mark [name ...]  Record current HEADs after a review
+  bash scripts/harvest-dogfood list             Show the registry
+
+Report probes, per registered repo:
+  - commits and new docs/log.md entries since the recorded harvest SHA,
+    with lines mentioning the kit or upstreaming highlighted
+  - kit-managed script drift, with manifest provenance (ADR 0013): matches
+    the kit, unedited older kit output, or owner-edited
+  - the proposed-ADR review inbox (scripts/okf pending)
+  - kit_version stamp vs this kit's VERSION, agent-config surfaces, and
+    whether the working tree holds uncommitted changes
+
+Environment:
+  OKF_DOGFOOD_REGISTRY  Registry file override. Defaults to
+                        .okf-kit-backups/dogfood-registry in this kit clone.
+EOF
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+KIT_VERSION="$(head -n 1 "$KIT_DIR/VERSION" 2>/dev/null || printf '0.0.0')"
+REGISTRY="${OKF_DOGFOOD_REGISTRY:-$KIT_DIR/.okf-kit-backups/dogfood-registry}"
+
+KIT_MANAGED_RELS=".claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf"
+
+kit_source_for() {
+  case "$1" in
+    .claude/hooks/check-docs-sync.sh) printf '%s\n' "$KIT_DIR/scripts/check-docs-sync.sh" ;;
+    .claude/hooks/check-okf-version.sh) printf '%s\n' "$KIT_DIR/scripts/check-okf-version.sh" ;;
+    scripts/okf) printf '%s\n' "$KIT_DIR/scripts/okf" ;;
+  esac
+}
+
+file_digest() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
+target_stamp() {
+  grep -m1 -oE 'kit_version:[[:space:]]*"?[0-9]+\.[0-9]+\.[0-9]+"?' "$1/docs/index.md" 2>/dev/null \
+    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true
+}
+
+registry_lines() {
+  [ -f "$REGISTRY" ] || return 0
+  grep -Ev '^[[:space:]]*(#|$)' "$REGISTRY" || true
+}
+
+require_registry() {
+  if [ -z "$(registry_lines)" ]; then
+    printf 'No repos registered. Add one with: bash scripts/harvest-dogfood add /path/to/repo\n' >&2
+    exit 1
+  fi
+}
+
+cmd_add() {
+  local path="${1:-}"
+  [ -n "$path" ] || { usage >&2; exit 2; }
+  [ -d "$path" ] || { printf 'No such directory: %s\n' "$path" >&2; exit 1; }
+  path="$(cd "$path" && pwd)"
+  local name="${2:-$(basename "$path")}"
+  local sha
+  sha="$(git -C "$path" rev-parse HEAD 2>/dev/null)" || {
+    printf 'Not a git repo with at least one commit: %s\n' "$path" >&2
+    exit 1
+  }
+  if registry_lines | cut -f1 | grep -qxF "$name"; then
+    printf 'Already registered under name: %s (see: harvest-dogfood list)\n' "$name" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "$REGISTRY")"
+  printf '%s\t%s\t%s\t%s\n' "$name" "$path" "$sha" "$(target_stamp "$path")" >> "$REGISTRY"
+  printf 'Registered %s at %s (baseline %s). Future reports show work after this point.\n' \
+    "$name" "$path" "$(git -C "$path" rev-parse --short "$sha")"
+}
+
+cmd_list() {
+  require_registry
+  printf 'Registry: %s\n' "$REGISTRY"
+  registry_lines | while IFS=$'\t' read -r name path sha stamp; do
+    printf '  %s  %s  (last harvest %s, stamped kit %s)\n' \
+      "$name" "$path" "$(git -C "$path" rev-parse --short "$sha" 2>/dev/null || printf '%s' "$sha")" "${stamp:-?}"
+  done
+}
+
+cmd_mark() {
+  require_registry
+  local tmp
+  tmp="$(mktemp)"
+  registry_lines | while IFS=$'\t' read -r name path sha stamp; do
+    local keep=1
+    if [ "$#" -gt 0 ]; then
+      keep=0
+      local wanted
+      for wanted in "$@"; do
+        if [ "$wanted" = "$name" ]; then keep=1; fi
+      done
+    fi
+    if [ "$keep" -eq 1 ] && [ -d "$path" ]; then
+      local new_sha
+      new_sha="$(git -C "$path" rev-parse HEAD 2>/dev/null || printf '%s' "$sha")"
+      printf '%s\t%s\t%s\t%s\n' "$name" "$path" "$new_sha" "$(target_stamp "$path")" >> "$tmp"
+      printf 'Marked %s at %s\n' "$name" "$(git -C "$path" rev-parse --short "$new_sha" 2>/dev/null || printf '%s' "$new_sha")"
+    else
+      printf '%s\t%s\t%s\t%s\n' "$name" "$path" "$sha" "$stamp" >> "$tmp"
+    fi
+  done
+  mv "$tmp" "$REGISTRY"
+}
+
+report_repo() {
+  local name="$1" path="$2" sha="$3"
+  printf '\n== %s (%s) ==\n' "$name" "$path"
+  if [ ! -d "$path" ]; then
+    printf '  SKIPPED: path no longer exists\n'
+    return 0
+  fi
+
+  local stamp
+  stamp="$(target_stamp "$path")"
+  if [ "${stamp:-}" = "$KIT_VERSION" ]; then
+    printf 'kit_version stamp: %s (current)\n' "$stamp"
+  else
+    printf 'kit_version stamp: %s vs kit %s (DRIFT - run the updater)\n' "${stamp:-none}" "$KIT_VERSION"
+  fi
+
+  if git -C "$path" cat-file -e "$sha^{commit}" 2>/dev/null; then
+    local count
+    count="$(git -C "$path" rev-list --count "$sha..HEAD" 2>/dev/null || printf '0')"
+    printf 'commits since last harvest (%s): %s\n' "$(git -C "$path" rev-parse --short "$sha")" "$count"
+    if [ "$count" -gt 0 ]; then
+      git -C "$path" log --oneline "$sha..HEAD" | sed 's/^/  /'
+      local new_log
+      new_log="$(git -C "$path" diff "$sha..HEAD" -- docs/log.md 2>/dev/null \
+        | grep '^+' | grep -v '^+++' | sed 's/^+//' | grep -v '^[[:space:]]*$' || true)"
+      if [ -n "$new_log" ]; then
+        printf 'new docs/log.md entries:\n'
+        printf '%s\n' "$new_log" | sed 's/^/  /'
+        local mentions
+        mentions="$(printf '%s\n' "$new_log" | grep -iE 'claude-okf-repo-kit|upstream|(^|[^[:alpha:]])kit([^[:alpha:]]|$)' || true)"
+        if [ -n "$mentions" ]; then
+          printf 'FLAGGED (mentions the kit or upstreaming):\n'
+          printf '%s\n' "$mentions" | sed 's/^/  >> /'
+        fi
+      else
+        printf 'new docs/log.md entries: none (unusual if commits touched code)\n'
+      fi
+    fi
+  else
+    printf 'commits since last harvest: baseline %s not found (rebase?); recent history:\n' "$sha"
+    git -C "$path" log --oneline -n 10 2>/dev/null | sed 's/^/  /' || true
+  fi
+
+  local dirty
+  dirty="$(git -C "$path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$dirty" != "0" ]; then
+    printf 'uncommitted changes: %s files (possible in-flight session)\n' "$dirty"
+  fi
+
+  printf 'kit-managed files:\n'
+  local rel src manifest digest
+  manifest="$path/.okf-kit-backups/candidate-manifest"
+  for rel in $KIT_MANAGED_RELS; do
+    src="$(kit_source_for "$rel")"
+    if [ ! -f "$path/$rel" ]; then
+      printf '  %s: MISSING\n' "$rel"
+    elif cmp -s "$src" "$path/$rel"; then
+      printf '  %s: matches kit %s\n' "$rel" "$KIT_VERSION"
+    else
+      digest="$(file_digest "$path/$rel")"
+      if [ -f "$manifest" ] && grep -qxF "$(printf '%s\t%s' "$digest" "$rel")" "$manifest"; then
+        printf '  %s: unedited older kit output (updater refreshes in place)\n' "$rel"
+      else
+        printf '  %s: OWNER-EDITED or unrecorded (updater preserves it and writes a candidate)\n' "$rel"
+      fi
+    fi
+  done
+
+  if [ -f "$path/scripts/okf" ]; then
+    printf 'ADR review inbox:\n'
+    OKF_ROOT="$path" bash "$path/scripts/okf" pending 2>/dev/null | sed 's/^/  /' || true
+  fi
+
+  local agents=""
+  if [ -f "$path/AGENTS.md" ]; then agents="AGENTS.md"; fi
+  if [ -d "$path/.codex" ]; then agents="${agents:+$agents, }.codex/"; fi
+  if [ -n "$agents" ]; then
+    printf 'second-agent config present: %s (re-sync hook mirrors after kit updates)\n' "$agents"
+  fi
+  return 0
+}
+
+cmd_report() {
+  require_registry
+  printf 'Dogfood harvest — kit %s\n' "$KIT_VERSION"
+  printf 'After reviewing, record the new high-water mark: bash scripts/harvest-dogfood mark\n'
+  registry_lines | while IFS=$'\t' read -r name path sha stamp; do
+    report_repo "$name" "$path" "$sha"
+  done
+}
+
+case "${1:-report}" in
+  add) shift; cmd_add "$@" ;;
+  mark) shift; cmd_mark "$@" ;;
+  list) cmd_list ;;
+  report) cmd_report ;;
+  help|-h|--help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac
