@@ -9,7 +9,9 @@ Usage:
   bash scripts/update-existing-repo /path/to/existing-repo
 
 Updates an existing repo without destructive overwrites:
-- backs up files before replacing kit-managed scripts
+- refreshes kit-managed scripts in place (after a backup) only when the current
+  content is provably this script's own unedited output; scripts the owner
+  edited are left in place with the kit version written as a numbered candidate
 - merges .claude/settings.json hooks with existing settings
 - appends .gitignore entries without overwriting .gitignore
 - leaves existing Markdown and map files intact
@@ -207,21 +209,40 @@ write_numbered_content_candidate() {
   rm -f "$tmp"
 }
 
-copy_with_backup() {
+# Kit-managed scripts are refreshed in place only when the target's current
+# content is provably this script's own unedited output (installed digest
+# recorded in the manifest). Content the owner edited — or content with no
+# recorded provenance, e.g. a fresh clone whose manifest was never synced —
+# is preserved, with the kit version staged as a numbered candidate for
+# review instead (ADR 0013). Identical content records itself so pre-manifest
+# installs opt in after one run.
+install_kit_script() {
   local src="$1"
   local dest="$2"
+  local label="$3"
+  local rel="${dest#"$TARGET"/}"
+  local digest
   mkdir -p "$(dirname "$dest")"
-  if [ -f "$dest" ]; then
-    if cmp -s "$src" "$dest"; then
-      skipped+=("${dest#"$TARGET"/} already current")
-      return 0
-    fi
-    backup_file "$dest"
-    updated+=("${dest#"$TARGET"/}")
-  else
-    created+=("${dest#"$TARGET"/}")
+  if [ ! -f "$dest" ]; then
+    cp "$src" "$dest"
+    manifest_record "$dest"
+    created+=("$rel")
+    return 0
   fi
-  cp "$src" "$dest"
+  if cmp -s "$src" "$dest"; then
+    manifest_record "$dest"
+    skipped+=("$rel already current")
+    return 0
+  fi
+  digest="$(file_digest "$dest")"
+  if manifest_has "$digest" "$rel"; then
+    backup_file "$dest"
+    cp "$src" "$dest"
+    manifest_record "$dest"
+    updated+=("$rel")
+    return 0
+  fi
+  write_numbered_candidate "$src" "$dest" "$label"
 }
 
 append_gitignore_entry() {
@@ -305,9 +326,9 @@ fi
 
 merge_settings
 
-copy_with_backup "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
-copy_with_backup "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
-copy_with_backup "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
+install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh" ".claude/hooks/check-docs-sync.sh"
+install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh" ".claude/hooks/check-okf-version.sh"
+install_kit_script "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf" "scripts/okf"
 
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
   write_numbered_candidate "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml" "docs/okf-map.yml"

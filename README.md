@@ -49,6 +49,7 @@ This source repo also includes its own `docs/` knowledge bundle with specs and A
   - [Manual existing repo](#manual-existing-repo)
   - [Daily use after installation](#daily-use-after-installation)
   - [Upgrading an installed repo](#upgrading-an-installed-repo)
+  - [Using a second agent for repo chores (optional)](#using-a-second-agent-for-repo-chores-optional)
 - [Commit vs ignore](#commit-vs-ignore)
 - [How the hooks behave](#how-the-hooks-behave)
 - [OKF helper commands](#okf-helper-commands)
@@ -345,7 +346,7 @@ docs/
 ### Daily use after installation
 
 1. Open the target repo in Claude Code. If `docs/GOAL.md` or `CLAUDE.md` still has template brackets, Claude Code starts with the goal interview and fills them with you before any milestone work.
-2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, logs the progress in `docs/log.md`, and keeps going milestone by milestone until the backlog is done, a decision reserved for you comes up, or you stop it. Decision-shaped changes land as `status: proposed` ADRs in `docs/adr/` for your review — list them any time with `bash scripts/okf pending`, then accept one by flipping its status to `accepted` (or just tell Claude Code to; the decision is yours, the edit can be Claude's), ask for changes, or reject it and have the work reverted per the ADR's rollback trigger. When every milestone is checked and the success criteria pass, it runs an acceptance pass — exercising the deliverable like a first-time user, from a clean checkout through the README quickstart and realistic (including wrong) inputs — then reports the goal met, lists any ADRs still awaiting your review, and proposes candidate next milestones — drawn from `docs/log.md` known items, ADR revisit triggers, acceptance-pass findings, and extensions that fit the stated non-goals, with anything needing a non-goal revision flagged separately — and adds nothing to `docs/GOAL.md` until you choose.
+2. To iterate toward the goal without writing a task, just ask Claude Code to continue. It reads `docs/GOAL.md`, takes the first unchecked milestone, verifies it against the milestone's stated check, checks it off, logs the progress in `docs/log.md`, and keeps going milestone by milestone until the backlog is done, a decision reserved for you comes up, or you stop it. Decision-shaped changes land as `status: proposed` ADRs in `docs/adr/` for your review — list them any time with `bash scripts/okf pending`, then accept one by flipping its status to `accepted` (or just tell Claude Code to; the decision is yours, the edit can be Claude's), ask for changes, or reject it and have the work reverted per the ADR's rollback trigger. When every milestone is checked and the success criteria pass, it runs an acceptance pass — exercising the deliverable like a first-time user, from a clean checkout through the README quickstart and realistic (including wrong) inputs — then reports the goal met, lists any ADRs still awaiting your review, and proposes candidate next milestones — drawn from `docs/log.md` known items, ADR revisit triggers, acceptance-pass findings, standard repo hygiene the repo still lacks (license, CI running the verification commands and the stale-map check, dependency updates, badges), and extensions that fit the stated non-goals, with anything needing a non-goal revision flagged separately — and adds nothing to `docs/GOAL.md` until you choose.
 3. For a specific change, ask the usual way, but point at the relevant spec or ADR when you know it:
 
 ```text
@@ -383,7 +384,18 @@ git pull
 bash scripts/update-existing-repo /path/to/target-repo
 ```
 
-The updater never overwrites your files: it backs up the kit-managed scripts it replaces under `.okf-kit-backups/<timestamp>/` and writes same-folder numbered candidates (such as `CLAUDE.2.md`) for changed templates. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+The updater never overwrites your work. Kit-managed scripts (`scripts/okf` and the two hooks) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+
+### Using a second agent for repo chores (optional)
+
+The kit is built for Claude Code, and the goal loop — the interview, milestones, proposed ADRs, and guardrails — stays with it. Optionally, you can point a second agent (Codex CLI, for example) at the same installed repo for commodity chores: a license, CI, dependency-update automation, badges, repository metadata. Both dogfood repos used exactly this split, and the docs discipline held — chore commits still landed their `docs/log.md` entries and ADRs.
+
+If you do this:
+
+- Commit the second agent's config (`AGENTS.md`, `.codex/`, or the equivalent). The shipped hooks already treat those paths as agent config rather than implementation code, so their presence won't re-trigger the docs-sync block every turn.
+- The `@` imports in `CLAUDE.md` and the env-file read denial in `.claude/settings.json` are Claude Code mechanisms. A ported playbook (such as `AGENTS.md`) needs explicit "read these files at session start" instructions instead of imports, and should state honestly that the second agent has no mechanical `.env` protection — for it, the secrets guardrail is policy prose.
+- If you want the docs-sync gate enforced in the second agent's sessions too, mirror the two hook scripts into its config (the shipped scripts resolve their root via `CLAUDE_PROJECT_DIR`, then `CODEX_PROJECT_DIR`, then the current directory, so unmodified copies work) and keep the mirrors byte-identical to the `.claude/hooks/` originals.
+- After a kit upgrade, re-sync any mirrors by hand: the updater manages only the `.claude/hooks/` copies and doesn't know about other agents' directories.
 
 ## Commit vs ignore
 
@@ -411,13 +423,15 @@ This source kit repo additionally ignores logs, Python bytecode/cache files, and
 
 ## How the hooks behave
 
-**Docs sync (every turn).** When Claude tries to finish a turn after changing code without touching `/docs`, the hook blocks the stop and Claude keeps working: it updates the governing spec or ADR, or records in `/docs/log.md` why no update was needed.
+**Docs sync (every turn).** When Claude tries to finish a turn after changing code without touching `/docs`, the hook blocks the stop and Claude keeps working: it updates the governing spec or ADR, or records in `/docs/log.md` why no update was needed. If the same stop cycle already blocked once (`stop_hook_active` in the hook payload), the hook warns on stderr and lets the turn end instead of blocking again, so a session that cannot write to `docs/` — a read-only sandbox, for example — never loops. Agent configuration (`.claude/`, `CLAUDE.md`, and a second agent's `.codex/` or `AGENTS.md` if present) doesn't count as implementation code; the file exclusions are exact-name matches, so lookalikes such as `LICENSE-MIT` still count as code.
 
 **Stale map check (every turn, when configured).** If `scripts/okf` and `docs/okf-map.yml` exist, the same Stop hook also runs `bash scripts/okf check-stale`. This catches the subtler case where some doc changed, but the mapped spec or ADR for the touched source area did not.
 
 **OKF version (session start).** The hook fetches the spec version from the official OKF repo (silent when offline) and compares it to `okf_version` in `docs/index.md`. When drift is detected, it adds context for Claude Code. The policy in `CLAUDE.md` tells Claude how to handle minor and major OKF version changes.
 
 **Kit version (session start).** The same hook compares the `kit_version` stamped in `docs/index.md` against this repo's published `VERSION` file. On drift, Claude Code is told to recommend the safe updater (see [Upgrading an installed repo](#upgrading-an-installed-repo)); it never updates anything itself. Repos without the stamp get no note.
+
+**ADR review inbox (session start).** The same hook counts ADRs under `docs/adr/` still marked `status: proposed` — skipping installer-written numbered candidates, exactly like `bash scripts/okf pending` — and injects the count as session-start context. Proposed decisions stay visible every session instead of only in the goal-met report, so they don't linger unreviewed. This check is local and works offline.
 
 **Env-file read denial (every tool call).** The installed `.claude/settings.json` also carries `permissions.deny` rules (`Read(./.env)`, `Read(./**/.env)`) so Claude Code cannot read local env files into conversation context. `.env.example` is deliberately not denied — deny rules can't be negated, and the committed sample file must stay readable. Extend the deny list in your own settings for other secret paths.
 

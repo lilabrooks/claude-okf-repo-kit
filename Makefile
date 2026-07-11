@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-helpers smoke-hooks smoke-okf
+.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf
 
 help:
 	@printf '%s\n' \
@@ -20,6 +20,7 @@ help:
 		'  make smoke-existing  Simulate installing into an existing repo.' \
 		'  make smoke-idempotent Test repeated existing-repo updates.' \
 		'  make smoke-candidates Test stale-candidate refresh across kit releases.' \
+		'  make smoke-scripts   Test kit-managed script provenance across releases.' \
 		'  make smoke-helpers    Test install, verify, and placeholder helpers.' \
 		'  make smoke-hooks     Test Stop hook block/pass behavior.' \
 		'  make smoke-okf       Test draft and ADR helper behavior.'
@@ -73,7 +74,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-helpers smoke-hooks smoke-okf
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -119,6 +120,11 @@ smoke-install:
 	python3 -m json.tool .claude/settings.json >/dev/null; \
 	grep -qF 'Read(./.env)' .claude/settings.json; \
 	grep -qF 'Read(./**/.env)' .claude/settings.json; \
+	test -f .okf-kit-backups/candidate-manifest; \
+	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 3 ]; \
+	grep -q 'scripts/okf' .okf-kit-backups/candidate-manifest; \
+	grep -q '.claude/hooks/check-docs-sync.sh' .okf-kit-backups/candidate-manifest; \
+	grep -q '.claude/hooks/check-okf-version.sh' .okf-kit-backups/candidate-manifest; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \
@@ -264,6 +270,40 @@ smoke-candidates:
 	grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.3.md"; \
 	printf 'candidate refresh smoke ok\n'
 
+smoke-scripts:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	kit="$$tmp/kit"; \
+	mkdir -p "$$kit/scripts" "$$kit/templates"; \
+	cp "$(KIT_DIR)/scripts/create-new-repo" "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
+	cp "$(KIT_DIR)/templates/CLAUDE.md" "$(KIT_DIR)/templates/GOAL.md" "$$kit/templates/"; \
+	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
+	target="$$tmp/target"; \
+	bash "$$kit/scripts/create-new-repo" "$$target" >/dev/null; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	test ! -f "$$target/.claude/hooks/check-docs-sync.2.sh"; \
+	printf '%s\n' '# kit v2 marker' >> "$$kit/scripts/check-docs-sync.sh"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	grep -q 'kit v2 marker' "$$target/.claude/hooks/check-docs-sync.sh"; \
+	test ! -f "$$target/.claude/hooks/check-docs-sync.2.sh"; \
+	[[ "$$output" == *'.claude/hooks/check-docs-sync.sh'* ]]; \
+	printf '%s\n' '# owner hardening' >> "$$target/.claude/hooks/check-docs-sync.sh"; \
+	printf '%s\n' '# kit v3 marker' >> "$$kit/scripts/check-docs-sync.sh"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	grep -q 'owner hardening' "$$target/.claude/hooks/check-docs-sync.sh"; \
+	! grep -q 'kit v3 marker' "$$target/.claude/hooks/check-docs-sync.sh"; \
+	test -f "$$target/.claude/hooks/check-docs-sync.2.sh"; \
+	grep -q 'kit v3 marker' "$$target/.claude/hooks/check-docs-sync.2.sh"; \
+	[[ "$$output" == *'check-docs-sync.sh exists; wrote candidate'* ]]; \
+	target2="$$tmp/preexisting"; \
+	mkdir -p "$$target2/.claude/hooks"; \
+	printf '%s\n' '#!/usr/bin/env bash' '# locally modified hook' > "$$target2/.claude/hooks/check-okf-version.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target2" >/dev/null; \
+	grep -q 'locally modified hook' "$$target2/.claude/hooks/check-okf-version.sh"; \
+	test -f "$$target2/.claude/hooks/check-okf-version.2.sh"; \
+	printf 'script provenance smoke ok\n'
+
 smoke-helpers:
 	@set -eu; \
 	tmp=$$(mktemp -d); \
@@ -365,6 +405,39 @@ smoke-hooks:
 	printf '%s\n' '# changed' > README.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
 	[[ -z "$$output" ]]; \
+	printf '%s\n' 'export function app() { return 3; }' > app/main.js; \
+	output=$$(printf '%s' '{"stop_hook_active": true}' | CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh 2>.claude/loopwarn.txt); \
+	[[ -z "$$output" ]]; \
+	grep -q 'avoid a loop' .claude/loopwarn.txt; \
+	rm -f .claude/loopwarn.txt; \
+	output=$$(printf '%s' '{"session_id": "smoke"}' | CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
+	[[ "$$output" == *'Code changed this session'* ]]; \
+	git checkout -q -- app/main.js; \
+	printf '%s\n' 'not a license' > LICENSE-MIT; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ "$$output" == *'Code changed this session'* ]]; \
+	rm LICENSE-MIT; \
+	printf '%s\n' 'MIT' > LICENSE; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	rm LICENSE; \
+	mkdir -p .codex; \
+	printf '%s\n' '{}' > .codex/hooks.json; \
+	printf '%s\n' '# Agents' > AGENTS.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	cp "$(KIT_DIR)/scripts/check-okf-version.sh" .claude/hooks/check-okf-version.sh; \
+	printf '%s\n' '---' 'status: proposed' 'title: One' '---' > docs/adr/0001-one.md; \
+	printf '%s\n' '---' 'status: accepted' 'title: Two' '---' > docs/adr/0002-two.md; \
+	printf '%s\n' '---' 'status: proposed' 'title: Three' '---' > docs/adr/0003-three.md; \
+	cp docs/adr/0001-one.md docs/adr/0001-one.2.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'ADR review inbox: 2 ADR(s)'* ]]; \
+	printf '%s' "$$output" | python3 -m json.tool >/dev/null; \
+	sed -i.bak 's/^status: proposed/status: accepted/' docs/adr/0001-one.md docs/adr/0003-three.md; \
+	rm -f docs/adr/0001-one.md.bak docs/adr/0003-three.md.bak docs/adr/0001-one.2.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" != *'ADR review inbox'* ]]; \
 	printf 'hook smoke ok\n'
 
 smoke-okf:

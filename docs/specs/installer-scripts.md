@@ -57,6 +57,8 @@ It must add these ignores:
 - `.env.*`
 - `!.env.example` (keeps the sample env file trackable)
 
+It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed scripts it installs (`scripts/okf` and the two hooks), so a later updater run can prove they are unedited kit output and refresh them in place (ADR 0013). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
+
 # Existing repo installer
 
 `bash scripts/update-existing-repo /path/to/existing-repo` updates an existing repo without destructive overwrites.
@@ -65,7 +67,7 @@ It must:
 
 - require the target directory to exist
 - create `.okf-kit-backups/<timestamp>/`
-- back up files before replacing kit-managed scripts
+- refresh a kit-managed script (`scripts/okf`, the two hooks) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADR 0013)
 - merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
 - append the required `.gitignore` entries (the same seven the new-repo installer adds) while preserving existing entries
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide
@@ -73,7 +75,7 @@ It must:
 - leave an existing `docs/okf-map.yml` untouched and write a candidate such as `docs/okf-map.2.yml`
 - leave an existing `docs/GOAL.md` untouched and write a candidate such as `docs/GOAL.2.md`; create `docs/GOAL.md` from `templates/GOAL.md` when it is missing
 - skip writing a numbered candidate when the existing file already matches the kit content byte for byte, recording such matches in the manifest so pre-manifest candidates opt in
-- record every candidate it writes in `.okf-kit-backups/candidate-manifest` (`sha256` plus repo-relative path), and on later runs refresh in place — after a backup — a stale candidate whose digest proves it is this script's own unedited output, removing provably-ours duplicates for the same destination; owner-edited or unrecorded candidates are never touched and keep the numbered-path behavior (ADR 0012)
+- record every candidate and kit-managed script it writes in `.okf-kit-backups/candidate-manifest` (`sha256` plus repo-relative path), and on later runs refresh in place — after a backup — a stale candidate whose digest proves it is this script's own unedited output, removing provably-ours duplicates for the same destination; owner-edited or unrecorded candidates are never touched and keep the numbered-path behavior (ADRs 0012, 0013)
 - create missing docs indexes and log files without overwriting existing docs
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
 

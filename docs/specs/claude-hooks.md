@@ -30,9 +30,11 @@ The deny set must not use an `.env.*` glob: deny rules cannot be negated, and th
 
 If `scripts/okf` exists in the target repo, the Stop hook also runs `bash scripts/okf check-stale` in hook mode.
 
-README, changelog, license, `.gitignore`, `.editorconfig`, Claude local memory, and hook/helper files are not treated as implementation files.
+README, changelog, license, `.gitignore`, `.editorconfig`, Claude local memory, hook/helper files, and agent config — `.claude/`, `CLAUDE.md`, plus a second agent's `.codex/` and `AGENTS.md` when present — are not treated as implementation files. File-name exclusions are end-anchored exact matches (so `LICENSE-MIT` or `CLAUDE.md.bak` count as code); directory exclusions keep prefix semantics.
 
-The hook emits JSON for Claude Code and exits successfully, allowing Claude Code to continue the turn rather than treating the hook itself as a shell failure.
+The hook honors `stop_hook_active` from the hook stdin payload: after a prior block in the same stop cycle it warns on stderr and allows the stop instead of blocking again, so a session that cannot write to `docs/` (a read-only sandbox, for example) never loops. Manual runs without a stdin payload behave as if the guard were absent.
+
+The hook emits JSON for Claude Code and exits successfully, allowing Claude Code to continue the turn rather than treating the hook itself as a shell failure. Its block message points at the repo playbook (`CLAUDE.md`; `AGENTS.md` if present) rather than a single agent's file, and both hooks resolve the repo root through `CLAUDE_PROJECT_DIR`, then `CODEX_PROJECT_DIR`, then the current directory, so unmodified copies work when mirrored into another agent's hook config.
 
 # SessionStart hook
 
@@ -42,7 +44,9 @@ The same hook also checks the declared `kit_version` in `docs/index.md` — stam
 
 The hook fails silent when offline or when the upstream spec or version file cannot be parsed.
 
-When drift is detected, the hook injects context for Claude Code rather than modifying files directly. OKF and kit drift notes are combined into a single context injection. The installed `CLAUDE.md` version policies tell Claude Code what to do with each note.
+The same hook also reports the ADR review inbox: it counts files under `docs/adr/` whose first `status:` line is `proposed`, skipping `index.md` and installer-written numbered candidates — the same files `bash scripts/okf pending` lists — and notes the count so proposed decisions stay visible every session instead of only in the goal-met report. This check is local and offline; it stays silent at zero.
+
+When anything is detected, the hook injects context for Claude Code rather than modifying files directly. OKF drift, kit drift, and the ADR inbox note are combined into a single context injection. The installed `CLAUDE.md` policies tell Claude Code what to do with each note.
 
 # Version migration policy
 

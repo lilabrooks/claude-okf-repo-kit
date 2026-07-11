@@ -12,3 +12,4 @@
 - [0010 Kit version stamp and drift reporting](0010-kit-version-stamp.md): Stamp installed repos with the kit release that produced them and report drift at session start.
 - [0011 Env-file read denial in shipped settings](0011-env-read-denial.md): Ship `permissions.deny` Read rules for local env files, making the secrets guardrail mechanical.
 - [0012 Stale-candidate refresh via digest manifest](0012-candidate-refresh-manifest.md): Refresh updater-written candidates in place (proven by content digest) instead of numbering past them each kit release.
+- [0013 Kit-managed script refresh via manifest provenance](0013-script-provenance-refresh.md): Refresh installed kit scripts in place only when provably unedited kit output; preserve owner-edited scripts with a kit candidate for review.

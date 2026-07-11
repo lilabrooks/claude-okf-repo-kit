@@ -72,6 +72,7 @@ mappings:
       - "docs/specs/repo-kit-packaging.md"
       - "docs/adr/0005-safe-installer-scripts.md"
       - "docs/adr/0010-kit-version-stamp.md"
+      - "docs/adr/0013-script-provenance-refresh.md"
 
   - source: "scripts/update-existing-repo"
     docs:
@@ -81,6 +82,7 @@ mappings:
       - "docs/adr/0010-kit-version-stamp.md"
       - "docs/adr/0011-env-read-denial.md"
       - "docs/adr/0012-candidate-refresh-manifest.md"
+      - "docs/adr/0013-script-provenance-refresh.md"
 
   - source: "okf-map.yml"
     docs:

@@ -37,6 +37,7 @@ The validation workflow must include:
 - existing-repo install simulation
 - existing-repo idempotency simulation
 - candidate refresh simulation across kit template changes
+- script provenance simulation across simulated kit releases (ADR 0013)
 - install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
@@ -53,11 +54,11 @@ New-repo install simulation must verify target `CLAUDE.md` comes from `templates
 
 New-repo install simulation must verify the installed `CLAUDE.md` carries the preloaded-context imports for `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` (ADR 0008).
 
-New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) and `.DS_Store` were appended (ADR 0010), and that the installed settings carry the env-file read deny rules (ADR 0011).
+New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) and `.DS_Store` were appended (ADR 0010), that the installed settings carry the env-file read deny rules (ADR 0011), and that `.okf-kit-backups/candidate-manifest` is seeded with entries for the three kit-managed scripts (ADR 0013).
 
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.
 
-Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries (including the target's own permission rules), merges hook settings and the kit's permission deny rules, appends required ignore entries including the env-file set, backs up replaced kit-managed scripts, and writes numbered candidates for same-name Markdown/map files (the `docs/index.md` candidate carrying the `kit_version` stamp).
+Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries (including the target's own permission rules), merges hook settings and the kit's permission deny rules, appends required ignore entries including the env-file set, backs up kit-managed scripts it refreshes, and writes numbered candidates for same-name Markdown/map files (the `docs/index.md` candidate carrying the `kit_version` stamp).
 
 Existing-repo install simulation must verify same-name Markdown and map conflicts produce same-folder numbered candidates.
 
@@ -68,6 +69,8 @@ Existing-repo install simulation must verify the update script prints a clear su
 Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, permission deny rules, or identical numbered candidates.
 
 Candidate refresh simulation must verify that when kit content changes between updater runs, the updater refreshes its own stale candidate in place instead of numbering past it, and that an owner-edited candidate is left untouched with a new number used instead (ADR 0012).
+
+Script provenance simulation must verify that across a simulated kit release: an unedited kit-managed script is refreshed in place with a backup and no candidate; an owner-edited script keeps its content, with the kit version written as a same-folder numbered candidate under the review section; and a repo with no manifest takes the preserve-plus-candidate path rather than being overwritten (ADR 0013).
 
 
 Install helper smoke tests must verify:
@@ -84,6 +87,10 @@ Hook smoke tests must cover:
 - mapped implementation changes with unrelated docs still block
 - mapped implementation changes with mapped docs pass
 - README-only edits pass
+- a `stop_hook_active` stdin payload downgrades a would-be block to a stderr warning that allows the stop; a payload without it still blocks
+- end-anchored exclusions: a lookalike file such as `LICENSE-MIT` blocks, while the exact excluded name passes
+- second-agent config (`.codex/`, `AGENTS.md`) alone does not block
+- the SessionStart hook reports the proposed-ADR count, skips numbered candidates, and emits valid JSON
 
 OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale`, ADR and spec scaffolding (numbering, `status: proposed`, index entries), and the `pending` listing including its missing-status flag.
 

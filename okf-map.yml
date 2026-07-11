@@ -6,6 +6,11 @@
 #
 # Keep patterns repo-relative. Quote glob patterns so YAML readers do not treat
 # `*` as an alias marker.
+#
+# Prefer one mapping per module or contract as specs emerge. A single broad
+# glob pointed at a stack ADR (for example "app/**" -> the ADR that chose the
+# framework) makes every source change look governed and turns check-stale
+# into noise instead of a signal.
 
 mappings:
   # Add one entry per source area after installing this kit in a real repo.

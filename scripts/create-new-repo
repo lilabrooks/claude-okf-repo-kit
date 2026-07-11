@@ -62,6 +62,29 @@ append_gitignore_entry() {
   fi
 }
 
+file_digest() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
+# Seed the same provenance manifest the updater keeps, so a later
+# update-existing-repo run can prove these scripts are unedited kit output and
+# refresh them in place instead of writing review candidates (ADR 0013). The
+# manifest lives in the git-ignored .okf-kit-backups/ and never leaves this
+# working copy.
+seed_manifest() {
+  local manifest="$TARGET/.okf-kit-backups/candidate-manifest"
+  mkdir -p "$TARGET/.okf-kit-backups"
+  local rel
+  for rel in .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf; do
+    printf '%s\t%s\n' "$(file_digest "$TARGET/$rel")" "$rel" >> "$manifest"
+  done
+  created+=(".okf-kit-backups/candidate-manifest (git-ignored provenance seed)")
+}
+
 copy_created "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
 copy_created "$KIT_DIR/settings.json" "$TARGET/.claude/settings.json"
 copy_created "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
@@ -100,6 +123,8 @@ cat > "$TARGET/docs/adr/index.md" <<'EOF'
 # ADRs
 EOF
 created+=("docs/adr/index.md")
+
+seed_manifest
 
 touch "$TARGET/.gitignore"
 created+=(".gitignore")
