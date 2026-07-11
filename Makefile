@@ -391,13 +391,13 @@ smoke-hooks:
 	git add .; \
 	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
 	printf '%s\n' 'export function app() { return 2; }' > app/main.js; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ "$$output" == *'Code changed this session but nothing under /docs was updated'* ]]; \
 	printf '%s\n' 'unrelated' > docs/notes/other.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ "$$output" == *'OKF stale mapping check failed'* ]]; \
 	printf '%s\n' 'mapped change' >> docs/specs/app.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
 	git add .; \
 	git -c user.email=a@example.com -c user.name=A commit -q -m mapped-doc-update; \
@@ -405,7 +405,7 @@ smoke-hooks:
 	git add README.md; \
 	git -c user.email=a@example.com -c user.name=A commit -q -m readme; \
 	printf '%s\n' '# changed' > README.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh); \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
 	printf '%s\n' 'export function app() { return 3; }' > app/main.js; \
 	output=$$(printf '%s' '{"stop_hook_active": true}' | CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh 2>.claude/loopwarn.txt); \
