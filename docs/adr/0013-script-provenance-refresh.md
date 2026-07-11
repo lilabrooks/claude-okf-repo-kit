@@ -4,12 +4,12 @@ title: Kit-managed script refresh via manifest provenance
 description: The updater refreshes kit-managed scripts in place only when their content is provably unedited kit output; owner-edited scripts are preserved with the kit version staged as a numbered candidate.
 tags: [adr, installer, safety]
 timestamp: 2026-07-11T21:33:56Z
-status: proposed
+status: accepted
 ---
 
 # Status
 
-Proposed (authored per the decision policy; awaiting owner review)
+Accepted (2026-07-11, at the owner's direction; implementation was already in place per the propose-then-implement policy)
 
 # Context
 
