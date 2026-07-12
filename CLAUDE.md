@@ -79,6 +79,7 @@ Source-only files:
 # Verification commands
 
 - Full validation: `make test`
+- Docs-only fast gate (ADR status flips, log-only edits): `make check-docs`
 - OKF stale map: `bash scripts/okf check-stale`
 - Helper command sanity: `bash scripts/okf adr-suggest`
 

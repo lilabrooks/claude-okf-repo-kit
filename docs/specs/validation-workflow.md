@@ -20,6 +20,8 @@ The Makefile is for this repo only. It does not need to be copied into target re
 
 `README.md` must name `make test` as the source-kit verification command.
 
+`make check-docs` must provide a fast gate for documentation-only changes — ADR status flips, log-only edits — running the checks that actually cover `docs/` prose (the stale-reference/local-path scan and the Markdown link check) plus the OKF helper sanity checks (`check-stale`, `pending`), without the installer, hook, and helper smoke simulations that a documentation edit cannot affect. It is a convenience subset of `make test`, not a replacement: changes that touch scripts, templates, `settings.json`, or `VERSION` still require `make test`.
+
 # Required checks
 
 The validation workflow must include:

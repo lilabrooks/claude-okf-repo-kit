@@ -3,12 +3,13 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
 		'Available targets:' \
 		'  make test            Run all validation checks.' \
+		'  make check-docs      Fast gate for documentation-only changes.' \
 		'  make syntax          Check script syntax.' \
 		'  make shellcheck      Run ShellCheck when installed.' \
 		'  make json            Validate JSON files.' \
@@ -27,6 +28,15 @@ help:
 		'  make smoke-harvest   Test the dogfood harvest registry and report.'
 
 test: syntax shellcheck json scan links smoke
+
+# Fast gate for documentation-only changes (ADR status flips, log-only edits):
+# the checks that actually cover docs/ prose, without the installer and hook
+# smoke simulations that a doc edit cannot affect. Not a replacement for `make
+# test` — changes touching scripts, templates, settings, or VERSION need it.
+check-docs: scan links
+	@bash scripts/okf check-stale >/dev/null
+	@bash scripts/okf pending >/dev/null
+	@printf 'check-docs ok\n'
 
 syntax:
 	@bash -n scripts/okf

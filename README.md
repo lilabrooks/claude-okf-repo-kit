@@ -546,6 +546,8 @@ make smoke
 make shellcheck
 ```
 
+For a change that only touches documentation — accepting an already-implemented ADR (a `status:` flip plus a log entry), or a log-only edit — `make check-docs` is a fast gate that runs just the checks covering `docs/` prose (the local-path scan and Markdown links) plus the OKF helper sanity checks, skipping the installer and hook smoke simulations a doc edit cannot affect. Anything touching scripts, templates, `settings.json`, or `VERSION` still needs the full `make test`.
+
 ## References
 
 - OKF spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
