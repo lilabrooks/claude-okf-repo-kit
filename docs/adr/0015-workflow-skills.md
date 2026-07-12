@@ -4,12 +4,12 @@ title: Workflow procedures as installed skills
 description: Deliver the four episodic workflow procedures as installed Claude Code skills that load on demand, with binding one-liners staying resident in the installed CLAUDE.md.
 tags: [adr, skills, context, template]
 timestamp: 2026-07-12T01:36:05Z
-status: proposed
+status: accepted
 ---
 
 # Status
 
-Proposed (authored per the decision policy; awaiting owner review)
+Accepted (2026-07-12, at the owner's direction; implementation was already in place per the propose-then-implement policy)
 
 # Context
 
