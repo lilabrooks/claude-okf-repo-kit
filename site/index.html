@@ -154,7 +154,7 @@
         <article class="principle">
           <span class="claim-status">Returned for review</span>
           <h3>Proposed architecture decisions</h3>
-          <p>Dependencies, persistence, APIs, security boundaries, deployment, and similar choices begin as proposed ADRs. The owner accepts, revises, or rejects them.</p>
+          <p>Dependencies, persistence, APIs, security boundaries, deployment, and similar choices begin as ADRs Claude writes itself, marked proposed. The owner accepts, revises, or rejects them.</p>
         </article>
       </div>
       <p><a class="text-link" href="how-it-works/">See how a session actually runs, step by step ↗</a></p>
@@ -165,7 +165,7 @@
         <p class="eyebrow">The loop</p>
         <div>
           <h2 id="flow-title">From goal to done — in order, on the record.</h2>
-          <p>You define the goal. From it, Claude Code drafts an ordered milestone backlog for you to confirm, then works the milestones one at a time — reading the specs and ADRs that govern each area before it edits, proposing an ADR whenever a change is decision-shaped, and writing or updating the behavior spec whenever behavior moves. Every milestone is verified and logged before the next begins.</p>
+          <p>You define the goal. From it, Claude Code drafts an ordered milestone backlog for you to confirm, then works the milestones one at a time — reading the specs and ADRs that govern each area before it edits, proposing an ADR whenever a change is decision-shaped, and writing or updating the behavior spec whenever behavior moves. Every milestone is verified and logged before the next begins. Claude authors the specs and writes the ADRs as proposals; you own the goal, and you accept, revise, or reject each proposed ADR.</p>
         </div>
       </div>
       <div style="max-width:600px;margin:8px auto 0;overflow-x:auto;">
@@ -215,7 +215,7 @@
 
           <rect class="fl-n" x="150" y="362" width="280" height="56" rx="4"/>
           <text class="fl-t" x="290" y="386">Specs + ADRs</text>
-          <text class="fl-s" x="290" y="404">spec updated · ADR proposed</text>
+          <text class="fl-s" x="290" y="404">Claude writes them; you review</text>
 
           <rect class="fl-n" x="150" y="448" width="280" height="56" rx="4"/>
           <text class="fl-t" x="290" y="472">Log + check off</text>
@@ -229,6 +229,9 @@
           <text class="fl-ta" x="290" y="644">Goal met</text>
           <text class="fl-s" x="290" y="662">ADRs await your review</text>
         </svg>
+      </div>
+      <div class="limit-note light">
+        <p><strong>Kept in the repo, not the context window.</strong> A Claude Code session opens with a fresh, limited context window. The kit keeps the goal, milestones, specs, ADRs, and log in git, and preloads only the goal and the spec and ADR indexes at session start — the rest is read from disk on demand. The record survives every context reset, so a fresh session resumes exactly where the last one stopped.</p>
       </div>
     </section>
 
