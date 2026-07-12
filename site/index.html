@@ -108,7 +108,7 @@
         <p class="intro">The kit turns an owner-defined outcome into verified milestones, behavior specifications, proposed architecture decisions, and a progress log that change with the code.</p>
         <div class="signal">
           <strong>Why it exists</strong>
-          <p>Claude Code can pursue a task. The kit makes the goal, boundaries, decisions, and progress part of the repository’s shared history.</p>
+          <p>Claude Code is an agentic coding tool: Claude directs its own tools in a loop. The kit makes the goal, boundaries, and decisions that loop produces part of the repository’s shared history.</p>
         </div>
       </div>
     </section>
@@ -142,9 +142,9 @@
           <p>The owner confirms the problem, target state, success criteria, non-goals, fixed constraints, and milestone order.</p>
         </article>
         <article class="principle">
-          <span class="claim-status">Claude-driven</span>
-          <h3>A verified milestone loop</h3>
-          <p>When asked to continue, Claude takes the first unfinished milestone, reads its governing context, implements it, verifies it, records progress, and moves on — running a first-time-user acceptance pass before it declares the goal met, and resuming in-flight work after an interrupted session rather than starting over.</p>
+          <span class="claim-status">Agentic</span>
+          <h3>A verified agent loop</h3>
+          <p>“Continue” runs Claude Code’s agent loop over the backlog: Claude takes the first unfinished milestone, reads its governing context, edits code, and runs the tests — using that environmental feedback as ground truth for whether the milestone is done before recording progress and moving on. It runs a first-time-user acceptance pass before declaring the goal met, and resumes in-flight work after an interrupted session rather than starting over.</p>
         </article>
         <article class="principle">
           <span class="claim-status">Kept with the code</span>
@@ -165,7 +165,7 @@
         <p class="eyebrow">What the kit installs</p>
         <div>
           <h2 id="artifacts-title">The contract is a handful of files in the repository.</h2>
-          <p>The knowledge bundle follows the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a>, an open spec for project knowledge that travels with the code. Nothing here is hidden state; it is committed, diffable, and reviewed like source.</p>
+          <p>The knowledge bundle follows the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a>, an open spec for project knowledge that travels with the code. It rides Claude Code’s own extension points — project memory, skills, and hooks — so the kit is configuration, not a separate engine, and nothing here is hidden state: it is committed, diffable, and reviewed like source.</p>
         </div>
       </div>
       <div class="principle-grid">
@@ -208,7 +208,7 @@
           <p class="eyebrow">What is verified</p>
           <div>
             <h2 id="truth-title">The mechanics are real. Judgment stays reviewable.</h2>
-            <p>The kit’s test suite covers installation, hooks, source mappings, document scaffolds, updates, and dogfood reporting. The content of a specification or decision still needs technical review.</p>
+            <p>The kit has two layers, in Anthropic’s terms: deterministic hooks that run as fixed code paths, and the agentic work Claude does with judgment. The test suite covers the first — installation, hooks, source mappings, document scaffolds, updates, and dogfood reporting. The content of a specification or decision is the second, and still needs technical review.</p>
           </div>
         </div>
         <ul class="working-set-list">

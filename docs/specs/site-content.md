@@ -33,6 +33,16 @@ The website is entirely the source-repo maintainer's concern. It is not part of 
 - Prefer concrete nouns from the repo (goal, milestone, spec, ADR, source map, hook, acceptance pass) over abstractions.
 - Sentence-level honesty over enthusiasm: when something is an instruction rather than an enforced gate, say so.
 
+# Terminology (Claude and Anthropic)
+
+Use Anthropic's own vocabulary so the site describes the real system, not a private metaphor. Keep three layers distinct:
+
+- **Claude** — the model, which does the reasoning and makes the decisions.
+- **Claude Code** — Anthropic's **agentic coding tool** (its docs' phrase; the "Claude Code engine"). It runs the **agent loop**: Claude "dynamically directs its own processes and tool usage… using tools based on environmental feedback in a loop," taking "ground truth from the environment at each step (such as tool call results or code execution)." Prefer "agent loop" and "agentic"; avoid "harness" — it is community shorthand Anthropic's public docs don't use.
+- **The kit** — configuration on Claude Code's own extension points (**project memory** / `CLAUDE.md`, **skills** that load on demand, **hooks** at lifecycle events like Stop and SessionStart), plus the OKF knowledge. It is not a separate engine or agent.
+
+Name where behavior is **agentic** (Claude's dynamic, self-directed tool use — the milestone loop, spec/ADR authoring) versus **deterministic** (the hooks, which run as fixed code paths — Anthropic's "workflow" end of the spectrum). Other terms to use as Anthropic does: **tools**, **context window**, **sessions**, **subagents**, `/goal` (a session-scoped completion condition). Don't call the kit's loop a Claude feature it isn't: "continue" drives Claude Code's agent loop over the backlog; it is not the built-in `/goal` command.
+
 # Honesty framing (do not soften)
 
 - Keep the **verified-vs-judgment** distinction the site already draws: the mechanics are real; the content of a spec or decision still needs human review.
