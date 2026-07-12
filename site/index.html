@@ -160,6 +160,78 @@
       <p><a class="text-link" href="how-it-works/">See how a session actually runs, step by step ↗</a></p>
     </section>
 
+    <section class="section shell" aria-labelledby="flow-title">
+      <div class="section-head">
+        <p class="eyebrow">The loop</p>
+        <div>
+          <h2 id="flow-title">From goal to done — in order, on the record.</h2>
+          <p>You define the goal. From it, Claude Code drafts an ordered milestone backlog for you to confirm, then works the milestones one at a time — reading the specs and ADRs that govern each area before it edits, proposing an ADR whenever a change is decision-shaped, and writing or updating the behavior spec whenever behavior moves. Every milestone is verified and logged before the next begins.</p>
+        </div>
+      </div>
+      <div style="max-width:600px;margin:8px auto 0;overflow-x:auto;">
+        <svg viewBox="0 0 600 700" role="img" aria-labelledby="flow-svg-title flow-svg-desc" style="width:100%;height:auto;display:block;">
+          <title id="flow-svg-title">The kit's goal-to-done loop</title>
+          <desc id="flow-svg-desc">The owner defines the goal; Claude Code drafts ordered milestones, then loops per milestone — read the governing specs and ADRs, implement and verify, update specs and propose ADRs, log and check off — repeating until the backlog is empty, then runs an acceptance pass and reports the goal met with proposed ADRs listed for review.</desc>
+          <style>
+            .fl-n { fill: var(--paper); stroke: var(--ink); stroke-width: 1.25; }
+            .fl-a { fill: var(--cobalt-soft); stroke: var(--cobalt); stroke-width: 1.25; }
+            .fl-t { fill: var(--ink); font-family: var(--display); font-size: 16px; font-weight: 600; text-anchor: middle; }
+            .fl-ta { fill: var(--cobalt); font-family: var(--display); font-size: 16px; font-weight: 600; text-anchor: middle; }
+            .fl-s { fill: var(--muted); font-family: var(--display); font-size: 12.5px; text-anchor: middle; }
+            .fl-ar { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+            .fl-lp { stroke: var(--cobalt); stroke-width: 1.25; fill: none; }
+            .fl-ll { fill: var(--cobalt); font-family: var(--display); font-size: 12.5px; font-style: italic; text-anchor: middle; }
+          </style>
+          <defs>
+            <marker id="fl-ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="var(--muted)"/></marker>
+            <marker id="fl-ahc" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="var(--cobalt)"/></marker>
+          </defs>
+
+          <line class="fl-ar" x1="290" y1="74" x2="290" y2="102" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="160" x2="290" y2="188" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="246" x2="290" y2="274" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="332" x2="290" y2="360" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="418" x2="290" y2="446" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="504" x2="290" y2="532" marker-end="url(#fl-ah)"/>
+          <line class="fl-ar" x1="290" y1="590" x2="290" y2="618" marker-end="url(#fl-ah)"/>
+          <path class="fl-lp" d="M430,476 H470 V218 H434" marker-end="url(#fl-ahc)"/>
+          <text class="fl-ll" x="487" y="347" transform="rotate(-90 487 347)">next milestone</text>
+
+          <rect class="fl-a" x="150" y="18" width="280" height="56" rx="4"/>
+          <text class="fl-ta" x="290" y="42">The goal</text>
+          <text class="fl-s" x="290" y="60">you define it, and confirm it</text>
+
+          <rect class="fl-n" x="150" y="104" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="128">Ordered milestones</text>
+          <text class="fl-s" x="290" y="146">Claude drafts them from the goal</text>
+
+          <rect class="fl-n" x="150" y="190" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="214">Read specs + ADRs</text>
+          <text class="fl-s" x="290" y="232">the knowledge governing the change</text>
+
+          <rect class="fl-n" x="150" y="276" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="300">Implement + verify</text>
+          <text class="fl-s" x="290" y="318">smallest change, then run the tests</text>
+
+          <rect class="fl-n" x="150" y="362" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="386">Specs + ADRs</text>
+          <text class="fl-s" x="290" y="404">spec updated · ADR proposed</text>
+
+          <rect class="fl-n" x="150" y="448" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="472">Log + check off</text>
+          <text class="fl-s" x="290" y="490">the milestone is done</text>
+
+          <rect class="fl-n" x="150" y="534" width="280" height="56" rx="4"/>
+          <text class="fl-t" x="290" y="558">Acceptance pass</text>
+          <text class="fl-s" x="290" y="576">when the backlog is empty</text>
+
+          <rect class="fl-a" x="150" y="620" width="280" height="56" rx="4"/>
+          <text class="fl-ta" x="290" y="644">Goal met</text>
+          <text class="fl-s" x="290" y="662">ADRs await your review</text>
+        </svg>
+      </div>
+    </section>
+
     <section class="section shell" aria-labelledby="artifacts-title">
       <div class="section-head">
         <p class="eyebrow">What the kit installs</p>
