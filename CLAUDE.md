@@ -42,6 +42,7 @@ Install artifacts:
 
 - `templates/CLAUDE.md` — template copied to target repo `CLAUDE.md`.
 - `templates/GOAL.md` — goal template copied to target repo `docs/GOAL.md`.
+- `templates/skills/okf-*/SKILL.md` — workflow skills copied to target repo `.claude/skills/okf-*/SKILL.md` (ADR 0015).
 - `settings.json` — copied to target repo `.claude/settings.json`.
 - `okf-map.yml` — copied to target repo `docs/okf-map.yml`.
 - `scripts/okf` — copied to target repo `scripts/okf`.

@@ -329,6 +329,10 @@ merge_settings
 install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh" ".claude/hooks/check-docs-sync.sh"
 install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh" ".claude/hooks/check-okf-version.sh"
 install_kit_script "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf" "scripts/okf"
+install_kit_script "$KIT_DIR/templates/skills/okf-goal-interview/SKILL.md" "$TARGET/.claude/skills/okf-goal-interview/SKILL.md" ".claude/skills/okf-goal-interview/SKILL.md"
+install_kit_script "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.claude/skills/okf-acceptance-pass/SKILL.md" ".claude/skills/okf-acceptance-pass/SKILL.md"
+install_kit_script "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md" ".claude/skills/okf-adr-review/SKILL.md"
+install_kit_script "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md" ".claude/skills/okf-kit-upgrade/SKILL.md"
 
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
   write_numbered_candidate "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml" "docs/okf-map.yml"

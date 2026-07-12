@@ -79,7 +79,9 @@ seed_manifest() {
   local manifest="$TARGET/.okf-kit-backups/candidate-manifest"
   mkdir -p "$TARGET/.okf-kit-backups"
   local rel
-  for rel in .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf; do
+  for rel in .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf \
+    .claude/skills/okf-goal-interview/SKILL.md .claude/skills/okf-acceptance-pass/SKILL.md \
+    .claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md; do
     printf '%s\t%s\n' "$(file_digest "$TARGET/$rel")" "$rel" >> "$manifest"
   done
   created+=(".okf-kit-backups/candidate-manifest (git-ignored provenance seed)")
@@ -92,6 +94,10 @@ copy_created "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/chec
 copy_created "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
 copy_created "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
 copy_created "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+copy_created "$KIT_DIR/templates/skills/okf-goal-interview/SKILL.md" "$TARGET/.claude/skills/okf-goal-interview/SKILL.md"
+copy_created "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.claude/skills/okf-acceptance-pass/SKILL.md"
+copy_created "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md"
+copy_created "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md"
 
 cat > "$TARGET/docs/index.md" <<EOF
 ---

@@ -123,10 +123,19 @@ smoke-install:
 	grep -qF 'Read(./.env)' .claude/settings.json; \
 	grep -qF 'Read(./**/.env)' .claude/settings.json; \
 	test -f .okf-kit-backups/candidate-manifest; \
-	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 3 ]; \
+	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 7 ]; \
 	grep -q 'scripts/okf' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-docs-sync.sh' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-okf-version.sh' .okf-kit-backups/candidate-manifest; \
+	for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do \
+		test -f ".claude/skills/$$skill/SKILL.md"; \
+		grep -q "^name: $$skill" ".claude/skills/$$skill/SKILL.md"; \
+		grep -q "$$skill" .okf-kit-backups/candidate-manifest; \
+	done; \
+	grep -q 'okf-goal-interview' CLAUDE.md; \
+	grep -q 'okf-acceptance-pass' CLAUDE.md; \
+	grep -q 'okf-adr-review' CLAUDE.md; \
+	grep -q 'okf-kit-upgrade' CLAUDE.md; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \
@@ -251,7 +260,7 @@ smoke-candidates:
 	kit="$$tmp/kit"; \
 	mkdir -p "$$kit/scripts" "$$kit/templates"; \
 	cp "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
-	cp "$(KIT_DIR)/templates/CLAUDE.md" "$(KIT_DIR)/templates/GOAL.md" "$$kit/templates/"; \
+	cp -R "$(KIT_DIR)/templates/." "$$kit/templates/"; \
 	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
 	target="$$tmp/target"; \
 	mkdir -p "$$target"; \
@@ -279,7 +288,7 @@ smoke-scripts:
 	kit="$$tmp/kit"; \
 	mkdir -p "$$kit/scripts" "$$kit/templates"; \
 	cp "$(KIT_DIR)/scripts/create-new-repo" "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
-	cp "$(KIT_DIR)/templates/CLAUDE.md" "$(KIT_DIR)/templates/GOAL.md" "$$kit/templates/"; \
+	cp -R "$(KIT_DIR)/templates/." "$$kit/templates/"; \
 	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
 	target="$$tmp/target"; \
 	bash "$$kit/scripts/create-new-repo" "$$target" >/dev/null; \
@@ -304,6 +313,15 @@ smoke-scripts:
 	bash "$$kit/scripts/update-existing-repo" "$$target2" >/dev/null; \
 	grep -q 'locally modified hook' "$$target2/.claude/hooks/check-okf-version.sh"; \
 	test -f "$$target2/.claude/hooks/check-okf-version.2.sh"; \
+	printf '%s\n' '# owner-tuned wording' >> "$$target/.claude/skills/okf-adr-review/SKILL.md"; \
+	printf '%s\n' '## kit v4 skill marker' >> "$$kit/templates/skills/okf-adr-review/SKILL.md"; \
+	printf '%s\n' '## kit v4 skill marker' >> "$$kit/templates/skills/okf-kit-upgrade/SKILL.md"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'owner-tuned wording' "$$target/.claude/skills/okf-adr-review/SKILL.md"; \
+	test -f "$$target/.claude/skills/okf-adr-review/SKILL.2.md"; \
+	grep -q 'kit v4 skill marker' "$$target/.claude/skills/okf-adr-review/SKILL.2.md"; \
+	grep -q 'kit v4 skill marker' "$$target/.claude/skills/okf-kit-upgrade/SKILL.md"; \
+	test ! -f "$$target/.claude/skills/okf-kit-upgrade/SKILL.2.md"; \
 	printf 'script provenance smoke ok\n'
 
 smoke-helpers:
@@ -477,6 +495,14 @@ smoke-harvest:
 	[[ "$$output" == *'commits since last harvest'*': 0'* ]]; \
 	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood" list); \
 	[[ "$$output" == *'dogfood-target'* ]]; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood" query 'worth upstreaming'); \
+	[[ "$$output" == *'dogfood-target [log]'* ]]; \
+	[[ "$$output" == *'worth upstreaming'* ]]; \
+	output=$$(bash "$(KIT_DIR)/scripts/harvest-dogfood" query '^dogfood-target.goal.*Problem'); \
+	[[ "$$output" == *'[goal] docs/GOAL.md'* ]]; \
+	if bash "$(KIT_DIR)/scripts/harvest-dogfood" query 'zz-no-such-term-zz' >/dev/null 2>&1; then \
+		printf 'query with no matches should exit nonzero\n' >&2; exit 1; \
+	fi; \
 	printf 'dogfood harvest smoke ok\n'
 
 smoke-okf:

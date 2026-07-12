@@ -39,6 +39,12 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/adr/0006-goal-file-template.md"
 
+  - source: "templates/skills/**"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/installer-scripts.md"
+      - "docs/adr/0015-workflow-skills.md"
+
   - source: "settings.json"
     docs:
       - "docs/specs/claude-hooks.md"

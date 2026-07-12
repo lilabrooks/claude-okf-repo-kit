@@ -55,7 +55,7 @@ New-repo install simulation must verify target `CLAUDE.md` comes from `templates
 
 New-repo install simulation must verify the installed `CLAUDE.md` carries the preloaded-context imports for `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` (ADR 0008).
 
-New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) and `.DS_Store` were appended (ADR 0010), that the installed settings carry the env-file read deny rules (ADR 0011), and that `.okf-kit-backups/candidate-manifest` is seeded with entries for the three kit-managed scripts (ADR 0013).
+New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) and `.DS_Store` were appended (ADR 0010), that the installed settings carry the env-file read deny rules (ADR 0011), that `.okf-kit-backups/candidate-manifest` is seeded with entries for the seven kit-managed files (ADRs 0013, 0015), and that the four `okf-*` skills are installed with matching frontmatter names while the installed `CLAUDE.md` keeps the resident one-liners pointing at them (ADR 0015).
 
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.
 

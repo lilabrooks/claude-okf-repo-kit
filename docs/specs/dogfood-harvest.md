@@ -26,13 +26,21 @@ Commands:
 - `bash scripts/harvest-dogfood add <path> [name]` — register a repo at its current HEAD; the name defaults to the directory basename. Rejected inputs: a missing directory, a directory that is not a git repo with at least one commit, and a name already registered — each fails with a clear message and a nonzero exit.
 - `bash scripts/harvest-dogfood mark [name ...]` — record the current HEAD and stamp for the named repos (all repos when no names are given), after the owner has reviewed a report.
 - `bash scripts/harvest-dogfood list` — show the registry with short SHAs and stamps.
+- `bash scripts/harvest-dogfood index` — rebuild the cross-repo knowledge index and report its entry count.
+- `bash scripts/harvest-dogfood query <pattern>` — rebuild the index, then print entries matching the case-insensitive extended-regex pattern; a query with no pattern prints usage and exits nonzero, and a pattern with no matches reports that and exits 1.
 - Unknown subcommands print usage and exit nonzero.
+
+Cross-repo index:
+
+- Lives beside the registry (`dogfood-index` in the same directory), machine-local and never committed. It is derived: rebuilt from scratch on every `index` and `query` run, so it cannot go stale and is never edited.
+- One tab-separated line per fact — repo name, kind, source path, text — where kind is one of `goal` (Kind/Problem/Solution lines from `docs/GOAL.md`), `milestone` (checkbox lines), `spec` (entries from `docs/specs/index.md`), `adr` (per-ADR status, title, and description, skipping the index and numbered candidates), and `log` (each `docs/log.md` bullet's first line, truncated, tagged with its dated heading).
+- Query output groups each hit as a header line (repo, kind, path) and an indented text line — compact enough that a hit costs tens of tokens to read.
 
 Report, per registered repo:
 
 - `kit_version` stamp from the target's `docs/index.md` compared against the kit `VERSION`, with an explicit drift marker.
 - Commits since the recorded SHA (`git log --oneline`), and the added `docs/log.md` lines from that range — the docs-sync hook guarantees this carries the narrative. Lines mentioning the kit by name, "upstream", or the word "kit" are repeated under a flagged section. A recorded SHA that no longer resolves falls back to recent history with a warning instead of failing.
-- Kit-managed script status for `scripts/okf` and the two hooks: `matches kit` (byte-identical to current kit source), `unedited older kit output` (digest recorded in the target's candidate manifest, so the updater refreshes it in place), or `owner-edited or unrecorded` (the updater preserves it and writes a candidate) — the ADR 0013 classification.
+- Kit-managed file status for `scripts/okf`, the two hooks, and the four `okf-*` skills: `matches kit` (byte-identical to current kit source), `unedited older kit output` (digest recorded in the target's candidate manifest, so the updater refreshes it in place), `owner-edited or unrecorded` (the updater preserves it and writes a candidate), or `missing` (the updater installs it) — the ADR 0013 classification extended to the ADR 0015 skills.
 - The target's proposed-ADR review inbox via its own `bash scripts/okf pending`.
 - An uncommitted-changes count when the target's working tree is dirty, and a note when second-agent config (`AGENTS.md`, `.codex/`) is present.
 - A registered path that no longer exists is reported as skipped, not an error.
@@ -41,6 +49,6 @@ The helper is read-only against targets: it must not write to, fetch into, or ot
 
 # Verification
 
-- `make smoke-harvest`: against a temp target created by `scripts/create-new-repo` (registry pointed at a temp file via `OKF_DOGFOOD_REGISTRY`), verifies `add` baselines at HEAD, a zero-delta report, a committed change producing the commit line, the new log entry, and the kit-mention flag, owner-edited hook classification, and `mark` resetting the delta to zero.
+- `make smoke-harvest`: against a temp target created by `scripts/create-new-repo` (registry pointed at a temp file via `OKF_DOGFOOD_REGISTRY`), verifies `add` baselines at HEAD, a zero-delta report, a committed change producing the commit line, the new log entry, and the kit-mention flag, owner-edited hook classification, `mark` resetting the delta to zero, and the query path: a term from the committed log entry matches with the repo tag, and a nonsense term exits 1.
 - `make syntax` / `make shellcheck` cover the script.
 - Manual check: `bash scripts/harvest-dogfood list` then a `report` against the registered real repos.

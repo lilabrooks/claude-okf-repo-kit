@@ -20,6 +20,10 @@ The source repo keeps these install artifacts:
 
 - `templates/CLAUDE.md`
 - `templates/GOAL.md`
+- `templates/skills/okf-goal-interview/SKILL.md`
+- `templates/skills/okf-acceptance-pass/SKILL.md`
+- `templates/skills/okf-adr-review/SKILL.md`
+- `templates/skills/okf-kit-upgrade/SKILL.md`
 - `settings.json`
 - `okf-map.yml`
 - `scripts/okf`
@@ -61,6 +65,7 @@ When installed into a target repo, copy files to these destinations:
 
 - `templates/CLAUDE.md` -> `CLAUDE.md`
 - `templates/GOAL.md` -> `docs/GOAL.md`
+- `templates/skills/okf-*/SKILL.md` -> `.claude/skills/okf-*/SKILL.md`
 - `settings.json` -> `.claude/settings.json`
 - `okf-map.yml` -> `docs/okf-map.yml`
 - `scripts/okf` -> `scripts/okf`
@@ -86,9 +91,11 @@ The bundle root `docs/index.md` declares `okf_version`, and installer-written st
 
 The installed `CLAUDE.md` must preload session context with `@` imports of `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md`, and must not import larger or unbounded files such as `docs/log.md` or full specs (ADR 0008).
 
+The expanded procedures for the four episodic workflows — goal interview, acceptance pass, ADR review, kit upgrade — are delivered as installed skills at `.claude/skills/okf-*/SKILL.md` (ADR 0015). The installed `CLAUDE.md` keeps a binding compressed form of each that names its skill and stands alone when the skill fails to load; guardrails and loop semantics never move into skills. The contract items below may therefore be satisfied by the resident compressed form, with the named skill carrying the expansion.
+
 The installed `CLAUDE.md` must also carry the autonomous iteration contract (ADR 0007):
 
-- fill placeholder content in `docs/GOAL.md` or `CLAUDE.md` with the owner before the first milestone task, through a structured goal interview: what is being built and for whom, the concrete done state, the example interactions users will actually give the primary interface (including at least one messy or wrong one, phrased per repo kind — typed/pasted input for an app, command lines for a utility, requests for a service), the mechanical verification (with the convention that a new repo's first milestone establishes canonical test and run commands), non-goals, which stack choices are fixed versus decided later through proposed ADRs, and the first shippable slice — each question illustrated with a worked example, pushing back on answers that cannot be checked mechanically, confirming that any tool a verification step names beyond the repo's own stack is installed (or marking that step owner-gated so the loop expects the pause), proposing answers from an existing codebase where possible, drafting the milestone backlog to end with the README-quickstart milestone by default, and never overwriting goal content the owner wrote by hand
+- fill placeholder content in `docs/GOAL.md` or `CLAUDE.md` with the owner before the first milestone task, through a structured goal interview: what is being built and for whom, the concrete done state, the example interactions users will actually give the primary interface (including at least one messy or wrong one, phrased per repo kind — typed/pasted input for an app, command lines for a utility, requests for a service), the mechanical verification (with the convention that a new repo's first milestone establishes canonical test and run commands), non-goals, which stack choices are fixed versus decided later through proposed ADRs, and the first shippable slice — the worked examples for each question carried by the `okf-goal-interview` skill, pushing back on answers that cannot be checked mechanically, confirming that any tool a verification step names beyond the repo's own stack is installed (or marking that step owner-gated so the loop expects the pause), proposing answers from an existing codebase where possible, drafting the milestone backlog to end with the README-quickstart milestone by default, and never overwriting goal content the owner wrote by hand
 - continue milestone by milestone until the backlog is done, a reserved decision comes up, or the owner stops the loop, and report the goal met when all milestones and success criteria pass instead of inventing scope
 - run an acceptance pass before reporting the goal met: exercise the deliverable through its primary interface as a first-time user would — clean checkout, README quickstart, the goal's example interactions plus obvious variants and wrong inputs — fixing in-scope breakage, logging what was exercised, and carrying out-of-scope findings into the candidate-milestone proposals
 - resume interrupted work: at session start, uncommitted working-tree changes are in-flight work to reconcile against the first unchecked milestone and the newest `docs/log.md` entry, then finish or back out — not a clean slate

@@ -76,6 +76,7 @@ That validates script syntax, optional ShellCheck linting, `settings.json`, stal
 |-------------------------|-------------------------------------|----------------------------------------------------------------|
 | `templates/CLAUDE.md`   | `CLAUDE.md` (repo root)             | Master objective template, grounding rules, workflow. Loaded every session. |
 | `templates/GOAL.md`     | `docs/GOAL.md`                      | Goal template: repo kind, problem, target state, success criteria, milestone backlog. |
+| `templates/skills/okf-*/SKILL.md` | `.claude/skills/okf-*/SKILL.md` | Workflow skills loading on demand: goal interview, acceptance pass, ADR review, kit upgrade. `CLAUDE.md` keeps binding one-liners that stand alone if a skill doesn't load. |
 | `settings.json`         | `.claude/settings.json`             | Registers both hooks and denies reading local `.env` files.    |
 | `scripts/check-docs-sync.sh`    | `.claude/hooks/check-docs-sync.sh`  | Stop hook. Blocks missing docs updates and stale mapped docs. |
 | `scripts/check-okf-version.sh`  | `.claude/hooks/check-okf-version.sh`| SessionStart hook. Reports OKF spec version drift so Claude migrates `/docs` formatting. |
@@ -194,6 +195,10 @@ cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
 cp "$KIT/okf-map.yml" "$TARGET/docs/okf-map.yml"
 cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do
+  mkdir -p "$TARGET/.claude/skills/$skill"
+  cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
+done
 ```
 
 5. Add the starter docs files:
@@ -299,6 +304,10 @@ mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" 
 cp "$KIT/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
 cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do
+  mkdir -p "$TARGET/.claude/skills/$skill"
+  cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
+done
 ```
 
 5. If the repo does not already have `docs/index.md`, `docs/log.md`, `docs/specs/index.md`, or `docs/adr/index.md`, create them using the starter files from the new-repo steps.
@@ -385,7 +394,7 @@ git pull
 bash scripts/update-existing-repo /path/to/target-repo
 ```
 
-The updater never overwrites your work. Kit-managed scripts (`scripts/okf` and the two hooks) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+The updater never overwrites your work. Kit-managed files (`scripts/okf`, the two hooks, and the four `okf-*` skills) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
 
 ### Using a second agent for repo chores (optional)
 
@@ -405,6 +414,7 @@ In an installed target repo, commit these files:
 - `CLAUDE.md`
 - `.claude/settings.json`
 - `.claude/hooks/`
+- `.claude/skills/`
 - `scripts/okf`
 - all of `docs/`
 
@@ -508,9 +518,12 @@ bash scripts/harvest-dogfood add /path/to/installed-repo   # register at current
 bash scripts/harvest-dogfood                               # delta report for all repos
 bash scripts/harvest-dogfood mark                          # record the reviewed point
 bash scripts/harvest-dogfood list                          # show the registry
+bash scripts/harvest-dogfood query <pattern>               # search all repos' knowledge
 ```
 
-Per repo, the report shows commits and new `docs/log.md` entries since the last mark (lines mentioning the kit or upstreaming are flagged), kit-managed script drift with manifest provenance (matches the kit, unedited older kit output, or owner-edited), the proposed-ADR review inbox, the `kit_version` stamp vs this kit's `VERSION`, uncommitted-change and second-agent-config notes. The helper never modifies a registered repo. Its registry holds absolute local paths, so it is machine-local and git-ignored under `.okf-kit-backups/` — a fresh kit clone starts with an empty registry and repos are re-added with one command each (ADR 0014).
+Per repo, the report shows commits and new `docs/log.md` entries since the last mark (lines mentioning the kit or upstreaming are flagged), kit-managed file drift with manifest provenance (matches the kit, unedited older kit output, or owner-edited), the proposed-ADR review inbox, the `kit_version` stamp vs this kit's `VERSION`, uncommitted-change and second-agent-config notes. The helper never modifies a registered repo. Its registry holds absolute local paths, so it is machine-local and git-ignored under `.okf-kit-backups/` — a fresh kit clone starts with an empty registry and repos are re-added with one command each (ADR 0014).
+
+`query` answers cross-repo questions in one command instead of an exploration: it rebuilds a derived knowledge index from every registered repo — goal lines, milestones, spec and ADR index entries with statuses, log bullets, each tagged with its repo and source path — then greps it case-insensitively. Because the index is rebuilt on every query, it can never go stale; like the registry, it stays machine-local and git-ignored.
 
 ## Validating this kit
 

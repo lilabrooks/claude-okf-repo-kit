@@ -37,6 +37,10 @@ It must create:
 - `.claude/settings.json`
 - `.claude/hooks/check-docs-sync.sh`
 - `.claude/hooks/check-okf-version.sh`
+- `.claude/skills/okf-goal-interview/SKILL.md`
+- `.claude/skills/okf-acceptance-pass/SKILL.md`
+- `.claude/skills/okf-adr-review/SKILL.md`
+- `.claude/skills/okf-kit-upgrade/SKILL.md`
 - `scripts/okf`
 - `docs/index.md`
 - `docs/log.md`
@@ -57,7 +61,7 @@ It must add these ignores:
 - `.env.*`
 - `!.env.example` (keeps the sample env file trackable)
 
-It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed scripts it installs (`scripts/okf` and the two hooks), so a later updater run can prove they are unedited kit output and refresh them in place (ADR 0013). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
+It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed files it installs (`scripts/okf`, the two hooks, and the four `okf-*` skills — seven entries), so a later updater run can prove they are unedited kit output and refresh them in place (ADRs 0013, 0015). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
 
 # Existing repo installer
 
@@ -67,7 +71,7 @@ It must:
 
 - require the target directory to exist
 - create `.okf-kit-backups/<timestamp>/`
-- refresh a kit-managed script (`scripts/okf`, the two hooks) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADR 0013)
+- refresh a kit-managed file (`scripts/okf`, the two hooks, the four `okf-*` skills) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADRs 0013, 0015)
 - merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
 - append the required `.gitignore` entries (the same seven the new-repo installer adds) while preserving existing entries
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide

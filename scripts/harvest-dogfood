@@ -18,6 +18,14 @@ Usage:
   bash scripts/harvest-dogfood add <path> [name]  Register a repo at its current HEAD
   bash scripts/harvest-dogfood mark [name ...]  Record current HEADs after a review
   bash scripts/harvest-dogfood list             Show the registry
+  bash scripts/harvest-dogfood query <pattern>  Search all repos' knowledge one-liners
+  bash scripts/harvest-dogfood index            Rebuild the cross-repo index and show its size
+
+query rebuilds the index first, so results are always current: it greps (case-
+insensitive extended regex) one-line entries derived from every registered
+repo — goal lines, milestones, spec and ADR index entries with statuses, and
+log bullets — each tagged repo/kind/path. Exit 1 when nothing matches. The
+index lives beside the registry, machine-local and derived, never committed.
 
 Report probes, per registered repo:
   - commits and new docs/log.md entries since the recorded harvest SHA,
@@ -38,14 +46,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 KIT_VERSION="$(head -n 1 "$KIT_DIR/VERSION" 2>/dev/null || printf '0.0.0')"
 REGISTRY="${OKF_DOGFOOD_REGISTRY:-$KIT_DIR/.okf-kit-backups/dogfood-registry}"
+INDEX="$(dirname "$REGISTRY")/dogfood-index"
 
-KIT_MANAGED_RELS=".claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf"
+KIT_MANAGED_RELS=".claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf
+.claude/skills/okf-goal-interview/SKILL.md .claude/skills/okf-acceptance-pass/SKILL.md
+.claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md"
 
 kit_source_for() {
   case "$1" in
     .claude/hooks/check-docs-sync.sh) printf '%s\n' "$KIT_DIR/scripts/check-docs-sync.sh" ;;
     .claude/hooks/check-okf-version.sh) printf '%s\n' "$KIT_DIR/scripts/check-okf-version.sh" ;;
     scripts/okf) printf '%s\n' "$KIT_DIR/scripts/okf" ;;
+    .claude/skills/*/SKILL.md) printf '%s\n' "$KIT_DIR/templates/skills/$(basename "$(dirname "$1")")/SKILL.md" ;;
   esac
 }
 
@@ -184,7 +196,7 @@ report_repo() {
   for rel in $KIT_MANAGED_RELS; do
     src="$(kit_source_for "$rel")"
     if [ ! -f "$path/$rel" ]; then
-      printf '  %s: MISSING\n' "$rel"
+      printf '  %s: missing (the updater installs it)\n' "$rel"
     elif cmp -s "$src" "$path/$rel"; then
       printf '  %s: matches kit %s\n' "$rel" "$KIT_VERSION"
     else
@@ -211,6 +223,68 @@ report_repo() {
   return 0
 }
 
+# Rebuild the cross-repo knowledge index from the registered repos: one line
+# per fact, tab-separated as repo<TAB>kind<TAB>path<TAB>text. Derived on every
+# build (never edited, never stale) and machine-local beside the registry.
+build_index() {
+  require_registry
+  mkdir -p "$(dirname "$INDEX")"
+  : > "$INDEX"
+  registry_lines | while IFS=$'\t' read -r name path sha stamp; do
+    [ -d "$path" ] || continue
+
+    if [ -f "$path/docs/GOAL.md" ]; then
+      awk -v n="$name" 'BEGIN{OFS="\t"} /^(Kind|Problem|Solution):/ {print n, "goal", "docs/GOAL.md", substr($0, 1, 240)}' \
+        "$path/docs/GOAL.md" >> "$INDEX"
+      awk -v n="$name" 'BEGIN{OFS="\t"} /^- \[[ x]\]/ {print n, "milestone", "docs/GOAL.md", substr($0, 1, 240)}' \
+        "$path/docs/GOAL.md" >> "$INDEX"
+    fi
+
+    if [ -f "$path/docs/specs/index.md" ]; then
+      awk -v n="$name" 'BEGIN{OFS="\t"} /^- / {print n, "spec", "docs/specs/index.md", substr($0, 1, 240)}' \
+        "$path/docs/specs/index.md" >> "$INDEX"
+    fi
+
+    local adr base status title desc
+    for adr in "$path"/docs/adr/*.md; do
+      [ -e "$adr" ] || continue
+      base="$(basename "$adr")"
+      case "$base" in
+        index.md|*.[0-9].md|*.[0-9][0-9].md) continue ;;
+      esac
+      status="$(grep -m1 -E '^status:' "$adr" 2>/dev/null | sed -E 's/^status:[[:space:]]*//; s/[[:space:]]+$//' || true)"
+      title="$(grep -m1 -E '^title:' "$adr" 2>/dev/null | sed -E 's/^title:[[:space:]]*//' || true)"
+      desc="$(grep -m1 -E '^description:' "$adr" 2>/dev/null | sed -E 's/^description:[[:space:]]*//' | cut -c1-160 || true)"
+      printf '%s\tadr\tdocs/adr/%s\t[%s] %s — %s\n' "$name" "$base" "${status:-?}" "${title:-untitled}" "$desc" >> "$INDEX"
+    done
+
+    if [ -f "$path/docs/log.md" ]; then
+      awk -v n="$name" 'BEGIN{OFS="\t"}
+        /^## / {date=$2}
+        /^- / {print n, "log", "docs/log.md", "[" date "] " substr($0, 3, 240)}' \
+        "$path/docs/log.md" >> "$INDEX"
+    fi
+  done
+}
+
+cmd_index() {
+  build_index
+  printf 'Indexed %s entries from registered repos into %s\n' \
+    "$(wc -l < "$INDEX" | tr -d ' ')" "$INDEX"
+}
+
+cmd_query() {
+  [ "$#" -ge 1 ] || { usage >&2; exit 2; }
+  build_index
+  local hits
+  hits="$(grep -iE -- "$*" "$INDEX" || true)"
+  if [ -z "$hits" ]; then
+    printf 'No matches for: %s\n' "$*" >&2
+    exit 1
+  fi
+  printf '%s\n' "$hits" | awk -F'\t' '{printf "%s [%s] %s\n    %s\n", $1, $2, $3, $4}'
+}
+
 cmd_report() {
   require_registry
   printf 'Dogfood harvest — kit %s\n' "$KIT_VERSION"
@@ -224,6 +298,8 @@ case "${1:-report}" in
   add) shift; cmd_add "$@" ;;
   mark) shift; cmd_mark "$@" ;;
   list) cmd_list ;;
+  index) cmd_index ;;
+  query) shift; cmd_query "$@" ;;
   report) cmd_report ;;
   help|-h|--help) usage ;;
   *) usage >&2; exit 2 ;;

@@ -54,7 +54,8 @@ milestone's verification names at least one rejected or edge input alongside
 the happy path. When the backlog is empty, Claude Code runs a first-time-user
 acceptance pass, reports the goal met, and proposes candidate milestones
 (from `docs/log.md` known items, ADR revisit triggers, acceptance-pass
-findings, and in-scope extensions); the owner chooses what gets added.
+findings, missing repo hygiene, and in-scope extensions); the owner
+chooses what gets added.
 
 - [ ] [first shippable slice + how to verify it]
 - [ ] [next milestone + how to verify it]
