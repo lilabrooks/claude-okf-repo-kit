@@ -6,3 +6,4 @@
 - [Claude hooks](claude-hooks.md): Stop and SessionStart hook behavior.
 - [Validation workflow](validation-workflow.md): Makefile validation and smoke tests.
 - [Dogfood harvest helper](dogfood-harvest.md): registry and delta reports for tracking installed dogfood repos.
+- [Site content and style](site-content.md): what the `site/` website must say and how it must read, and how it stays current as the kit changes.

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dogfood findings | Claude OKF repo kit</title>
+  <meta name="description" content="Lila Brooks documents how Spec Agent CLI, Repo Pulse, and Skywatch exposed gaps and changed the Claude OKF repo kit.">
+  <meta name="author" content="Lila Brooks">
+  <link rel="canonical" href="https://lilabrooks.github.io/dogfood/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Claude OKF repo kit">
+  <meta property="og:title" content="Dogfood findings | Claude OKF repo kit">
+  <meta property="og:description" content="Lila Brooks documents 3 repositories, the gaps they exposed, and the changes carried back into the kit.">
+  <meta property="og:url" content="https://lilabrooks.github.io/dogfood/">
+  <meta property="og:image" content="https://lilabrooks.github.io/og.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <meta property="article:author" content="https://github.com/lilabrooks">
+  <meta property="article:modified_time" content="2026-07-11">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dogfood findings | Claude OKF repo kit">
+  <meta name="twitter:description" content="Lila Brooks documents 3 repositories, the gaps they exposed, and the changes carried back into the kit.">
+  <meta name="twitter:image" content="https://lilabrooks.github.io/og.png">
+  <meta name="twitter:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://lilabrooks.github.io/#lila-brooks",
+        "name": "Lila Brooks",
+        "url": "https://lilabrooks.github.io/",
+        "sameAs": "https://github.com/lilabrooks"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://lilabrooks.github.io/#website",
+        "url": "https://lilabrooks.github.io/",
+        "name": "Claude OKF repo kit",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "copyrightHolder": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "inLanguage": "en"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit",
+        "name": "Claude OKF repo kit",
+        "url": "https://lilabrooks.github.io/",
+        "codeRepository": "https://github.com/lilabrooks/claude-okf-repo-kit",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "maintainer": { "@id": "https://lilabrooks.github.io/#lila-brooks" }
+      },
+      {
+        "@type": "TechArticle",
+        "@id": "https://lilabrooks.github.io/dogfood/#article",
+        "url": "https://lilabrooks.github.io/dogfood/",
+        "headline": "What changed after the kit met real work",
+        "description": "How Spec Agent CLI, Repo Pulse, and Skywatch exposed gaps and changed the Claude OKF repo kit.",
+        "dateModified": "2026-07-11",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "creator": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "publisher": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "copyrightHolder": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "about": { "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit" },
+        "isPartOf": { "@id": "https://lilabrooks.github.io/#website" },
+        "mainEntityOfPage": "https://lilabrooks.github.io/dogfood/",
+        "image": "https://lilabrooks.github.io/og.png",
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header shell">
+    <a class="wordmark" href="../" aria-label="Claude OKF repo kit, home"><span class="wordmark-mark">OKF</span><span>Claude OKF repo kit</span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../">The kit</a><a href="../how-it-works/">How it works</a><a href="../dogfood/" aria-current="page">Dogfood</a><a href="https://github.com/lilabrooks/claude-okf-repo-kit">Source</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <header class="page-hero shell">
+      <div><p class="eyebrow">Dogfood record</p><p class="page-meta">Three different repository shapes</p></div>
+      <div><h1>What changed after the kit met real work.</h1><p class="dek">The dogfood repositories were built as useful software and as tests of the knowledge model. Each one put pressure on a different part of the kit.</p></div>
+    </header>
+
+    <article class="dogfood-entry shell" aria-labelledby="spec-agent-title">
+      <header class="dogfood-header">
+        <p class="eyebrow">01 · Existing Python CLI</p>
+        <h2 id="spec-agent-title">Spec Agent CLI</h2>
+        <p>A Python command-line tool that combines Markdown specifications, reusable agent skills, and model-provider adapters to produce a reviewed file plan and generated project files.</p>
+        <a class="text-link" href="https://github.com/lilabrooks/spec-agent-cli">View repository ↗</a>
+      </header>
+      <div class="dogfood-body">
+        <section>
+          <h3>What it tested</h3>
+          <p>Spec Agent CLI came before the packaged source kit. It added an OKF-style knowledge bundle to an existing repository that already had buildable specifications, agent skills, packaging rules, and a substantial quality gate.</p>
+          <p>This was the baseline case: could governing knowledge remain distinct from the Markdown documents the application itself consumes?</p>
+        </section>
+        <section>
+          <h3>What it found</h3>
+          <ul>
+            <li>Project specifications and runtime input specifications need separate locations and explicit indexes.</li>
+            <li>Documentation structure can drift while application tests remain green. Missing metadata and broken local links need their own check.</li>
+            <li>Repository knowledge should join the ordinary quality gate without adding dependencies to the shipped application.</li>
+          </ul>
+        </section>
+        <section class="kit-response">
+          <h3>What entered the kit</h3>
+          <p>The kit’s first version carried forward a repo-local knowledge bundle with separate spec and ADR indexes, a dated log, source-to-knowledge mappings, and local validation. It kept project knowledge outside application runtime concerns and left stricter document-schema checks to the target repository.</p>
+        </section>
+      </div>
+    </article>
+
+    <article class="dogfood-entry shell" aria-labelledby="repo-pulse-title">
+      <header class="dogfood-header">
+        <p class="eyebrow">02 · Greenfield web application</p>
+        <h2 id="repo-pulse-title">Repo Pulse</h2>
+        <p>A local dashboard that gathers the vital signs of a public GitHub repository and reduces them to a small set of facts plus an activity verdict.</p>
+        <a class="text-link" href="https://github.com/lilabrooks/repo-pulse">View repository ↗</a>
+      </header>
+      <div class="dogfood-body">
+        <section>
+          <h3>What it tested</h3>
+          <p>Repo Pulse was the first full greenfield run through the kit’s goal loop. It moved from an owner-defined problem through five verified milestones, application contracts, architecture decisions, a clean-checkout check, and a final acceptance pass.</p>
+        </section>
+        <section>
+          <h3>What it found</h3>
+          <ul>
+            <li>The milestone plan reached completion before a realistic pasted URL exposed an input gap. Mechanical tests had covered the contract, while the first-user path still had something to teach.</li>
+            <li>Architecture decisions could remain proposed after the goal was reported complete unless the review inbox became part of completion.</li>
+            <li>The installed kit became stale within hours of a source-kit improvement, with no version signal in the target repository.</li>
+            <li>Environment-file conventions needed a mechanical read boundary as well as written secret-handling rules.</li>
+          </ul>
+        </section>
+        <section class="kit-response">
+          <h3>What changed in the kit</h3>
+          <p>The goal interview now asks for realistic and messy example interactions. New backlogs end with a clean-checkout quickstart check, and the goal closes only after a first-user acceptance pass. Completion reports include proposed ADRs awaiting review.</p>
+          <p>The kit also gained a pending-decision inbox, spec and ADR scaffolds, environment-file ignore and read-denial rules, a release stamp in installed repositories, session-start version drift reporting, and safer refresh behavior for review candidates.</p>
+        </section>
+      </div>
+    </article>
+
+    <article class="dogfood-entry shell" aria-labelledby="skywatch-title">
+      <header class="dogfood-header">
+        <p class="eyebrow">03 · Scheduled local service</p>
+        <h2 id="skywatch-title">Skywatch</h2>
+        <p>An always-on local service that joins ISS pass predictions with cloud forecasts, records the result, explains a go, maybe, or skip verdict, and sends a digest when a pass is worth watching.</p>
+        <a class="text-link" href="https://github.com/lilabrooks/skywatch">View repository ↗</a>
+      </header>
+      <div class="dogfood-body">
+        <section>
+          <h3>What it tested</h3>
+          <p>Skywatch put the loop against an application with scheduled work, 2 upstream services, SQLite state, SMTP delivery, quiet hours, retention, and a manual mail-sink check. It also had both Claude Code and Codex configuration in the same repository.</p>
+        </section>
+        <section>
+          <h3>What it found</h3>
+          <ul>
+            <li>A milestone can depend on a local tool the agent cannot install. The plan needs to identify that boundary before work begins and mark the check as owner-gated.</li>
+            <li>A broad source mapping creates noise. Mappings work better at module and contract boundaries.</li>
+            <li>The stop hook could repeat after blocking once, and loose filename exclusions could miss real code changes.</li>
+            <li>Second-agent configuration could look like application work and keep rearming the documentation check.</li>
+            <li>Dogfood repositories had improved their installed hooks. A later kit update needed to preserve those owner edits.</li>
+          </ul>
+        </section>
+        <section class="kit-response">
+          <h3>What changed in the kit</h3>
+          <p>The goal interview now checks whether verification tools are available and records owner-gated steps. The starter map asks for narrow mappings. The stop hook gained a repeat-block guard, exact filename exclusions, portable project-root handling, and tolerance for second-agent configuration.</p>
+          <p>Installed kit files now carry local provenance. An unedited kit file can be refreshed safely; an owner-edited file stays in place while the new version waits beside it for review. The post-goal review also proposes ordinary repository hygiene when it is still missing.</p>
+        </section>
+      </div>
+    </article>
+
+    <section class="section shell" aria-labelledby="feedback-title">
+      <div class="section-head">
+        <p class="eyebrow">The feedback mechanism</p>
+        <div>
+          <h2 id="feedback-title">The dogfood record now has its own memory.</h2>
+          <p>After Repo Pulse and Skywatch, the kit gained a read-only harvest record for registered dogfood repositories. It reports new commits, dated log entries, proposed decisions, version drift, and local changes to kit-managed files since the last review.</p>
+        </div>
+      </div>
+      <div class="essay-grid">
+        <p>This closes the same loop at a higher level. Target repositories keep their own intent and history. The kit can inspect the delta, identify a repeated weakness, and carry the general fix back into the source.</p>
+        <p>The registered paths stay local to the maintainer’s machine. The target repositories remain unchanged by the review.</p>
+      </div>
+    </section>
+
+    <section class="cta shell">
+      <p class="eyebrow">Back to the model</p>
+      <h2>The theory is useful when the feedback changes the mechanism.</h2>
+      <p>The main page explains how the goal, knowledge bundle, source map, decision policy, and session loop fit together.</p>
+      <div class="button-row"><a class="button primary" href="../">Read about the kit</a><a class="button" href="https://github.com/lilabrooks/claude-okf-repo-kit">View source</a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer shell"><p>Claude OKF repo kit, created and maintained by Lila Brooks · © 2026</p><a href="#content">Back to top ↑</a></footer>
+</body>
+</html>

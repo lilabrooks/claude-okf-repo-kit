@@ -15,3 +15,4 @@
 - [0013 Kit-managed script refresh via manifest provenance](0013-script-provenance-refresh.md): Refresh installed kit scripts in place only when provably unedited kit output; preserve owner-edited scripts with a kit candidate for review.
 - [0014 Dogfood harvest via a machine-local registry](0014-dogfood-harvest-registry.md): Track installed dogfood repos with a git-ignored high-water-mark registry and a source-only delta-report helper.
 - [0015 Workflow procedures as installed skills](0015-workflow-skills.md): Deliver the episodic workflow procedures as installed `okf-*` skills loading on demand, with binding one-liners resident in the installed `CLAUDE.md`.
+- [0016 Apex mirror of the kit site via submodule](0016-apex-mirror-editorial-site.md): Make `site/` the single governed source of an editorial site, mirrored to the owner's apex user-site repo through a git submodule, with relative paths so the same files render at both bases.

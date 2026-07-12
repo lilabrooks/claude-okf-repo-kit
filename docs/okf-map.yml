@@ -32,6 +32,10 @@ mappings:
       - "docs/adr/0007-autonomous-iteration-guardrails.md"
       - "docs/adr/0008-context-preloading-imports.md"
       - "docs/adr/0010-kit-version-stamp.md"
+      # site-drift reminder (site-content spec): the site narrates this workflow,
+      # so a change here should prompt a site review. Not a governing spec —
+      # check-stale lists it among the "update one of" options.
+      - "site/index.html"
 
   - source: "templates/GOAL.md"
     docs:
@@ -44,6 +48,8 @@ mappings:
       - "docs/specs/repo-kit-packaging.md"
       - "docs/specs/installer-scripts.md"
       - "docs/adr/0015-workflow-skills.md"
+      # site-drift reminder (see templates/CLAUDE.md mapping above)
+      - "site/index.html"
 
   - source: "settings.json"
     docs:
@@ -114,12 +120,15 @@ mappings:
   - source: "site/**"
     docs:
       - "docs/specs/repo-kit-packaging.md"
+      - "docs/specs/site-content.md"
       - "docs/adr/0009-github-pages-website.md"
+      - "docs/adr/0016-apex-mirror-editorial-site.md"
 
   - source: ".github/workflows/pages.yml"
     docs:
       - "docs/specs/repo-kit-packaging.md"
       - "docs/adr/0009-github-pages-website.md"
+      - "docs/adr/0016-apex-mirror-editorial-site.md"
 
   - source: ".github/dependabot.yml"
     docs:

@@ -57,6 +57,8 @@ New-repo install simulation must verify target `CLAUDE.md` comes from `templates
 
 New-repo install simulation must verify the installed `CLAUDE.md` carries the preloaded-context imports for `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` (ADR 0008).
 
+Both the new-repo and existing-repo simulations must verify that maintainer-only, source-only artifacts never reach a target: no `site/`, no `.github/workflows/pages.yml`, no `VERSION` or `Makefile`, no `docs/specs/site-content.md`, no ADR 0009 or ADR 0016 file, and no `site/` mappings in the installed `docs/okf-map.yml` (or its candidate). This guards the site-content spec's source-only boundary against installer regressions.
+
 New-repo install simulation must verify the starter `docs/index.md` declares `kit_version` and links the log and source map, that the env-file ignore entries (`.env`, `.env.*`, `!.env.example`) and `.DS_Store` were appended (ADR 0010), that the installed settings carry the env-file read deny rules (ADR 0011), that `.okf-kit-backups/candidate-manifest` is seeded with entries for the seven kit-managed files (ADRs 0013, 0015), and that the four `okf-*` skills are installed with matching frontmatter names while the installed `CLAUDE.md` keeps the resident one-liners pointing at them (ADR 0015).
 
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.

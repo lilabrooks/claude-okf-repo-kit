@@ -1,214 +1,312 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude OKF Repo Kit — a spec-driven workflow for Claude Code</title>
-<meta name="description" content="Install a goal-driven, spec-governed Claude Code workflow into any repository: you provide the goal, Claude Code makes recorded decisions and iterates until the goal is met.">
-<style>
-  :root {
-    --bg: #ffffff;
-    --fg: #1c1e21;
-    --muted: #5b6470;
-    --accent: #5d3fd3;
-    --border: #e3e6ea;
-    --card: #f6f7f9;
-    --code-bg: #f0f1f4;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude OKF repo kit | Lila Brooks</title>
+  <meta name="description" content="The Claude OKF repo kit, created by Lila Brooks, makes goal-directed and specification-governed AI-assisted development with Claude Code reviewable in Git.">
+  <meta name="author" content="Lila Brooks">
+  <link rel="canonical" href="https://lilabrooks.github.io/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Claude OKF repo kit">
+  <meta property="og:title" content="Claude OKF repo kit | Lila Brooks">
+  <meta property="og:description" content="Goal-directed and specification-governed AI-assisted development with Claude Code, made reviewable in Git.">
+  <meta property="og:url" content="https://lilabrooks.github.io/">
+  <meta property="og:image" content="https://lilabrooks.github.io/og.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Claude OKF repo kit | Lila Brooks">
+  <meta name="twitter:description" content="Goal-directed and specification-governed AI-assisted development with Claude Code, made reviewable in Git.">
+  <meta name="twitter:image" content="https://lilabrooks.github.io/og.png">
+  <meta name="twitter:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://lilabrooks.github.io/#lila-brooks",
+        "name": "Lila Brooks",
+        "url": "https://lilabrooks.github.io/",
+        "sameAs": "https://github.com/lilabrooks"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://lilabrooks.github.io/#website",
+        "url": "https://lilabrooks.github.io/",
+        "name": "Claude OKF repo kit",
+        "description": "An explanation of the intent, mechanisms, and evidence behind the Claude OKF repo kit.",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "creator": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "copyrightHolder": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "inLanguage": "en"
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://lilabrooks.github.io/#webpage",
+        "url": "https://lilabrooks.github.io/",
+        "name": "Claude OKF repo kit | Lila Brooks",
+        "description": "The Claude OKF repo kit makes goal-directed and specification-governed AI-assisted development with Claude Code reviewable in Git.",
+        "isPartOf": { "@id": "https://lilabrooks.github.io/#website" },
+        "mainEntity": { "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit" },
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "image": "https://lilabrooks.github.io/og.png",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit",
+        "name": "Claude OKF repo kit",
+        "description": "A repository kit that keeps goal-directed Claude Code work reviewable in Git through explicit outcomes, behavior specifications, proposed architecture decisions, verification, and a progress record.",
+        "url": "https://lilabrooks.github.io/",
+        "codeRepository": "https://github.com/lilabrooks/claude-okf-repo-kit",
+        "mainEntityOfPage": { "@id": "https://lilabrooks.github.io/#webpage" },
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "creator": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "maintainer": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "copyrightHolder": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "keywords": [
+          "Claude Code",
+          "goal-directed software development",
+          "behavior specifications",
+          "architecture decision records",
+          "AI-assisted software development",
+          "Open Knowledge Format"
+        ]
+      }
+    ]
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14161a;
-      --fg: #e8eaed;
-      --muted: #9aa4b1;
-      --accent: #a99bf0;
-      --border: #2b2f36;
-      --card: #1c1f25;
-      --code-bg: #21252c;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--fg);
-    line-height: 1.65;
-  }
-  main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
-  header.hero { text-align: left; padding: 3rem 0 1rem; border-bottom: 1px solid var(--border); }
-  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-  .tagline { font-size: 1.15rem; color: var(--muted); margin: 0 0 1.25rem; }
-  h2 { font-size: 1.4rem; margin: 2.5rem 0 0.75rem; letter-spacing: -0.01em; }
-  h3 { font-size: 1.1rem; margin: 1.75rem 0 0.5rem; }
-  p { margin: 0.75rem 0; }
-  a { color: var(--accent); }
-  ul, ol { padding-left: 1.4rem; }
-  li { margin: 0.35rem 0; }
-  code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.9em;
-    background: var(--code-bg);
-    padding: 0.1em 0.35em;
-    border-radius: 4px;
-  }
-  pre {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.9rem 1rem;
-    overflow-x: auto;
-  }
-  pre code { background: none; padding: 0; }
-  .buttons { margin: 1.25rem 0 0.5rem; }
-  .buttons a {
-    display: inline-block;
-    margin: 0 0.6rem 0.6rem 0;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    text-decoration: none;
-    border: 1px solid var(--accent);
-  }
-  .buttons a.primary { background: var(--accent); color: var(--bg); }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin: 1.25rem 0;
-  }
-  .card p:first-child { margin-top: 0; }
-  .card p:last-child { margin-bottom: 0; }
-  .callout { border-left: 4px solid var(--accent); }
-  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
-  th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; }
-  footer { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
-  .qa { margin: 1rem 0; }
-  .qa .q { font-weight: 600; }
-  .qa .a { color: var(--muted); }
-</style>
+  </script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header shell">
+    <a class="wordmark" href="./" aria-label="Claude OKF repo kit, home">
+      <span class="wordmark-mark">OKF</span>
+      <span>Claude OKF repo kit</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="./" aria-current="page">The kit</a>
+      <a href="how-it-works/">How it works</a>
+      <a href="dogfood/">Dogfood</a>
+      <a href="https://github.com/lilabrooks/claude-okf-repo-kit">Source</a>
+    </nav>
+  </header>
 
-<header class="hero">
-  <h1>Claude OKF Repo Kit</h1>
-  <p class="tagline">A spec-driven workflow for Claude Code: you provide the goal, Claude Code makes recorded decisions and iterates until the goal is met — with guardrails.</p>
-  <div class="buttons">
-    <a class="primary" href="https://github.com/lilabrooks/claude-okf-repo-kit">View on GitHub</a>
-    <a href="#install">Install the kit</a>
-    <a href="#how-claude-works">How Claude Code works with your repo</a>
-  </div>
-</header>
+  <main id="content">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Claude Code · Open Knowledge Format</p>
+        <h1 id="hero-title">Keep goal-directed Claude Code work <em>reviewable in Git.</em></h1>
+      </div>
+      <div class="hero-aside">
+        <p class="intro">The kit turns an owner-defined outcome into verified milestones, behavior specifications, proposed architecture decisions, and a progress log that change with the code.</p>
+        <div class="signal">
+          <strong>Why it exists</strong>
+          <p>Claude Code can pursue a task. The kit makes the goal, boundaries, decisions, and progress part of the repository’s shared history.</p>
+        </div>
+      </div>
+    </section>
 
-<h2 id="what">What it is</h2>
-<p>Repos driven by Claude Code lose their goal, contracts, and decisions between sessions. This kit installs a small, durable structure — built on the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a> — that makes the repo itself the memory:</p>
-<table>
-  <tr><th>File</th><th>What it holds</th></tr>
-  <tr><td><code>CLAUDE.md</code></td><td>The objective, decision policy, guardrails, and workflow. Loaded every session; preloads the goal and knowledge indexes via imports.</td></tr>
-  <tr><td><code>docs/GOAL.md</code></td><td>The goal: problem, target state, verifiable success criteria, and an ordered milestone backlog.</td></tr>
-  <tr><td><code>docs/specs/</code></td><td>Behavior and contracts Claude Code must preserve.</td></tr>
-  <tr><td><code>docs/adr/</code></td><td>Architecture decisions — including the ones Claude Code itself proposes.</td></tr>
-  <tr><td><code>docs/log.md</code></td><td>A dated changelog of what changed and why.</td></tr>
-  <tr><td><code>docs/okf-map.yml</code></td><td>Which specs and ADRs govern which source areas.</td></tr>
-  <tr><td><code>.claude/hooks/</code></td><td>Guardrail hooks that block ending a turn with code and docs out of sync.</td></tr>
-  <tr><td><code>.claude/skills/okf-*/</code></td><td>Workflow skills that load on demand — goal interview, acceptance pass, ADR review, kit upgrade — keeping the always-loaded playbook small.</td></tr>
-  <tr><td><code>scripts/okf</code></td><td>A repo-local helper: stale-mapping checks, spec drafts, ADR suggestions, ADR/spec scaffolding, and a pending-decisions list.</td></tr>
-</table>
+    <section class="section shell" aria-labelledby="baseline-title">
+      <div class="section-head">
+        <p class="eyebrow">The baseline</p>
+        <div>
+          <h2 id="baseline-title">Claude Code can already pursue a goal — just not in a way the repo remembers.</h2>
+          <p>The built-in <code>/goal</code> command keeps a session working toward a completion condition, and auto memory carries notes across sessions. But <code>/goal</code> is session-scoped and clears once met, and auto memory is machine-local and unversioned — neither becomes part of the repository a teammate reviews in a diff.</p>
+        </div>
+      </div>
+      <div class="essay-grid">
+        <p>The kit is the versioned complement. It places the owner-approved goal, ordered milestones, behavior specifications, architecture decisions, progress log, and source mappings in version control — so the objective and the decisions that reached it outlive the session that created them.</p>
+        <p>That creates a project-level record a fresh session can pick up and a reviewer can read in an ordinary diff. Read more in the <a href="https://code.claude.com/docs/en/memory">Claude Code memory documentation</a> and the <a href="https://code.claude.com/docs/en/goal">built-in goal documentation</a>.</p>
+      </div>
+    </section>
 
-<h2 id="how-claude-works">How Claude Code works with your repo</h2>
-<p>This is the part that matters day to day: what actually happens when you open the repo and talk to Claude Code. Everything below is installed behavior, not aspiration — it is written into the kit's <code>CLAUDE.md</code>, which Claude Code loads at the start of every session.</p>
+    <section class="section shell" aria-labelledby="contract-title">
+      <div class="section-head">
+        <p class="eyebrow">What the kit adds</p>
+        <div>
+          <h2 id="contract-title">A defined operating contract around the coding session.</h2>
+          <p>The contract says who owns the outcome, how Claude chooses work, where behavior and decisions are recorded, and what must be reviewed.</p>
+        </div>
+      </div>
+      <div class="principle-grid">
+        <article class="principle">
+          <span class="claim-status">Owner-controlled</span>
+          <h3>A goal with boundaries</h3>
+          <p>The owner confirms the problem, target state, success criteria, non-goals, fixed constraints, and milestone order.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">Claude-driven</span>
+          <h3>A verified milestone loop</h3>
+          <p>When asked to continue, Claude takes the first unfinished milestone, reads its governing context, implements it, verifies it, records progress, and moves on — running a first-time-user acceptance pass before it declares the goal met, and resuming in-flight work after an interrupted session rather than starting over.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">Kept with the code</span>
+          <h3>Behavior specifications</h3>
+          <p>Claude authors or updates the governing specification when behavior changes. The source map connects code areas to the contracts that describe them.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">Returned for review</span>
+          <h3>Proposed architecture decisions</h3>
+          <p>Dependencies, persistence, APIs, security boundaries, deployment, and similar choices begin as proposed ADRs. The owner accepts, revises, or rejects them.</p>
+        </article>
+      </div>
+      <p><a class="text-link" href="how-it-works/">See how a session actually runs, step by step ↗</a></p>
+    </section>
 
-<h3>Session start: context without re-reading the repo</h3>
-<p>Claude Code never holds your whole repo in its context window, and it doesn't need to. The installed <code>CLAUDE.md</code> imports three small files at load time — <code>docs/GOAL.md</code> and the spec and ADR indexes — so every session begins already knowing the goal, which milestones are done, and what knowledge exists. Full specs, ADRs, and code stay on disk until a task needs them; the indexes and the source-to-doc map tell Claude exactly which file to read for the task at hand. The conversation is a scratchpad; the docs bundle is the memory.</p>
+    <section class="section shell" aria-labelledby="artifacts-title">
+      <div class="section-head">
+        <p class="eyebrow">What the kit installs</p>
+        <div>
+          <h2 id="artifacts-title">The contract is a handful of files in the repository.</h2>
+          <p>The knowledge bundle follows the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">Open Knowledge Format</a>, an open spec for project knowledge that travels with the code. Nothing here is hidden state; it is committed, diffable, and reviewed like source.</p>
+        </div>
+      </div>
+      <div class="principle-grid">
+        <article class="principle">
+          <span class="claim-status">CLAUDE.md</span>
+          <h3>Project instructions</h3>
+          <p>Holds the goal, rules, workflow, and verification commands. Its imports preload the goal and the spec and ADR indexes at session start, so Claude begins already knowing the project.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">docs/GOAL.md</span>
+          <h3>The goal and backlog</h3>
+          <p>States the problem, target state, success criteria, and an ordered milestone backlog that Claude iterates toward across sessions.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">docs/specs · docs/adr</span>
+          <h3>Specs and decisions</h3>
+          <p>Behavior contracts to preserve and architecture decisions to follow, versioned beside the code they govern.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">docs/okf-map.yml</span>
+          <h3>The source map</h3>
+          <p>Maps source areas to the specs and ADRs that govern them, so Claude reads the right knowledge before editing and stale mappings can be caught.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">.claude/hooks · scripts/okf</span>
+          <h3>Guardrails and checks</h3>
+          <p>A stop hook catches code changes with no matching docs update; a session-start hook reports version drift and pending decisions. Local helper commands find stale mappings, draft specs, and suggest ADRs.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">.claude/skills/okf-*</span>
+          <h3>Workflow skills</h3>
+          <p>Four skills load on demand — goal interview, acceptance pass, ADR review, and kit upgrade — with binding one-liners kept in CLAUDE.md for when a skill does not load.</p>
+        </article>
+      </div>
+    </section>
 
-<h3>The first session: a goal interview, not a blank form</h3>
-<p>If the goal file still contains template placeholders, Claude Code doesn't start working — it interviews you first, a few questions at a time, and drafts the goal from your answers for your confirmation:</p>
-<ol>
-  <li>What are you building, and for whom?</li>
-  <li>What exists when it's done — concretely?</li>
-  <li>What will users actually give it — realistic example inputs, including a messy or wrong one?</li>
-  <li>How is that verified mechanically? What's the test command?</li>
-  <li>What should this repo deliberately <em>not</em> do?</li>
-  <li>Which stack and dependency choices are fixed, and which may Claude decide later through proposed ADRs?</li>
-  <li>What's the first shippable slice, and how do we check it?</li>
-</ol>
-<p>It pushes back on answers it can't verify — "migrate the API to GraphQL" is a direction, not a done state — and in an existing codebase it proposes answers from the code first and lets you correct them.</p>
+    <section class="section working-set" aria-labelledby="truth-title">
+      <div class="shell">
+        <div class="section-head">
+          <p class="eyebrow">What is verified</p>
+          <div>
+            <h2 id="truth-title">The mechanics are real. Judgment stays reviewable.</h2>
+            <p>The kit’s test suite covers installation, hooks, source mappings, document scaffolds, updates, and dogfood reporting. The content of a specification or decision still needs technical review.</p>
+          </div>
+        </div>
+        <ul class="working-set-list">
+          <li><span class="status">Yes</span><h3>Goal-directed</h3><p>The installed <code>CLAUDE.md</code> and on-demand skills preload the goal and tell Claude how to select, verify, and close milestones across sessions.</p></li>
+          <li><span class="status">Qualified</span><h3>Claude-authored specs</h3><p>Claude is instructed to write and maintain specs. The kit supplies structure and checks for stale mappings; it does not prove that a contract is complete or correct.</p></li>
+          <li><span class="status">Qualified</span><h3>Claude-authored ADRs</h3><p>Decision-shaped work starts with a proposed ADR. The kit can suggest and scaffold it; Claude fills the reasoning and the owner makes the decision.</p></li>
+          <li><span class="status">Mechanical</span><h3>Documentation sync</h3><p>A stop-time hook can prevent a turn from ending when code changed without a documentation update. A mapped spec, ADR, or dated rationale satisfies the check.</p></li>
+        </ul>
+        <div class="limit-note">
+          <p><strong>The enforcement boundary matters.</strong> The hooks verify that expected files changed and mappings remain current. They cannot judge the quality of the reasoning. Test discipline, security rules, and consent rules remain instructions unless the target repository enforces them through CI, permissions, or branch protection.</p>
+        </div>
+      </div>
+    </section>
 
-<h3>Saying "continue": the iteration loop</h3>
-<p>Once the goal exists, you don't have to write tasks. Ask Claude Code to continue and it runs the loop:</p>
-<ol>
-  <li>Take the first unchecked milestone from <code>docs/GOAL.md</code>.</li>
-  <li><strong>Impact analysis</strong> — name the specs and ADRs that govern the files about to change, and read them.</li>
-  <li>Implement the smallest change that satisfies the milestone.</li>
-  <li>Run the test command and make it pass.</li>
-  <li><strong>Knowledge alignment</strong> — update the governing spec or ADR if behavior changed, and add a dated <code>docs/log.md</code> entry. The stale-map check catches anything missed.</li>
-  <li>Check the milestone off only when its stated verification passes, then take the next one.</li>
-</ol>
-<p>The loop stops on its own in exactly three cases: the backlog is empty, a decision reserved for you comes up, or you say stop. An empty backlog isn't a dead end — Claude first runs an acceptance pass, exercising the deliverable the way a first-time user would (clean checkout, README quickstart, realistic and wrong inputs — tests prove the contract, this proves the experience), then reports the goal met with any still-proposed ADRs listed for your review, and proposes candidate next milestones (from the log's known items, ADR revisit triggers, acceptance-pass findings, standard repo hygiene still missing — license, CI, dependency updates, badges — and extensions inside your non-goals) — adding nothing until you choose.</p>
+    <section class="section shell" aria-labelledby="adopt-title">
+      <div class="section-head">
+        <p class="eyebrow">Adopting the kit</p>
+        <div>
+          <h2 id="adopt-title">Start from the repository you have.</h2>
+          <p>The kit has separate paths for a new repository and a repository with existing code, documentation, and agent settings.</p>
+        </div>
+      </div>
+      <div class="route-grid">
+        <article class="route-card">
+          <span class="claim-status">New repository</span>
+          <h3>Begin with the goal</h3>
+          <p>The new-repository path creates the project instructions, goal template, knowledge bundle, source map, hooks, and local helper.</p>
+          <ol class="steps-list">
+            <li><p>Apply the kit to an empty repository. The starter structure and guardrails are created together.</p></li>
+            <li><p>Open the repository in Claude Code. The project instructions and goal template load with the session.</p></li>
+            <li><p>Answer the goal interview: who the software is for, what done means, realistic inputs, verification, non-goals, fixed choices, and the first useful slice.</p></li>
+            <li><p>Review and confirm the drafted goal, milestones, and project instructions.</p></li>
+            <li><p>Give Claude a specific task or ask it to continue. Claude takes the first unfinished milestone and works through its verification.</p></li>
+            <li><p>Review proposed ADRs and the final acceptance report. Commit code, specifications, decisions, and progress together.</p></li>
+          </ol>
+        </article>
 
-<h3>How decisions get made</h3>
-<p>The division of labor is explicit: <strong>you own the goal; Claude Code drives the decisions that reach it — on the record.</strong></p>
-<ul>
-  <li>Implementation choices inside existing specs, accepted ADRs, and the guardrails are Claude's to make without asking.</li>
-  <li>Decision-shaped changes — a new dependency, persistence model, auth approach, API contract, deployment shape — start with an ADR Claude writes itself, marked <code>status: proposed</code>, covering context, decision, alternatives, consequences, and a rollback trigger. It implements against the proposed ADR and flags it for you.</li>
-  <li>You review asynchronously: scan <code>docs/adr/</code> for proposed entries (or run <code>bash scripts/okf pending</code>) and accept, request changes, or revert. Accepting means flipping the status to accepted — edit it yourself or tell Claude to; rejecting reverts the work per the ADR's rollback trigger. Accepted ADRs become binding constraints on all future sessions. So pending decisions can't quietly pile up, a session-start note counts the ADRs still awaiting your review in every session.</li>
-  <li>Reserved for you alone: changing the goal, superseding an accepted ADR, and every action the guardrails gate.</li>
-</ul>
+        <article class="route-card">
+          <span class="claim-status">Existing repository</span>
+          <h3>Add the contract carefully</h3>
+          <p>The existing-repository path preserves current files, merges compatible settings, and writes review candidates when names or locally edited kit files conflict.</p>
+          <ol class="steps-list">
+            <li><p>Apply the safe updater to the repository. Existing project files and documentation stay in place.</p></li>
+            <li><p>Review the generated candidates. Merge the pieces that fit the repository and keep project-specific instructions intact.</p></li>
+            <li><p>Open the repository in Claude Code. Claude proposes the goal, verification commands, and constraints from the codebase; correct and confirm them.</p></li>
+            <li><p>Map important source areas to existing specs and ADRs. Add missing contracts gradually as work reaches those areas.</p></li>
+            <li><p>Choose a current change or an agreed milestone. Claude reads the mapped knowledge before editing and records the result with the code.</p></li>
+            <li><p>Review proposed ADRs and any update candidates. When the kit reports a newer version, repeat the safe update and review the differences.</p></li>
+          </ol>
+        </article>
+      </div>
+    </section>
 
-<h3>Guardrails, standing in every session</h3>
-<div class="card">
-  <ul>
-    <li>Tests run after every change; a milestone with failing tests is not done.</li>
-    <li>Failing tests are never deleted, skipped, or weakened to force a green run.</li>
-    <li>Secrets never enter tracked files; env and credential files are confirmed git-ignored before they're created — and the shipped settings deny reading local <code>.env</code> files outright.</li>
-    <li>Security-sensitive changes — auth, input parsing, crypto, network exposure, permissions — get an ADR check.</li>
-    <li>Force pushes, data deletion, publishing, deploying, and external calls with side effects wait for your explicit go-ahead, every time.</li>
-    <li>Outcomes are reported as they are: failures, partial progress, and skipped steps stay visible.</li>
-  </ul>
-</div>
-<div class="card callout">
-  <p><strong>Know the limit:</strong> these guardrails are instructions, not mechanical enforcement. The kit's mechanical gates are docs sync (hooks) and a settings rule denying reads of local <code>.env</code> files — nothing else. When a rule must be guaranteed rather than followed — tests green before merge, no secrets in commits — put it in your repo's own CI and branch protection, on top of this kit.</p>
-</div>
+    <section class="section shell" aria-labelledby="fit-title">
+      <div class="section-head">
+        <p class="eyebrow">Where the approach helps</p>
+        <div>
+          <h2 id="fit-title">The value grows with the life of the repository.</h2>
+          <p>The method earns its cost when work spans sessions, decisions carry consequences, or several people and agents need the same project record.</p>
+        </div>
+      </div>
+      <div class="principle-grid">
+        <article class="principle"><h3>Longer work</h3><p>Milestones, logs, and accepted decisions give a fresh session a reliable restart point.</p></article>
+        <article class="principle"><h3>Decision-heavy systems</h3><p>Architecture choices remain visible with their context, consequences, and revisit conditions.</p></article>
+        <article class="principle"><h3>Shared repositories</h3><p>People and agents can review the same goal, contracts, and pending decisions through ordinary version control.</p></article>
+        <article class="principle"><h3>Governed delivery</h3><p>Owner boundaries, verification rules, and explicit review points reduce silent changes to scope and architecture.</p></article>
+      </div>
+      <div class="limit-note light">
+        <p><strong>The evidence is still early.</strong> The source-kit tests validate the mechanisms, and the dogfood repositories provide concrete findings. They do not establish a measured improvement in delivery time, defects, or maintenance cost. A small one-session change may cost less to handle directly.</p>
+      </div>
+    </section>
 
-<h3>Interruptions cost minutes, not state</h3>
-<p>Sessions end: context windows fill, limits hit, laptops close. The loop is built for it. Milestone checkboxes, the dated log, ADRs, and git commits are the durable record — a fresh session reads them (the goal is preloaded) and knows exactly where the loop stands. If a session was cut off mid-milestone, the next one treats uncommitted changes as in-flight work: it reconciles them against the first unchecked milestone and the newest log entry, then finishes or backs them out before taking anything new.</p>
+    <section class="section shell" aria-labelledby="evidence-title">
+      <div class="section-head">
+        <p class="eyebrow">Evidence from use</p>
+        <div>
+          <h2 id="evidence-title">The kit changes when real repositories find a weak spot.</h2>
+          <p>Spec Agent CLI, Repo Pulse, and Skywatch exercised different repository shapes. Their findings changed the kit’s goal interview, acceptance pass, hooks, source mapping, upgrade policy, and review loop.</p>
+        </div>
+      </div>
+      <div class="path-grid">
+        <a class="path-card" href="dogfood/">
+          <span class="number">01 · Dogfood record</span><span class="card-arrow" aria-hidden="true">↗</span>
+          <h3>What the repositories taught the kit</h3>
+          <p>Each use case, the weakness it exposed, and the change carried back into the source kit.</p>
+        </a>
+        <a class="path-card" href="https://github.com/lilabrooks/claude-okf-repo-kit">
+          <span class="number">02 · Source</span><span class="card-arrow" aria-hidden="true">↗</span>
+          <h3>Read the repository</h3>
+          <p>The goal, specifications, decision records, templates, tests, and change log are public.</p>
+        </a>
+      </div>
+    </section>
+  </main>
 
-<h3>Anatomy of a conversation</h3>
-<p>What this looks like in practice — the pattern an installed repo produces, request by request:</p>
-<div class="qa">
-  <p class="q">You ask for a capability: "make sure this repo supports X."</p>
-  <p class="a">Claude reads the goal and the governing specs and ADRs first, reports the gap between what exists and what you asked for, then makes the smallest change that closes it. Behavior changes land together with their spec updates, an ADR if the change is decision-shaped, a log entry, and a full verification run — and the summary tells you what passed, what's proposed for your review, and what the change deliberately does not do.</p>
-</div>
-<div class="qa">
-  <p class="q">You ask a question: "how does this part work?" or "is it worth adding Y?"</p>
-  <p class="a">You get an assessment grounded in the repo's own files — including honest trade-offs and a recommendation — not an unrequested edit. If the answer suggests an improvement, Claude offers it and waits; work starts when you say yes.</p>
-</div>
-<div class="qa">
-  <p class="q">You say "yes" or "continue."</p>
-  <p class="a">Claude runs the loop: impact analysis, smallest change, tests, docs sync, verification, honest report. Decisions it had to make along the way are waiting for you as proposed ADRs, and the log tells the story in dated entries you can read months later.</p>
-</div>
-<div class="qa">
-  <p class="q">The backlog runs out.</p>
-  <p class="a">Claude runs the first-time-user acceptance pass, reports the goal met, and stops building — with any ADRs still awaiting your review listed in the report. Instead of inventing scope, it lays out your options: known items from the log, revisit triggers from accepted ADRs, findings from the acceptance pass, standard repo hygiene still missing (license, CI, dependency updates, badges), extensions that fit your non-goals — and, flagged separately, ideas that would need you to revise a non-goal first. You pick; it drafts the chosen milestones with verifications; the loop resumes.</p>
-</div>
-<div class="qa">
-  <p class="q">You come back after a week.</p>
-  <p class="a">Nothing is re-explained. The goal, milestone state, and knowledge indexes load automatically; the log and ADRs carry every decision since; "continue" means the same thing it meant last time.</p>
-</div>
-
-<h2 id="install">Install</h2>
-<p>The kit is a reviewable source repo. Clone it, point the installer at your target repo, and it chooses the safe path — a fresh setup for new or empty repos, a non-destructive update (backups, merged settings, numbered candidates) for existing ones:</p>
-<pre><code>git clone https://github.com/lilabrooks/claude-okf-repo-kit.git
-cd claude-okf-repo-kit
-bash scripts/install-kit /path/to/target-repo
-bash scripts/verify-install /path/to/target-repo</code></pre>
-<p>Then open the target repo in Claude Code — it runs the goal interview with you before the first task. Full instructions, manual paths, and verification details are in the <a href="https://github.com/lilabrooks/claude-okf-repo-kit#readme">README</a>.</p>
-
-<footer>
-  <p>MIT licensed. Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> on <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">OKF 0.1</a>. This site's own source lives in the repo's <code>site/</code> folder and deploys from main via GitHub Actions — governed, like everything else here, by the repo's specs and ADRs.</p>
-</footer>
-
-</main>
+  <footer class="site-footer shell">
+    <p>Claude OKF repo kit, created and maintained by Lila Brooks · © 2026</p>
+    <a href="#content">Back to top ↑</a>
+  </footer>
 </body>
 </html>

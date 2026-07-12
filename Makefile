@@ -125,6 +125,15 @@ smoke-install:
 	test -f docs/specs/index.md; \
 	test -f docs/adr/index.md; \
 	test -f docs/okf-map.yml; \
+	: 'site and maintainer-only artifacts must never reach a target repo (site-content spec, ADR 0009/0016)'; \
+	! test -e site; \
+	! test -e .github/workflows/pages.yml; \
+	! test -e VERSION; \
+	! test -e Makefile; \
+	! test -e docs/specs/site-content.md; \
+	! test -e docs/adr/0009-github-pages-website.md; \
+	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
+	! grep -q 'site/' docs/okf-map.yml; \
 	grep -qFx '.DS_Store' .gitignore; \
 	grep -qFx '.env' .gitignore; \
 	grep -qFx '.env.*' .gitignore; \
@@ -218,6 +227,14 @@ smoke-existing:
 	test -f docs/okf-map.2.yml; \
 	python3 -m json.tool .claude/settings.json >/dev/null; \
 	bash scripts/okf check-stale >/dev/null; \
+	: 'site and maintainer-only artifacts must never reach an existing target repo'; \
+	! test -e site; \
+	! test -e .github/workflows/pages.yml; \
+	! test -e docs/specs/site-content.md; \
+	! test -e docs/adr/0009-github-pages-website.md; \
+	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
+	! grep -q 'site/' docs/okf-map.yml; \
+	! grep -q 'site/' docs/okf-map.2.yml; \
 	printf 'existing-repo install smoke ok\n'
 
 smoke-idempotent:

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How it works | Claude OKF repo kit</title>
+  <meta name="description" content="What actually happens when you open a kit-installed repo and talk to Claude Code: session context, the goal interview, the iteration loop, how decisions get made, the guardrails, and interrupted-session resume.">
+  <meta name="author" content="Lila Brooks">
+  <link rel="canonical" href="https://lilabrooks.github.io/how-it-works/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Claude OKF repo kit">
+  <meta property="og:title" content="How it works | Claude OKF repo kit">
+  <meta property="og:description" content="What actually happens when you open a kit-installed repo and talk to Claude Code — installed behavior, request by request.">
+  <meta property="og:url" content="https://lilabrooks.github.io/how-it-works/">
+  <meta property="og:image" content="https://lilabrooks.github.io/og.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How it works | Claude OKF repo kit">
+  <meta name="twitter:description" content="What actually happens when you open a kit-installed repo and talk to Claude Code — installed behavior, request by request.">
+  <meta name="twitter:image" content="https://lilabrooks.github.io/og.png">
+  <meta name="twitter:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://lilabrooks.github.io/#lila-brooks",
+        "name": "Lila Brooks",
+        "url": "https://lilabrooks.github.io/",
+        "sameAs": "https://github.com/lilabrooks"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://lilabrooks.github.io/#website",
+        "url": "https://lilabrooks.github.io/",
+        "name": "Claude OKF repo kit",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "copyrightHolder": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "inLanguage": "en"
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit",
+        "name": "Claude OKF repo kit",
+        "url": "https://lilabrooks.github.io/",
+        "codeRepository": "https://github.com/lilabrooks/claude-okf-repo-kit",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "maintainer": { "@id": "https://lilabrooks.github.io/#lila-brooks" }
+      },
+      {
+        "@type": "TechArticle",
+        "@id": "https://lilabrooks.github.io/how-it-works/#article",
+        "url": "https://lilabrooks.github.io/how-it-works/",
+        "headline": "How Claude Code works with your repo",
+        "description": "The installed behavior of a kit-managed repo: session context, the goal interview, the iteration loop, decision policy, guardrails, and interrupted-session resume.",
+        "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "publisher": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
+        "about": { "@id": "https://lilabrooks.github.io/#claude-okf-repo-kit" },
+        "isPartOf": { "@id": "https://lilabrooks.github.io/#website" },
+        "image": "https://lilabrooks.github.io/og.png",
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header shell">
+    <a class="wordmark" href="../" aria-label="Claude OKF repo kit, home"><span class="wordmark-mark">OKF</span><span>Claude OKF repo kit</span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../">The kit</a><a href="./" aria-current="page">How it works</a><a href="../dogfood/">Dogfood</a><a href="https://github.com/lilabrooks/claude-okf-repo-kit">Source</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <header class="page-hero shell">
+      <div><p class="eyebrow">How it works</p><p class="page-meta">Installed behavior, not aspiration</p></div>
+      <div><h1>How Claude Code works with your repo.</h1><p class="dek">What actually happens when you open a kit-installed repo and talk to Claude Code — all of it written into the kit’s <code>CLAUDE.md</code>, loaded at the start of every session.</p></div>
+    </header>
+
+    <section class="section shell" aria-labelledby="start-title">
+      <div class="section-head">
+        <p class="eyebrow">Session start</p>
+        <div>
+          <h2 id="start-title">Context without re-reading the repo.</h2>
+          <p>Claude Code never holds your whole repo in its context window, and it doesn’t need to.</p>
+        </div>
+      </div>
+      <div class="essay-grid">
+        <p>The installed <code>CLAUDE.md</code> imports three small files at load time — <code>docs/GOAL.md</code> and the spec and ADR indexes — so every session begins already knowing the goal, which milestones are done, and what knowledge exists.</p>
+        <p>Full specs, ADRs, and code stay on disk until a task needs them; the indexes and the source-to-doc map tell Claude exactly which file to read for the task at hand. The conversation is a scratchpad; the docs bundle is the memory.</p>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="interview-title">
+      <div class="section-head">
+        <p class="eyebrow">The first session</p>
+        <div>
+          <h2 id="interview-title">A goal interview, not a blank form.</h2>
+          <p>If the goal file still contains template placeholders, Claude Code doesn’t start working — it interviews you first, a few questions at a time, and drafts the goal from your answers for your confirmation.</p>
+        </div>
+      </div>
+      <ol class="steps-list">
+        <li><p>What are you building, and for whom?</p></li>
+        <li><p>What exists when it’s done — concretely?</p></li>
+        <li><p>What will users actually give it — realistic example inputs, including a messy or wrong one?</p></li>
+        <li><p>How is that verified mechanically? What’s the test command?</p></li>
+        <li><p>What should this repo deliberately <em>not</em> do?</p></li>
+        <li><p>Which stack and dependency choices are fixed, and which may Claude decide later through proposed ADRs?</p></li>
+        <li><p>What’s the first shippable slice, and how do we check it?</p></li>
+      </ol>
+      <div class="essay-grid">
+        <p>It pushes back on answers it can’t verify — “migrate the API to GraphQL” is a direction, not a done state — and in an existing codebase it proposes answers from the code first and lets you correct them.</p>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="loop-title">
+      <div class="section-head">
+        <p class="eyebrow">Saying “continue”</p>
+        <div>
+          <h2 id="loop-title">The iteration loop.</h2>
+          <p>Once the goal exists, you don’t have to write tasks. Ask Claude Code to continue and it runs the loop.</p>
+        </div>
+      </div>
+      <ol class="steps-list">
+        <li><p>Take the first unchecked milestone from <code>docs/GOAL.md</code>.</p></li>
+        <li><p><strong>Impact analysis</strong> — name the specs and ADRs that govern the files about to change, and read them.</p></li>
+        <li><p>Implement the smallest change that satisfies the milestone.</p></li>
+        <li><p>Run the test command and make it pass.</p></li>
+        <li><p><strong>Knowledge alignment</strong> — update the governing spec or ADR if behavior changed, and add a dated <code>docs/log.md</code> entry. The stale-map check catches anything missed.</p></li>
+        <li><p>Check the milestone off only when its stated verification passes, then take the next one.</p></li>
+      </ol>
+      <div class="essay-grid">
+        <p>The loop stops on its own in exactly three cases: the backlog is empty, a decision reserved for you comes up, or you say stop.</p>
+        <p>An empty backlog isn’t a dead end. Claude first runs an acceptance pass — exercising the deliverable the way a first-time user would, from a clean checkout through the README quickstart with realistic and wrong inputs, because tests prove the contract and that pass proves the experience — then reports the goal met with any still-proposed ADRs listed, and proposes candidate next milestones for you to choose from, adding nothing until you do.</p>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="decisions-title">
+      <div class="section-head">
+        <p class="eyebrow">Decisions</p>
+        <div>
+          <h2 id="decisions-title">You own the goal; Claude drives the decisions that reach it — on the record.</h2>
+          <p>The division of labor is explicit, and every decision-shaped change leaves a reviewable trail.</p>
+        </div>
+      </div>
+      <div class="principle-grid">
+        <article class="principle">
+          <span class="claim-status">Claude decides</span>
+          <h3>Inside the guardrails</h3>
+          <p>Implementation choices inside existing specs, accepted ADRs, and the guardrails are Claude’s to make without asking.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">Proposed ADR</span>
+          <h3>Decision-shaped changes</h3>
+          <p>A new dependency, persistence model, auth approach, API contract, or deployment shape starts with an ADR Claude writes itself — marked <code>status: proposed</code> with context, decision, alternatives, consequences, and a rollback trigger — implemented against and flagged for you.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">You review</span>
+          <h3>Asynchronously</h3>
+          <p>Scan <code>docs/adr/</code> for proposed entries (or run <code>bash scripts/okf pending</code>) and accept, request changes, or revert. Accepting flips the status to accepted and binds every future session; a session-start note counts what still awaits you.</p>
+        </article>
+        <article class="principle">
+          <span class="claim-status">You alone</span>
+          <h3>Reserved decisions</h3>
+          <p>Changing the goal, superseding an accepted ADR, and every action the guardrails gate.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="guardrails-title">
+      <div class="section-head">
+        <p class="eyebrow">Guardrails</p>
+        <div>
+          <h2 id="guardrails-title">Standing in every session.</h2>
+          <p>The same rules hold across every session, whoever is driving.</p>
+        </div>
+      </div>
+      <div class="principle-grid">
+        <article class="principle"><h3>Tests gate milestones</h3><p>Tests run after every change; a milestone with failing tests is not done.</p></article>
+        <article class="principle"><h3>Tests aren’t weakened</h3><p>Failing tests are never deleted, skipped, or weakened to force a green run.</p></article>
+        <article class="principle"><h3>Secrets stay untracked</h3><p>Env and credential files are confirmed git-ignored before they’re created, and the shipped settings deny reading local <code>.env</code> files outright.</p></article>
+        <article class="principle"><h3>Security gets a check</h3><p>Auth, input parsing, crypto, network exposure, and permission changes get an ADR check.</p></article>
+        <article class="principle"><h3>Destructive actions wait</h3><p>Force pushes, data deletion, publishing, deploying, and side-effecting external calls wait for your explicit go-ahead, every time.</p></article>
+        <article class="principle"><h3>Honest reporting</h3><p>Failures, partial progress, and skipped steps stay visible; outcomes are reported as they are.</p></article>
+      </div>
+      <div class="limit-note light">
+        <p><strong>Know the limit.</strong> These guardrails are instructions, not mechanical enforcement. The kit’s mechanical gates are docs sync (hooks) and a settings rule denying reads of local <code>.env</code> files — nothing else. When a rule must be guaranteed rather than followed — tests green before merge, no secrets in commits — put it in your repo’s own CI and branch protection, on top of this kit.</p>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="resume-title">
+      <div class="section-head">
+        <p class="eyebrow">Interruptions</p>
+        <div>
+          <h2 id="resume-title">Minutes, not state.</h2>
+          <p>Sessions end: context windows fill, limits hit, laptops close. The loop is built for it.</p>
+        </div>
+      </div>
+      <div class="essay-grid">
+        <p>Milestone checkboxes, the dated log, ADRs, and git commits are the durable record — a fresh session reads them, with the goal preloaded, and knows exactly where the loop stands.</p>
+        <p>If a session was cut off mid-milestone, the next one treats uncommitted changes as in-flight work: it reconciles them against the first unchecked milestone and the newest log entry, then finishes or backs them out before taking anything new.</p>
+      </div>
+    </section>
+
+    <section class="section working-set" aria-labelledby="anatomy-title">
+      <div class="shell">
+        <div class="section-head">
+          <p class="eyebrow">In practice</p>
+          <div>
+            <h2 id="anatomy-title">Anatomy of a conversation.</h2>
+            <p>The pattern an installed repo produces, request by request.</p>
+          </div>
+        </div>
+        <ul class="working-set-list">
+          <li><span class="status">Capability</span><h3>“Make sure this repo supports X.”</h3><p>Claude reads the goal and the governing specs and ADRs first, reports the gap between what exists and what you asked for, then makes the smallest change that closes it — behavior changes landing with their spec updates, an ADR if decision-shaped, a log entry, and a full verification run.</p></li>
+          <li><span class="status">Question</span><h3>“How does this part work?”</h3><p>You get an assessment grounded in the repo’s own files — honest trade-offs and a recommendation — not an unrequested edit. If it suggests an improvement, Claude offers it and waits; work starts when you say yes.</p></li>
+          <li><span class="status">Continue</span><h3>“Yes” or “continue.”</h3><p>Claude runs the loop: impact analysis, smallest change, tests, docs sync, verification, honest report. Decisions it had to make are waiting as proposed ADRs, and the log tells the story in dated entries you can read months later.</p></li>
+          <li><span class="status">Backlog empty</span><h3>The work runs out.</h3><p>Claude runs the first-time-user acceptance pass, reports the goal met, and stops building. Instead of inventing scope, it lays out your options — log items, ADR revisit triggers, acceptance findings, missing repo hygiene, and non-goal-fitting extensions — and drafts only what you pick.</p></li>
+          <li><span class="status">A week later</span><h3>You come back.</h3><p>Nothing is re-explained. The goal, milestone state, and knowledge indexes load automatically; the log and ADRs carry every decision since; “continue” means the same thing it meant last time.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section shell" aria-labelledby="install-title">
+      <div class="section-head">
+        <p class="eyebrow">Install</p>
+        <div>
+          <h2 id="install-title">One installer, the safe path.</h2>
+          <p>The kit is a reviewable source repo. Clone it, point the installer at your target repo, and it chooses the safe path — a fresh setup for new or empty repos, a non-destructive update (backups, merged settings, numbered candidates) for existing ones.</p>
+        </div>
+      </div>
+      <div class="essay-grid">
+        <p><code>git clone https://github.com/lilabrooks/claude-okf-repo-kit.git</code><br><code>cd claude-okf-repo-kit</code><br><code>bash scripts/install-kit /path/to/target-repo</code><br><code>bash scripts/verify-install /path/to/target-repo</code></p>
+        <p>Then open the target repo in Claude Code — it runs the goal interview with you before the first task. Full instructions, the manual paths, and verification details are in the <a href="https://github.com/lilabrooks/claude-okf-repo-kit#readme">README</a>.</p>
+      </div>
+    </section>
+
+    <section class="cta shell">
+      <p class="eyebrow">Keep reading</p>
+      <h2>See the model, or the evidence behind it.</h2>
+      <p>The home page explains why the kit exists and what it installs; the dogfood record shows what real repositories taught it.</p>
+      <div class="button-row"><a class="button primary" href="../">About the kit</a><a class="button" href="../dogfood/">Dogfood findings</a><a class="button" href="https://github.com/lilabrooks/claude-okf-repo-kit">View source</a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer shell"><p>Claude OKF repo kit, created and maintained by Lila Brooks · © 2026</p><a href="#content">Back to top ↑</a></footer>
+</body>
+</html>
