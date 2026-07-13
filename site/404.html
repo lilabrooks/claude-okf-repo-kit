@@ -3,22 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Page not found | Lila Brooks</title>
+  <title>Page not found | Claude OKF repo kit</title>
   <meta name="robots" content="noindex">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="compact-theme.css">
+  <script src="compact-theme.js" defer></script>
 </head>
 <body>
-  <header class="site-header shell">
-    <a class="wordmark" href="./" aria-label="Claude OKF repo kit, home"><span class="wordmark-mark">OKF</span><span>Claude OKF repo kit</span></a>
-    <nav class="site-nav" aria-label="Primary navigation"><a href="./">The kit</a><a href="how-it-works/">How it works</a><a href="dogfood/">Dogfood</a><a href="https://github.com/lilabrooks/claude-okf-repo-kit">Source</a></nav>
+  <a class="compact-skip-link" href="#content">Skip to content</a>
+  <header class="compact-header compact-shell">
+    <a class="compact-brand" href="./" aria-label="Claude OKF repo kit, home">
+      <span class="compact-brand-mark">OKF</span>
+      <span>Claude OKF repo kit</span>
+    </a>
+    <div class="compact-header-actions">
+      <nav class="compact-nav" aria-label="Primary navigation">
+        <a href="./">The kit</a>
+        <a href="how-it-works/">How it works</a>
+        <a href="dogfood/">Dogfood</a>
+        <a href="https://github.com/lilabrooks/claude-okf-repo-kit">Source</a>
+      </nav>
+      <button class="compact-theme-toggle" type="button" data-theme-toggle hidden>Theme</button>
+    </div>
   </header>
-  <main class="not-found shell">
-    <p class="eyebrow">404</p>
-    <h1>Wrong turn.</h1>
-    <p>The page may have moved during the site restructure.</p>
-    <p><a class="button primary" href="./">Return home</a></p>
+  <main id="content">
+    <section class="compact-section" style="border-bottom:0;">
+      <div class="compact-shell">
+        <p class="compact-eyebrow">404</p>
+        <h1 class="compact-title">Wrong turn.</h1>
+        <p class="compact-lede" style="margin-top:24px;">The page may have moved during the site restructure.</p>
+        <div class="compact-actions"><a class="compact-button compact-button-primary" href="./">Return home</a></div>
+      </div>
+    </section>
   </main>
-  <footer class="site-footer shell"><p>© 2026 Lila Brooks</p><a href="./">Home</a></footer>
+  <footer class="compact-footer compact-shell">
+    <span>Claude OKF repo kit, created and maintained by Lila Brooks · © 2026</span>
+    <a href="./">Home</a>
+  </footer>
 </body>
 </html>

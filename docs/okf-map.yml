@@ -123,6 +123,7 @@ mappings:
       - "docs/specs/site-content.md"
       - "docs/adr/0009-github-pages-website.md"
       - "docs/adr/0016-apex-mirror-editorial-site.md"
+      - "docs/adr/0017-compact-theme-site.md"
 
   - source: ".github/workflows/pages.yml"
     docs:
