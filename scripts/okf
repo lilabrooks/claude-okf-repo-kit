@@ -141,9 +141,11 @@ matches_pattern() {
   [[ "$file" == $pattern ]]
 }
 
+# Workflow and agent-config paths check-stale skips entirely; .codex/ and
+# AGENTS.md cover a second agent run against the same checkout.
 is_workflow_file() {
   case "$1" in
-    docs/*|.claude/*|CLAUDE.md|CLAUDE.local.md|scripts/okf) return 0 ;;
+    docs/*|.claude/*|.codex/*|CLAUDE.md|CLAUDE.local.md|AGENTS.md|scripts/okf) return 0 ;;
   esac
   # Layout-relocated knowledge homes count as workflow files even when they
   # sit outside docs/.
@@ -153,8 +155,8 @@ is_workflow_file() {
   esac
 }
 
-# Repo-meta files that never need an okf-map.yml mapping of their own; kept in
-# sync with the Stop hook's non-implementation list.
+# Repo-meta files that never need an okf-map.yml mapping of their own. Together
+# with is_workflow_file these are the Stop hook's non-implementation list.
 is_meta_file() {
   case "$1" in
     README.md|CHANGELOG.md|LICENSE|.gitignore|.editorconfig|.env.example) return 0 ;;

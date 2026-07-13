@@ -100,10 +100,10 @@ Hook smoke tests must cover:
 - README-only edits pass
 - a `stop_hook_active` stdin payload downgrades a would-be block to a stderr warning that allows the stop; a payload without it still blocks
 - end-anchored exclusions (map-less fixture): a lookalike file such as `LICENSE-MIT` blocks, while the exact excluded name passes
-- second-agent config (`.codex/`, `AGENTS.md`) alone does not block
+- second-agent config (`.codex/`, `AGENTS.md`) alone does not block, and a `.env.example`-only change does not block
 - the SessionStart hook reports the proposed-ADR count (including body-status conventions), skips numbered candidates, emits valid JSON, and stays silent about `okf_version` when the stamp file is absent
 
-OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale`, ADR and spec scaffolding (numbering, `status: proposed`, index entries), numbering-width detection against pre-existing numbered ADRs, seeded index creation, and the `pending` listing including its missing-status flag and the tolerant status forms (ADR 0018).
+OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale` (listing unmapped implementation files while skipping agent config such as `.codex/` and `AGENTS.md`), ADR and spec scaffolding (numbering, `status: proposed`, index entries), numbering-width detection against pre-existing numbered ADRs, seeded index creation, and the `pending` listing including its missing-status flag and the tolerant status forms (ADR 0018).
 
 This kit validates OKF helper behavior and source-to-doc freshness. Target repos that need stricter OKF frontmatter or link rules should add a repo-local docs validator to their own quality gate.
 

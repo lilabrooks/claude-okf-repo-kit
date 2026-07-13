@@ -518,6 +518,10 @@ smoke-hooks:
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
 	rm LICENSE; \
+	printf '%s\n' 'API_URL=' > .env.example; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	rm .env.example; \
 	mkdir -p .codex; \
 	printf '%s\n' '{}' > .codex/hooks.json; \
 	printf '%s\n' '# Agents' > AGENTS.md; \
@@ -650,6 +654,14 @@ smoke-okf:
 	[[ "$$output" == *'OKF mappings are current.'* ]]; \
 	[[ "$$output" == *'no okf-map.yml mapping'* ]]; \
 	[[ "$$output" == *'package.json'* ]]; \
+	mkdir -p .codex; \
+	printf '%s\n' '{}' > .codex/hooks.json; \
+	printf '%s\n' '# Agents' > AGENTS.md; \
+	output=$$(bash scripts/okf check-stale); \
+	[[ "$$output" == *'package.json'* ]]; \
+	[[ "$$output" != *'AGENTS.md'* ]]; \
+	[[ "$$output" != *'.codex'* ]]; \
+	rm -rf .codex AGENTS.md; \
 	bash scripts/okf new-adr cache-layer "Cache layer" >/dev/null; \
 	test -f docs/adr/0001-cache-layer.md; \
 	grep -q 'status: proposed' docs/adr/0001-cache-layer.md; \

@@ -48,9 +48,11 @@ For each changed source file mapped in `docs/okf-map.yml`, the check passes when
 
 A changed `docs/log.md` also passes as the documented rationale path when no spec or ADR edit is warranted.
 
-The check ignores workflow files such as `docs/`, `.claude/`, `CLAUDE.md`, `CLAUDE.local.md`, and `scripts/okf`. Layout-relocated spec and ADR homes count as workflow files even when they sit outside `docs/`.
+The check ignores workflow and agent-config files: `docs/`, `.claude/`, `.codex/`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, and `scripts/okf`. A second agent's `.codex/` and `AGENTS.md` are config for the same checkout, not implementation, so they neither go stale nor appear in the unmapped note. Layout-relocated spec and ADR homes count as workflow files even when they sit outside `docs/`.
 
 Outside hook mode, `check-stale` also prints a non-blocking note listing changed implementation files that match no mapping, so new source areas get mapped as they gain governing docs. Repo-meta files (README, changelog, license, ignore and editor config, `.env.example`) are excluded from the note, and unmapped files never change the exit status. Hook mode stays silent about unmapped files to avoid false blocks.
+
+The workflow/agent-config exclusions and the repo-meta set are, together, exactly the Stop hook's non-implementation list (Claude hooks spec); the two lists must not drift.
 
 # Draft behavior
 

@@ -30,7 +30,9 @@ The deny set must not use an `.env.*` glob: deny rules cannot be negated, and th
 
 If `scripts/okf` exists in the target repo, the Stop hook also runs `bash scripts/okf check-stale` in hook mode.
 
-README, changelog, license, `.gitignore`, `.editorconfig`, Claude local memory, hook/helper files, and agent config — `.claude/`, `CLAUDE.md`, plus a second agent's `.codex/` and `AGENTS.md` when present — are not treated as implementation files. File-name exclusions are end-anchored exact matches (so `LICENSE-MIT` or `CLAUDE.md.bak` count as code); directory exclusions keep prefix semantics.
+README, changelog, license, `.gitignore`, `.editorconfig`, `.env.example`, Claude local memory, hook/helper files, and agent config — `.claude/`, `CLAUDE.md`, plus a second agent's `.codex/` and `AGENTS.md` when present — are not treated as implementation files. File-name exclusions are end-anchored exact matches (so `LICENSE-MIT` or `CLAUDE.md.bak` count as code); directory exclusions keep prefix semantics.
+
+This non-implementation list is exactly the union of the `check-stale` exclusions in `scripts/okf` — its workflow/agent-config set and its repo-meta set (OKF helper command spec). A file added to either side is added to the other in the same change; the two lists must not drift.
 
 The hook honors `stop_hook_active` from the hook stdin payload: after a prior block in the same stop cycle it warns on stderr and allows the stop instead of blocking again, so a session that cannot write to `docs/` (a read-only sandbox, for example) never loops. Manual runs without a stdin payload behave as if the guard were absent.
 
