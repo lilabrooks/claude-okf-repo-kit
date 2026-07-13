@@ -38,6 +38,7 @@ The validation workflow must include:
 - new-repo install simulation
 - existing-repo install simulation
 - existing-repo idempotency simulation
+- brownfield adoption simulation (layout detection, seeded indexes, AGENTS.md-first staging; ADR 0018)
 - candidate refresh simulation across kit template changes
 - script provenance simulation across simulated kit releases (ADR 0013)
 - dogfood harvest smoke check against a temp target (ADR 0014)
@@ -63,7 +64,7 @@ New-repo install simulation must verify the starter `docs/index.md` declares `ki
 
 Existing-repo install simulation must exercise `scripts/update-existing-repo`.
 
-Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries (including the target's own permission rules), merges hook settings and the kit's permission deny rules, appends required ignore entries including the env-file set, backs up kit-managed scripts it refreshes, and writes numbered candidates for same-name Markdown/map files (the `docs/index.md` candidate carrying the `kit_version` stamp).
+Existing-repo install simulation must verify the kit preserves an existing `CLAUDE.md`, preserves existing docs, preserves existing `.gitignore` entries, preserves existing settings entries (including the target's own permission rules), merges hook settings and the kit's permission deny rules, appends required ignore entries including the env-file set, backs up kit-managed scripts it refreshes, and writes numbered candidates for same-name Markdown/map files (the `docs/index.md` candidate carrying the `kit_version` stamp). Heading-only starters — `docs/log.md` and the spec and ADR indexes — leave existing files untouched with no numbered candidate (ADR 0018).
 
 Existing-repo install simulation must verify same-name Markdown and map conflicts produce same-folder numbered candidates.
 
@@ -72,6 +73,8 @@ Existing-repo install simulation must verify any `CLAUDE.md` merge candidate com
 Existing-repo install simulation must verify the update script prints a clear summary with created, updated, and review-needed sections.
 
 Existing-repo idempotency simulation must verify repeated updates do not duplicate `.gitignore` entries, settings hooks, permission deny rules, or identical numbered candidates.
+
+Brownfield adoption simulation must verify, against a target with an `AGENTS.md` playbook, a pure-import `CLAUDE.md` shim, specs under `docs/architecture/specification/`, three-digit body-status ADRs, and a root `schemas/` directory: the updater records the detected layout in the installed map, creates no parallel `docs/specs/` tree, seeds both indexes from the existing files, stages the kit playbook as an `AGENTS.md` numbered candidate with rewritten imports while leaving the shim untouched, suppresses the goal-template candidate for a filled goal, links runbooks and schemas from the starter `docs/index.md`, and produces a target that passes `verify-install`. In that target, `scripts/okf` must scaffold the next three-digit ADR into a seeded index, list a body-status proposed ADR in `pending` without flagging tolerated statuses as missing, and honor the layout for `draft` (ADR 0018).
 
 Candidate refresh simulation must verify that when kit content changes between updater runs, the updater refreshes its own stale candidate in place instead of numbering past it, and that an owner-edited candidate is left untouched with a new number used instead (ADR 0012).
 
@@ -90,16 +93,17 @@ Install helper smoke tests must verify:
 
 Hook smoke tests must cover:
 
-- implementation changes with no docs update block
+- implementation changes with no docs update block while the map carries no active mapping (the crude prefix gate)
+- with active mappings, the prefix gate stands down: a stale mapped source blocks through `check-stale`, a mapped governing doc outside `docs/` (a schema) passes, and unmapped-only changes no longer hard-block (ADR 0018)
 - mapped implementation changes with unrelated docs still block
 - mapped implementation changes with mapped docs pass
 - README-only edits pass
 - a `stop_hook_active` stdin payload downgrades a would-be block to a stderr warning that allows the stop; a payload without it still blocks
-- end-anchored exclusions: a lookalike file such as `LICENSE-MIT` blocks, while the exact excluded name passes
+- end-anchored exclusions (map-less fixture): a lookalike file such as `LICENSE-MIT` blocks, while the exact excluded name passes
 - second-agent config (`.codex/`, `AGENTS.md`) alone does not block
-- the SessionStart hook reports the proposed-ADR count, skips numbered candidates, and emits valid JSON
+- the SessionStart hook reports the proposed-ADR count (including body-status conventions), skips numbered candidates, emits valid JSON, and stays silent about `okf_version` when the stamp file is absent
 
-OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale`, ADR and spec scaffolding (numbering, `status: proposed`, index entries), and the `pending` listing including its missing-status flag.
+OKF helper smoke tests must verify draft generation, ADR suggestion behavior, the non-blocking unmapped-file note from `check-stale`, ADR and spec scaffolding (numbering, `status: proposed`, index entries), numbering-width detection against pre-existing numbered ADRs, seeded index creation, and the `pending` listing including its missing-status flag and the tolerant status forms (ADR 0018).
 
 This kit validates OKF helper behavior and source-to-doc freshness. Target repos that need stricter OKF frontmatter or link rules should add a repo-local docs validator to their own quality gate.
 

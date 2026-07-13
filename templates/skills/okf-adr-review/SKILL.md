@@ -10,7 +10,7 @@ The owner finds pending decisions with `bash scripts/okf pending` (the SessionSt
 Accepting an ADR:
 
 1. Flip `status: proposed` to `status: accepted` in the frontmatter, and update the body `# Status` section (date, "at the owner's direction").
-2. Remove any "(proposed)" markers the ADR carries in `docs/adr/index.md` entries, `docs/GOAL.md` milestones, or the current-state line of `CLAUDE.md`.
+2. Remove any "(proposed)" markers the ADR carries in the ADR index entries (`docs/adr/index.md` by default; a `layout:` block in `docs/okf-map.yml` may relocate it), `docs/GOAL.md` milestones, or the current-state line of `CLAUDE.md`.
 3. No implementation change is usually needed: under the propose-then-implement policy the work already exists — acceptance makes it binding for future work.
 4. Add a dated `docs/log.md` entry recording the acceptance, and verify `bash scripts/okf pending` no longer lists it.
 
@@ -23,4 +23,4 @@ Rejecting an ADR:
 
 Requested changes (neither accept nor reject): treat the owner's comments as a task — amend the ADR and the implementation together, keep `status: proposed`, and flag it again in the summary.
 
-Old ADRs missing a `status:` field are invisible to the pending scan — add frontmatter status to them when found, as a formatting-only fix.
+The pending scan reads frontmatter `status:` first, then the body conventions brownfield repos use (a `- Status: X` bullet or a `## Status` section). ADRs with none of those are invisible to it — add frontmatter status to them when found, as a formatting-only fix; frontmatter stays the preferred form for new ADRs.

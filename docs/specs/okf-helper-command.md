@@ -34,6 +34,12 @@ After installation, the helper reads `docs/okf-map.yml`.
 
 In this source-kit repo, it may also read root `okf-map.yml` as the install template when `docs/okf-map.yml` is absent.
 
+# Layout block
+
+The map file may carry an optional top-level `layout:` block relocating the knowledge homes for repos that already keep specs or ADRs elsewhere (ADR 0018). Recognized keys, with defaults: `specs_dir` (`docs/specs`; drafts live in `<specs_dir>/_drafts`), `adr_dir` (`docs/adr`; the index lives at `<adr_dir>/index.md`), and `stamp_file` (`docs/index.md`; read by the SessionStart hook, not this helper). Every command resolves its paths through the block; absent keys fall back to the defaults, so canonical repos behave exactly as before.
+
+The parser is a small awk routine over flat `key: value` lines, tolerant of quotes and comments. Inline copies live in `check-okf-version.sh`, `verify-install`, `update-existing-repo`, and `harvest-dogfood` so each tool stands alone (hooks especially, when mirrored into another agent's config); the copies must stay in sync with this helper's.
+
 # Stale mapping behavior
 
 `check-stale` uses repo-relative changed files from Git.
@@ -42,15 +48,15 @@ For each changed source file mapped in `docs/okf-map.yml`, the check passes when
 
 A changed `docs/log.md` also passes as the documented rationale path when no spec or ADR edit is warranted.
 
-The check ignores workflow files such as `docs/`, `.claude/`, `CLAUDE.md`, `CLAUDE.local.md`, and `scripts/okf`.
+The check ignores workflow files such as `docs/`, `.claude/`, `CLAUDE.md`, `CLAUDE.local.md`, and `scripts/okf`. Layout-relocated spec and ADR homes count as workflow files even when they sit outside `docs/`.
 
 Outside hook mode, `check-stale` also prints a non-blocking note listing changed implementation files that match no mapping, so new source areas get mapped as they gain governing docs. Repo-meta files (README, changelog, license, ignore and editor config, `.env.example`) are excluded from the note, and unmapped files never change the exit status. Hook mode stays silent about unmapped files to avoid false blocks.
 
 # Draft behavior
 
-`draft` must write to `docs/specs/_drafts/`.
+`draft` must write to the drafts folder — `<specs_dir>/_drafts/`, which is `docs/specs/_drafts/` by default.
 
-Drafts are review-only scaffolding. They must not be treated as accepted specs until a human or agent rewrites and promotes them into `docs/specs/`.
+Drafts are review-only scaffolding. They must not be treated as accepted specs until a human or agent rewrites and promotes them into the spec home (`docs/specs/` by default).
 
 Drafts may include observable facts such as file counts, language extensions, public surface clues, tests found, and mapped docs.
 
@@ -60,16 +66,18 @@ Drafts may include observable facts such as file counts, language extensions, pu
 
 It may suggest ADRs for dependency, persistence, cache, queue, worker, scheduler, auth, security, privacy, API, deployment, or ownership-boundary changes.
 
+Machine-readable contract schemas (JSON Schema, GraphQL, proto) classify under the public API/contract suggestion, not persistence; persistence still matches migrations, SQL, and database paths. The printed draft path follows the configured ADR home.
+
 It should stay quiet for local refactors, formatting, test-only changes, and bug fixes that do not create a standing decision.
 
 # Scaffolding behavior
 
-`new-adr` computes the next four-digit number from existing `docs/adr/NNNN-*.md` files, writes frontmatter with at least `type: ADR`, a title, a timestamp, and `status: proposed`, and lays out the required sections: status, context, decision, alternatives considered, consequences, and rollback/revisit trigger.
+`new-adr` scaffolds into the ADR home and follows whatever numbering already exists there (ADR 0018): the next number is the highest existing numeric prefix plus one, zero-padded to the widest existing prefix width — a repo with `001-*.md` ADRs gets `017-`, never a parallel `0001-` sequence — and four digits when the directory holds no numbered ADRs. It writes frontmatter with at least `type: ADR`, a title, a timestamp, and `status: proposed`, and lays out the required sections: status, context, decision, alternatives considered, consequences, and rollback/revisit trigger.
 
-`new-spec` writes `docs/specs/<slug>.md` with `type: Spec` frontmatter and purpose, contract, and verification sections; the contract section prompts for the example interactions users actually give the surface, including a rejected or edge input.
+`new-spec` writes `<specs_dir>/<slug>.md` with `type: Spec` frontmatter and purpose, contract, and verification sections; the contract section prompts for the example interactions users actually give the surface, including a rejected or edge input.
 
-Both commands append an entry to the matching `index.md` (creating it with its heading when missing), refuse to overwrite existing files, and emit bracketed placeholders the author must fill — a scaffold is a skeleton, not a decision or a contract.
+Both commands append an entry to the matching `index.md`, refuse to overwrite existing files, and emit bracketed placeholders the author must fill — a scaffold is a skeleton, not a decision or a contract. A missing index is created seeded with an entry per knowledge file already in the directory (titles from frontmatter or the first heading), so a fresh index never lists less than its directory holds.
 
 # Pending review behavior
 
-`pending` scans `docs/adr/*.md` for a frontmatter `status:` field, excluding the index and installer-written numbered review candidates (`*.N.md`), which are not live ADRs. It lists files whose status is `proposed` with their titles, and separately flags files with no status field, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero.
+`pending` scans the ADR home's `*.md` files, excluding the index and installer-written numbered review candidates (`*.N.md`), which are not live ADRs. Status detection tolerates brownfield conventions (ADR 0018): frontmatter `status:` first, then a `- Status: X` body bullet, then the first word following a `# Status`/`## Status` heading — normalized to the lowercased first word, so `Accepted (2026-07-12)` reads as `accepted`. It lists files whose status is `proposed` with their titles (frontmatter `title:`, falling back to the first `#` heading), and separately flags files with no status in any recognized form, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero. The SessionStart hook's inbox count applies the same detection.

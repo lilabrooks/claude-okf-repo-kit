@@ -223,6 +223,42 @@ report_repo() {
   return 0
 }
 
+# Layout block reader for registered repos (ADR 0018): the same keys
+# scripts/okf reads, defaulting to the canonical tree, so brownfield repos
+# index their real spec and ADR homes.
+target_layout_value() {
+  local repo_path="$1"
+  local key="$2"
+  local default="$3"
+  local value=""
+  if [ -f "$repo_path/docs/okf-map.yml" ]; then
+    value="$(awk -v key="$key" '
+      function clean(s) {
+        gsub(/#.*/, "", s)
+        gsub(/^[[:space:]"'\'']+/, "", s)
+        gsub(/[[:space:]"'\'']+$/, "", s)
+        return s
+      }
+      /^layout:/ { in_layout = 1; next }
+      /^[^[:space:]#]/ { in_layout = 0 }
+      in_layout {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+        if (index(line, key ":") == 1) {
+          sub(key ":", "", line)
+          print clean(line)
+          exit
+        }
+      }
+    ' "$repo_path/docs/okf-map.yml")"
+  fi
+  if [ -n "$value" ]; then
+    printf '%s\n' "${value%/}"
+  else
+    printf '%s\n' "$default"
+  fi
+}
+
 # Rebuild the cross-repo knowledge index from the registered repos: one line
 # per fact, tab-separated as repo<TAB>kind<TAB>path<TAB>text. Derived on every
 # build (never edited, never stale) and machine-local beside the registry.
@@ -240,22 +276,36 @@ build_index() {
         "$path/docs/GOAL.md" >> "$INDEX"
     fi
 
-    if [ -f "$path/docs/specs/index.md" ]; then
-      awk -v n="$name" 'BEGIN{OFS="\t"} /^- / {print n, "spec", "docs/specs/index.md", substr($0, 1, 240)}' \
-        "$path/docs/specs/index.md" >> "$INDEX"
+    local specs_dir adr_root
+    specs_dir="$(target_layout_value "$path" specs_dir docs/specs)"
+    adr_root="$(target_layout_value "$path" adr_dir docs/adr)"
+
+    if [ -f "$path/$specs_dir/index.md" ]; then
+      awk -v n="$name" -v p="$specs_dir/index.md" 'BEGIN{OFS="\t"} /^- / {print n, "spec", p, substr($0, 1, 240)}' \
+        "$path/$specs_dir/index.md" >> "$INDEX"
     fi
 
     local adr base status title desc
-    for adr in "$path"/docs/adr/*.md; do
+    for adr in "$path/$adr_root"/*.md; do
       [ -e "$adr" ] || continue
       base="$(basename "$adr")"
       case "$base" in
         index.md|*.[0-9].md|*.[0-9][0-9].md) continue ;;
       esac
       status="$(grep -m1 -E '^status:' "$adr" 2>/dev/null | sed -E 's/^status:[[:space:]]*//; s/[[:space:]]+$//' || true)"
+      if [ -z "$status" ]; then
+        status="$(grep -m1 -E '^[-*][[:space:]]*[Ss]tatus:' "$adr" 2>/dev/null | sed -E 's/^[-*][[:space:]]*[Ss]tatus:[[:space:]]*//; s/[[:space:]]+$//' || true)"
+      fi
+      if [ -z "$status" ]; then
+        status="$(awk 'found && NF { print; exit } /^#+[[:space:]]*[Ss]tatus[[:space:]]*$/ { found = 1 }' "$adr" 2>/dev/null || true)"
+      fi
+      status="$(printf '%s' "$status" | awk '{ print tolower($1) }' | sed -E 's/[^a-z]+$//' || true)"
       title="$(grep -m1 -E '^title:' "$adr" 2>/dev/null | sed -E 's/^title:[[:space:]]*//' || true)"
+      if [ -z "$title" ]; then
+        title="$(grep -m1 -E '^#[[:space:]]' "$adr" 2>/dev/null | sed -E 's/^#[[:space:]]+//; s/[[:space:]]+$//' || true)"
+      fi
       desc="$(grep -m1 -E '^description:' "$adr" 2>/dev/null | sed -E 's/^description:[[:space:]]*//' | cut -c1-160 || true)"
-      printf '%s\tadr\tdocs/adr/%s\t[%s] %s — %s\n' "$name" "$base" "${status:-?}" "${title:-untitled}" "$desc" >> "$INDEX"
+      printf '%s\tadr\t%s/%s\t[%s] %s — %s\n' "$name" "$adr_root" "$base" "${status:-?}" "${title:-untitled}" "$desc" >> "$INDEX"
     done
 
     if [ -f "$path/docs/log.md" ]; then

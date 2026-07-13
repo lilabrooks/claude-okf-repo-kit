@@ -129,6 +129,8 @@ bash scripts/okf adr-suggest
 
 `adr-suggest` should stay conservative. It proposes ADRs only for decision-shaped changes: new dependencies, persistence models, cache or queue behavior, workers, auth/security/privacy, public API contracts, deployment topology, or ownership boundaries. It should stay quiet for local refactors, test-only changes, and bug fixes that don't create a standing decision.
 
+The paths above are the defaults. A repo that already keeps its knowledge elsewhere — chaptered specs under `docs/architecture/specification/`, three-digit ADRs with `- Status:` bullets instead of frontmatter — points the kit at it with a small `layout:` block in `/docs/okf-map.yml` (`specs_dir`, `adr_dir`, `stamp_file`), and the helper, hooks, and installers follow it. `new-adr` continues whatever numbering already exists, and the status scans read the body conventions too, so nothing has to be renamed or moved to adopt the kit in a brownfield repo.
+
 If you want your `/docs` tree to be OKF-compliant, each spec file needs YAML frontmatter with at least a `type:` field, and each directory gets an `index.md` listing its contents. That index is what lets an agent survey the bundle cheaply before reading whole documents. A folder literally named `.okf/` is optional; the spec cares about file conventions, and `/docs` works fine.
 
 ---

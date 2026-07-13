@@ -315,12 +315,116 @@ PY
   updated+=(".claude/settings.json merged hooks and permissions")
 }
 
-mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" "$TARGET/docs/adr"
+# --- Brownfield knowledge detection (ADR 0018) ------------------------------
+# A target that already keeps specs or ADRs in its own arrangement gets the
+# kit pointed at that arrangement instead of a parallel empty tree. Priority:
+# a layout block in an existing docs/okf-map.yml, then filesystem detection,
+# then the canonical defaults.
 
-if [ -f "$TARGET/CLAUDE.md" ]; then
-  write_numbered_candidate "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md" "CLAUDE.md"
+map_layout_value() {
+  local key="$1"
+  local target_map="$TARGET/docs/okf-map.yml"
+  [ -f "$target_map" ] || return 0
+  awk -v key="$key" '
+    function clean(s) {
+      gsub(/#.*/, "", s)
+      gsub(/^[[:space:]"'\'']+/, "", s)
+      gsub(/[[:space:]"'\'']+$/, "", s)
+      return s
+    }
+    /^layout:/ { in_layout = 1; next }
+    /^[^[:space:]#]/ { in_layout = 0 }
+    in_layout {
+      line = $0
+      sub(/^[[:space:]]+/, "", line)
+      if (index(line, key ":") == 1) {
+        sub(key ":", "", line)
+        print clean(line)
+        exit
+      }
+    }
+  ' "$target_map"
+}
+
+dir_has_md() {
+  find "$1" -maxdepth 1 -name '*.md' ! -name 'index.md' 2>/dev/null | grep -q .
+}
+
+detect_specs_dir() {
+  local candidate
+  for candidate in docs/specs docs/specifications docs/specification \
+    docs/architecture/specification docs/architecture/specs; do
+    if [ -d "$TARGET/$candidate" ] && dir_has_md "$TARGET/$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  printf 'docs/specs\n'
+}
+
+detect_adr_dir() {
+  local candidate
+  for candidate in docs/adr docs/adrs docs/decisions docs/architecture/decisions; do
+    if [ -d "$TARGET/$candidate" ] \
+      && find "$TARGET/$candidate" -maxdepth 1 -name '[0-9]*-*.md' 2>/dev/null | grep -q .; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  printf 'docs/adr\n'
+}
+
+SPECS_DIR="$(map_layout_value specs_dir)"
+[ -n "$SPECS_DIR" ] || SPECS_DIR="$(detect_specs_dir)"
+SPECS_DIR="${SPECS_DIR%/}"
+ADR_DIR="$(map_layout_value adr_dir)"
+[ -n "$ADR_DIR" ] || ADR_DIR="$(detect_adr_dir)"
+ADR_DIR="${ADR_DIR%/}"
+
+CANONICAL_LAYOUT=1
+if [ "$SPECS_DIR" != "docs/specs" ] || [ "$ADR_DIR" != "docs/adr" ]; then
+  CANONICAL_LAYOUT=0
+fi
+
+mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/$SPECS_DIR/_drafts" "$TARGET/$ADR_DIR"
+
+# Playbook staging: when AGENTS.md is the repo's real playbook and CLAUDE.md
+# is absent or a pure @-import shim, the kit playbook lands as an AGENTS.md
+# candidate instead of a CLAUDE.2.md that competes with the shim. Preloaded
+# import lines are rewritten to the detected layout so they resolve to the
+# real indexes.
+render_playbook() {
+  sed -e "s|^@docs/specs/index.md$|@$SPECS_DIR/index.md|" \
+    -e "s|^@docs/adr/index.md$|@$ADR_DIR/index.md|" \
+    "$KIT_DIR/templates/CLAUDE.md"
+}
+
+is_import_shim() {
+  local f="$1"
+  [ -f "$f" ] || return 1
+  grep -qE '^@' "$f" || return 1
+  ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .
+}
+
+if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then
+  # Process substitution, not a pipe: the candidate machinery mutates the
+  # summary arrays and must run in this shell.
+  write_numbered_content_candidate "$TARGET/AGENTS.md" "AGENTS.md (kit playbook; this repo is AGENTS.md-first)" < <(render_playbook)
+  if [ ! -f "$TARGET/CLAUDE.md" ]; then
+    {
+      printf '@AGENTS.md\n'
+      printf '@docs/GOAL.md\n'
+      printf '@%s/index.md\n' "$SPECS_DIR"
+      printf '@%s/index.md\n' "$ADR_DIR"
+    } > "$TARGET/CLAUDE.md"
+    created+=("CLAUDE.md (import shim; AGENTS.md stays the playbook)")
+  else
+    skipped+=("CLAUDE.md import shim left untouched; kit playbook staged beside AGENTS.md")
+  fi
+elif [ -f "$TARGET/CLAUDE.md" ]; then
+  write_numbered_content_candidate "$TARGET/CLAUDE.md" "CLAUDE.md" < <(render_playbook)
 else
-  cp "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
+  render_playbook > "$TARGET/CLAUDE.md"
   created+=("CLAUDE.md")
 fi
 
@@ -334,84 +438,135 @@ install_kit_script "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TA
 install_kit_script "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md" ".claude/skills/okf-adr-review/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md" ".claude/skills/okf-kit-upgrade/SKILL.md"
 
+# The installed map records the detected layout so every kit tool follows it
+# from the first session; canonical layouts get the template unchanged.
+render_map() {
+  cat "$KIT_DIR/okf-map.yml"
+  if [ "$CANONICAL_LAYOUT" -eq 0 ]; then
+    printf '\n# Detected by update-existing-repo: this repo keeps its knowledge here.\n'
+    printf 'layout:\n'
+    if [ "$SPECS_DIR" != "docs/specs" ]; then
+      printf '  specs_dir: %s\n' "$SPECS_DIR"
+    fi
+    if [ "$ADR_DIR" != "docs/adr" ]; then
+      printf '  adr_dir: %s\n' "$ADR_DIR"
+    fi
+  fi
+}
+
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
-  write_numbered_candidate "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml" "docs/okf-map.yml"
+  write_numbered_content_candidate "$TARGET/docs/okf-map.yml" "docs/okf-map.yml" < <(render_map)
 else
-  cp "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
+  render_map > "$TARGET/docs/okf-map.yml"
   created+=("docs/okf-map.yml")
 fi
 
+# A goal file that already carries the kit's structure with no template
+# brackets is the owner's finished goal — a template candidate beside it is
+# pure review noise, so none is written (ADR 0018).
+goal_is_filled() {
+  local f="$TARGET/docs/GOAL.md"
+  if [ ! -f "$f" ]; then return 1; fi
+  if grep -q 'Template. Fill every \[bracket\]' "$f"; then return 1; fi
+  if grep -qF '[app | service | utility]' "$f"; then return 1; fi
+  if ! grep -qE '^# Goal' "$f"; then return 1; fi
+  if ! grep -qE '^# Milestones' "$f"; then return 1; fi
+  return 0
+}
+
 if [ -f "$TARGET/docs/GOAL.md" ]; then
-  write_numbered_candidate "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md" "docs/GOAL.md"
+  if goal_is_filled; then
+    skipped+=("docs/GOAL.md already filled; no template candidate written")
+  else
+    write_numbered_candidate "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md" "docs/GOAL.md"
+  fi
 else
   cp "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
   created+=("docs/GOAL.md")
 fi
 
+# Bundle-root links follow the detected layout, and knowledge surfaces the
+# canonical tree has no slot for (runbooks, machine-readable schemas) get
+# linked when present.
+bundle_link() {
+  local rel="$1"
+  case "$rel" in
+    docs/*) printf '%s\n' "${rel#docs/}" ;;
+    *) printf '../%s\n' "$rel" ;;
+  esac
+}
+
+docs_index_content() {
+  printf -- '---\nokf_version: "0.1"\nkit_version: "%s"\n---\n\n# Knowledge bundle\n\n' "$KIT_VERSION"
+  printf -- '- [Goal](GOAL.md)\n'
+  printf -- '- [Specs](%s/index.md)\n' "$(bundle_link "$SPECS_DIR")"
+  printf -- '- [ADRs](%s/index.md)\n' "$(bundle_link "$ADR_DIR")"
+  printf -- '- [Log](log.md)\n'
+  printf -- '- [Source map](okf-map.yml)\n'
+  if [ -d "$TARGET/docs/runbooks" ]; then
+    printf -- '- [Runbooks](runbooks/)\n'
+  fi
+  if [ -d "$TARGET/schemas" ]; then
+    printf -- '- [Schemas](../schemas/)\n'
+  fi
+}
+
 if [ ! -f "$TARGET/docs/index.md" ]; then
-  cat > "$TARGET/docs/index.md" <<EOF
----
-okf_version: "0.1"
-kit_version: "$KIT_VERSION"
----
-
-# Knowledge bundle
-
-- [Goal](GOAL.md)
-- [Specs](specs/index.md)
-- [ADRs](adr/index.md)
-- [Log](log.md)
-- [Source map](okf-map.yml)
-EOF
+  docs_index_content > "$TARGET/docs/index.md"
   created+=("docs/index.md")
 else
-  write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" <<EOF
----
-okf_version: "0.1"
-kit_version: "$KIT_VERSION"
----
-
-# Knowledge bundle
-
-- [Goal](GOAL.md)
-- [Specs](specs/index.md)
-- [ADRs](adr/index.md)
-- [Log](log.md)
-- [Source map](okf-map.yml)
-EOF
+  write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" < <(docs_index_content)
 fi
 
+# Heading-only starters carry no kit content worth reviewing, so an existing
+# file gets no numbered candidate; a missing index is created seeded with the
+# knowledge files already beside it, never as an empty shell next to work the
+# kit did not write (ADR 0018).
 if [ ! -f "$TARGET/docs/log.md" ]; then
   cat > "$TARGET/docs/log.md" <<'EOF'
 # Log
 EOF
   created+=("docs/log.md")
 else
-  write_numbered_content_candidate "$TARGET/docs/log.md" "docs/log.md" <<'EOF'
-# Log
-EOF
+  skipped+=("docs/log.md exists; left untouched")
 fi
 
-if [ ! -f "$TARGET/docs/specs/index.md" ]; then
-  cat > "$TARGET/docs/specs/index.md" <<'EOF'
-# Specs
-EOF
-  created+=("docs/specs/index.md")
+seed_index_content() {
+  local dir="$1"
+  local heading="$2"
+  local f base title printed=0
+  printf '%s\n' "$heading"
+  for f in "$TARGET/$dir"/*.md; do
+    [ -e "$f" ] || continue
+    base="$(basename "$f")"
+    case "$base" in
+      index.md|*.[0-9].md|*.[0-9][0-9].md) continue ;;
+    esac
+    if [ "$printed" -eq 0 ]; then
+      printf '\n'
+      printed=1
+    fi
+    title="$(grep -m1 -E '^title:' "$f" 2>/dev/null | sed -E 's/^title:[[:space:]]*//; s/[[:space:]]+$//' || true)"
+    if [ -z "$title" ]; then
+      title="$(grep -m1 -E '^#[[:space:]]' "$f" 2>/dev/null | sed -E 's/^#[[:space:]]+//; s/[[:space:]]+$//' || true)"
+    fi
+    [ -n "$title" ] || title="$base"
+    printf -- '- [%s](%s)\n' "$title" "$base"
+  done
+}
+
+if [ ! -f "$TARGET/$SPECS_DIR/index.md" ]; then
+  seed_index_content "$SPECS_DIR" "# Specs" > "$TARGET/$SPECS_DIR/index.md"
+  created+=("$SPECS_DIR/index.md")
 else
-  write_numbered_content_candidate "$TARGET/docs/specs/index.md" "docs/specs/index.md" <<'EOF'
-# Specs
-EOF
+  skipped+=("$SPECS_DIR/index.md exists; left untouched")
 fi
 
-if [ ! -f "$TARGET/docs/adr/index.md" ]; then
-  cat > "$TARGET/docs/adr/index.md" <<'EOF'
-# ADRs
-EOF
-  created+=("docs/adr/index.md")
+if [ ! -f "$TARGET/$ADR_DIR/index.md" ]; then
+  seed_index_content "$ADR_DIR" "# ADRs" > "$TARGET/$ADR_DIR/index.md"
+  created+=("$ADR_DIR/index.md")
 else
-  write_numbered_content_candidate "$TARGET/docs/adr/index.md" "docs/adr/index.md" <<'EOF'
-# ADRs
-EOF
+  skipped+=("$ADR_DIR/index.md exists; left untouched")
 fi
 
 append_gitignore_entry '.claude/settings.local.json'

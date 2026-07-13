@@ -33,7 +33,7 @@ Commands:
 Cross-repo index:
 
 - Lives beside the registry (`dogfood-index` in the same directory), machine-local and never committed. It is derived: rebuilt from scratch on every `index` and `query` run, so it cannot go stale and is never edited.
-- One tab-separated line per fact — repo name, kind, source path, text — where kind is one of `goal` (Kind/Problem/Solution lines from `docs/GOAL.md`), `milestone` (checkbox lines), `spec` (entries from `docs/specs/index.md`), `adr` (per-ADR status, title, and description, skipping the index and numbered candidates), and `log` (each `docs/log.md` bullet's first line, truncated, tagged with its dated heading).
+- One tab-separated line per fact — repo name, kind, source path, text — where kind is one of `goal` (Kind/Problem/Solution lines from `docs/GOAL.md`), `milestone` (checkbox lines), `spec` (entries from the spec index at the target's layout home, `docs/specs/index.md` by default), `adr` (per-ADR status — tolerant of frontmatter, `- Status:` bullets, and `# Status` sections — title with a first-heading fallback, and description, from the target's ADR home, skipping the index and numbered candidates; ADR 0018), and `log` (each `docs/log.md` bullet's first line, truncated, tagged with its dated heading).
 - Query output groups each hit as a header line (repo, kind, path) and an indented text line — compact enough that a hit costs tens of tokens to read.
 
 Report, per registered repo:

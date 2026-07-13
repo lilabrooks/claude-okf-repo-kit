@@ -26,7 +26,7 @@ The deny set must not use an `.env.*` glob: deny rules cannot be negated, and th
 
 # Stop hook
 
-`.claude/hooks/check-docs-sync.sh` blocks when implementation files changed and no file under `docs/` changed.
+`.claude/hooks/check-docs-sync.sh` blocks when implementation files changed and no file under `docs/` changed — but only while `docs/okf-map.yml` (or root `okf-map.yml`) carries no active mapping, or `scripts/okf` is missing. Once mappings exist, the stale-mapping check below is the authority and the docs/-prefix gate stands down (ADR 0018): mapped governing docs may live outside `docs/` — machine-readable contract schemas, for example — and count as documentation, while unmapped source changes surface through `check-stale`'s non-blocking note instead of a hard block. The block message names `docs/okf-map.yml` so the agent learns the mapped path.
 
 If `scripts/okf` exists in the target repo, the Stop hook also runs `bash scripts/okf check-stale` in hook mode.
 
@@ -38,13 +38,13 @@ The hook emits JSON for Claude Code and exits successfully, allowing Claude Code
 
 # SessionStart hook
 
-`.claude/hooks/check-okf-version.sh` checks the declared `okf_version` in `docs/index.md` against the latest OKF spec version published by the official OKF repo.
+`.claude/hooks/check-okf-version.sh` checks the declared `okf_version` in the stamp file — `docs/index.md` by default; the `layout: stamp_file` key in `docs/okf-map.yml` relocates it (ADR 0018) — against the latest OKF spec version published by the official OKF repo. When the stamp file is absent or declares no `okf_version`, the check stays silent and skips the network fetch entirely — the same absent-stamp contract `kit_version` has always had — so brownfield repos without a bundle root are not nagged every session.
 
-The same hook also checks the declared `kit_version` in `docs/index.md` — stamped by the installers — against the kit's published `VERSION` file on the source repo's main branch (ADR 0010). It stays silent when `docs/index.md` carries no `kit_version` stamp.
+The same hook also checks the declared `kit_version` in the same stamp file — stamped by the installers — against the kit's published `VERSION` file on the source repo's main branch (ADR 0010). It stays silent when the stamp file carries no `kit_version` stamp.
 
 The hook fails silent when offline or when the upstream spec or version file cannot be parsed.
 
-The same hook also reports the ADR review inbox: it counts files under `docs/adr/` whose first `status:` line is `proposed`, skipping `index.md` and installer-written numbered candidates — the same files `bash scripts/okf pending` lists — and notes the count so proposed decisions stay visible every session instead of only in the goal-met report. This check is local and offline; it stays silent at zero.
+The same hook also reports the ADR review inbox: it counts files under the ADR home (`docs/adr/` by default, per the layout block) whose status is `proposed`, skipping `index.md` and installer-written numbered candidates — the same files `bash scripts/okf pending` lists, with the same tolerant status detection (frontmatter `status:`, then a `- Status:` bullet, then a `# Status` section, normalized to the lowercased first word; ADR 0018) — and notes the count so proposed decisions stay visible every session instead of only in the goal-met report. This check is local and offline; it stays silent at zero.
 
 When anything is detected, the hook injects context for Claude Code rather than modifying files directly. OKF drift, kit drift, and the ADR inbox note are combined into a single context injection. The installed `CLAUDE.md` policies tell Claude Code what to do with each note.
 

@@ -156,6 +156,8 @@ The existing-repo script avoids destructive overwrites:
 - refreshes its own stale candidates in place when the kit has moved on — proven by a digest manifest under `.okf-kit-backups/`, backed up first — so candidates don't pile up across releases; a candidate you edited is never touched and a new number is used instead
 - prints a clear summary of created, updated, skipped, backed-up, and review-needed files
 
+Brownfield repos — ones that already keep specs or ADRs in their own arrangement — get adopted rather than overruled (ADR 0018). The updater detects the spec and ADR homes (an existing `layout:` block in `docs/okf-map.yml` wins, then bounded filesystem probes such as `docs/architecture/specification/`), records a non-canonical arrangement as a `layout:` block in the installed map, and scaffolds into the real homes instead of planting an empty parallel `docs/specs/` tree. A missing spec or ADR index is created **seeded** with the files already beside it; existing indexes and `docs/log.md` get no heading-only candidates; a `docs/GOAL.md` that already has the kit's structure with no template brackets gets no `GOAL.2.md` candidate. When `AGENTS.md` is the repo's playbook and `CLAUDE.md` is absent or a pure `@`-import shim, the kit playbook is staged as an `AGENTS.2.md` candidate (its preloaded-import lines rewritten to the detected layout) and the shim is preserved or created. From then on every kit tool follows the layout block: `scripts/okf` scaffolds and scans there, `new-adr` continues whatever ADR numbering already exists (three-digit `001-` stays three-digit), status detection reads `- Status:` bullets and `## Status` sections as well as frontmatter, and once the map carries real mappings the Stop hook defers to `check-stale` — so machine-readable contracts such as JSON Schemas outside `docs/` can serve as mapped governing docs.
+
 After installation, run the safe checks from this kit repo:
 
 ```bash
@@ -438,11 +440,11 @@ This source kit repo additionally ignores logs, Python bytecode/cache files, and
 
 **Stale map check (every turn, when configured).** If `scripts/okf` and `docs/okf-map.yml` exist, the same Stop hook also runs `bash scripts/okf check-stale`. This catches the subtler case where some doc changed, but the mapped spec or ADR for the touched source area did not.
 
-**OKF version (session start).** The hook fetches the spec version from the official OKF repo (silent when offline) and compares it to `okf_version` in `docs/index.md`. When drift is detected, it adds context for Claude Code. The policy in `CLAUDE.md` tells Claude how to handle minor and major OKF version changes.
+**OKF version (session start).** The hook compares `okf_version` in the stamp file — `docs/index.md` by default; `layout: stamp_file` in `docs/okf-map.yml` relocates it — against the spec version fetched from the official OKF repo (silent when offline). A missing stamp file or missing `okf_version` means the policy is inactive: the hook stays silent and skips the fetch, so brownfield repos without a bundle root are never nagged. When drift is detected, it adds context for Claude Code; the policy in `CLAUDE.md` tells Claude how to handle minor and major OKF version changes.
 
 **Kit version (session start).** The same hook compares the `kit_version` stamped in `docs/index.md` against this repo's published `VERSION` file. On drift, Claude Code is told to recommend the safe updater (see [Upgrading an installed repo](#upgrading-an-installed-repo)); it never updates anything itself. Repos without the stamp get no note.
 
-**ADR review inbox (session start).** The same hook counts ADRs under `docs/adr/` still marked `status: proposed` — skipping installer-written numbered candidates, exactly like `bash scripts/okf pending` — and injects the count as session-start context. Proposed decisions stay visible every session instead of only in the goal-met report, so they don't linger unreviewed. This check is local and works offline.
+**ADR review inbox (session start).** The same hook counts ADRs under the ADR home (`docs/adr/` by default) still marked proposed — skipping installer-written numbered candidates, exactly like `bash scripts/okf pending`, and reading `- Status:` bullets and `## Status` sections as well as frontmatter — and injects the count as session-start context. Proposed decisions stay visible every session instead of only in the goal-met report, so they don't linger unreviewed. This check is local and works offline.
 
 **Env-file read denial (every tool call).** The installed `.claude/settings.json` also carries `permissions.deny` rules (`Read(./.env)`, `Read(./**/.env)`) so Claude Code cannot read local env files into conversation context. `.env.example` is deliberately not denied — deny rules can't be negated, and the committed sample file must stay readable. Extend the deny list in your own settings for other secret paths.
 
@@ -465,7 +467,7 @@ bash scripts/okf pending
 
 `check-stale` compares changed source files against `docs/okf-map.yml`. It also prints a non-blocking note listing changed files that match no mapping, so new source areas get mapped as they gain governing docs.
 
-`draft` writes fact-based markdown drafts to `docs/specs/_drafts/`. It is aimed at existing codebases with undocumented modules — greenfield repos usually write specs as modules land. Review and rewrite before promoting a draft into `docs/specs/`.
+`draft` writes fact-based markdown drafts to the drafts folder (`docs/specs/_drafts/` by default; every helper path follows the optional `layout:` block in `docs/okf-map.yml`). It is aimed at existing codebases with undocumented modules — greenfield repos usually write specs as modules land. Review and rewrite before promoting a draft into the spec home.
 
 `adr-suggest` prints ADR candidates only for decision-shaped changes: dependencies, persistence, cache/queue/worker behavior, auth/security/privacy, public API contracts, deployment, or ownership boundaries.
 
@@ -505,7 +507,7 @@ Expected results:
 - `check-stale` either says mappings are current or names the mapped spec/ADR to update.
 - `adr-suggest` either says no ADR-shaped changes were detected or prints conservative ADR candidates.
 - `git status --ignored` shows `.claude/settings.local.json`, `CLAUDE.local.md`, `.okf-kit-backups/`, and `.env` as ignored if they exist; a committed `.env.example` stays tracked.
-- `verify-install` requires the settings to carry the env-file read deny rules, and warns (without failing) when `docs/index.md` lacks the `kit_version` stamp used for upgrade drift reporting.
+- `verify-install` requires the settings to carry the env-file read deny rules, and warns (without failing) when the stamp file lacks the `kit_version` stamp used for upgrade drift reporting or when a knowledge index lists no entries while knowledge files sit beside it. It resolves the spec home, ADR home, and stamp file through the target's `layout:` block.
 
 To manually test the Stop hook, edit a mapped source file and try to finish a Claude Code turn without touching `/docs`. Claude should be blocked and told to update the mapped spec/ADR or add a dated `docs/log.md` rationale. Then touch an unrelated doc: Claude should still be blocked by `check-stale`.
 

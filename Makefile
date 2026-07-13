@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
@@ -20,6 +20,7 @@ help:
 		'  make smoke-install   Simulate a new-repo install.' \
 		'  make smoke-existing  Simulate installing into an existing repo.' \
 		'  make smoke-idempotent Test repeated existing-repo updates.' \
+		'  make smoke-brownfield Test adoption of a repo with its own docs layout.' \
 		'  make smoke-candidates Test stale-candidate refresh across kit releases.' \
 		'  make smoke-scripts   Test kit-managed script provenance across releases.' \
 		'  make smoke-helpers    Test install, verify, and placeholder helpers.' \
@@ -86,7 +87,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -221,10 +222,12 @@ smoke-existing:
 	grep -qFx '!.env.example' .gitignore; \
 	test -f docs/index.2.md; \
 	grep -q 'kit_version:' docs/index.2.md; \
-	test -f docs/log.2.md; \
-	test -f docs/specs/index.2.md; \
-	test -f docs/adr/index.2.md; \
+	: 'heading-only starters write no candidates beside existing files (ADR 0018)'; \
+	test ! -f docs/log.2.md; \
+	test ! -f docs/specs/index.2.md; \
+	test ! -f docs/adr/index.2.md; \
 	test -f docs/okf-map.2.yml; \
+	! grep -q '^layout:' docs/okf-map.2.yml; \
 	python3 -m json.tool .claude/settings.json >/dev/null; \
 	bash scripts/okf check-stale >/dev/null; \
 	: 'site and maintainer-only artifacts must never reach an existing target repo'; \
@@ -262,12 +265,9 @@ smoke-idempotent:
 	test ! -f docs/GOAL.2.md; \
 	test -f docs/index.2.md; \
 	test ! -f docs/index.3.md; \
-	test -f docs/log.2.md; \
-	test ! -f docs/log.3.md; \
-	test -f docs/specs/index.2.md; \
-	test ! -f docs/specs/index.3.md; \
-	test -f docs/adr/index.2.md; \
-	test ! -f docs/adr/index.3.md; \
+	test ! -f docs/log.2.md; \
+	test ! -f docs/specs/index.2.md; \
+	test ! -f docs/adr/index.2.md; \
 	test -f docs/okf-map.2.yml; \
 	test ! -f docs/okf-map.3.yml; \
 	[ "$$(grep -cFx '.claude/settings.local.json' .gitignore)" -eq 1 ]; \
@@ -279,6 +279,70 @@ smoke-idempotent:
 	[ "$$(grep -cFx '!.env.example' .gitignore)" -eq 1 ]; \
 	python3 -c 'import json; s=json.load(open(".claude/settings.json")); cmds=[hook.get("command", "") for entries in s.get("hooks", {}).values() for group in entries for hook in group.get("hooks", [])]; assert cmds.count("echo existing") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docs-sync.sh\"") == 1; assert cmds.count("bash \"$${CLAUDE_PROJECT_DIR}/.claude/hooks/check-okf-version.sh\"") == 1; deny=s.get("permissions", {}).get("deny", []); assert deny.count("Read(./custom-secret)") == 1; assert deny.count("Read(./.env)") == 1; assert deny.count("Read(./**/.env)") == 1'; \
 	printf 'existing-repo idempotency smoke ok\n'
+
+smoke-brownfield:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	target="$$tmp/brown"; \
+	mkdir -p "$$target"; \
+	cd "$$target"; \
+	git init -q; \
+	mkdir -p docs/architecture/specification docs/adr docs/runbooks schemas; \
+	printf '%s\n' '# Agent instructions' '' 'Playbook lives here.' > AGENTS.md; \
+	printf '%s\n' '@AGENTS.md' '@docs/GOAL.md' > CLAUDE.md; \
+	printf '%s\n' '# ADR-001: First decision' '' '- Status: Accepted' '' '## Context' 'x' > docs/adr/001-first-decision.md; \
+	printf '%s\n' '# ADR-002: Second decision' '' '## Status' '' 'Proposed' '' '## Context' 'y' > docs/adr/002-second-decision.md; \
+	printf '%s\n' '# System overview' 'text' > docs/architecture/specification/01-overview.md; \
+	printf '%s\n' '# Operations runbook' > docs/runbooks/operations.md; \
+	printf '%s\n' '{"x":1}' > schemas/config.schema.json; \
+	printf '%s\n' '# Goal' '' 'Kind: service' '' 'Problem: real text.' '' '# Milestones' '' '- [x] Baseline. Verify: true.' > docs/GOAL.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$target"); \
+	: 'AGENTS.md-first staging: shim preserved, playbook candidate beside AGENTS.md'; \
+	grep -qx '@AGENTS.md' CLAUDE.md; \
+	test ! -f CLAUDE.2.md; \
+	test -f AGENTS.2.md; \
+	grep -q 'Claude Code repo instructions' AGENTS.2.md; \
+	grep -q '^@docs/architecture/specification/index.md' AGENTS.2.md; \
+	grep -q '^@docs/adr/index.md' AGENTS.2.md; \
+	[[ "$$output" == *'AGENTS.md (kit playbook; this repo is AGENTS.md-first) exists; wrote candidate AGENTS.2.md'* ]]; \
+	: 'detected layout recorded; no parallel tree; seeded indexes'; \
+	grep -q '^layout:' docs/okf-map.yml; \
+	grep -q 'specs_dir: docs/architecture/specification' docs/okf-map.yml; \
+	test ! -d docs/specs; \
+	test -d docs/architecture/specification/_drafts; \
+	grep -q '01-overview.md' docs/architecture/specification/index.md; \
+	grep -q 'System overview' docs/architecture/specification/index.md; \
+	grep -q '001-first-decision.md' docs/adr/index.md; \
+	grep -q '002-second-decision.md' docs/adr/index.md; \
+	: 'filled goal gets no template candidate; bundle links the real homes'; \
+	test ! -f docs/GOAL.2.md; \
+	test -f docs/log.md; \
+	grep -q '\[Specs\](architecture/specification/index.md)' docs/index.md; \
+	grep -q '\[Runbooks\](runbooks/)' docs/index.md; \
+	grep -q '\[Schemas\](../schemas/)' docs/index.md; \
+	bash "$(KIT_DIR)/scripts/verify-install" "$$target" >/dev/null; \
+	: 'helper follows the layout: tolerant pending, continued numbering, drafts'; \
+	output=$$(bash scripts/okf pending); \
+	[[ "$$output" == *'002-second-decision.md'* ]]; \
+	[[ "$$output" != *'001-first-decision.md'* ]]; \
+	[[ "$$output" != *'no status field'* ]]; \
+	bash scripts/okf new-adr third-thing "Third thing" >/dev/null; \
+	test -f docs/adr/003-third-thing.md; \
+	grep -q '003 Third thing' docs/adr/index.md; \
+	bash scripts/okf draft schemas >/dev/null; \
+	test -f docs/architecture/specification/_drafts/schemas.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'ADR review inbox: 2 ADR(s)'* ]]; \
+	: 'second run stays idempotent'; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$target" >/dev/null; \
+	test ! -f AGENTS.3.md; \
+	test ! -f docs/GOAL.2.md; \
+	test ! -f docs/adr/index.2.md; \
+	test ! -f docs/architecture/specification/index.2.md; \
+	printf 'brownfield adoption smoke ok\n'
 
 smoke-candidates:
 	@set -eu; \
@@ -429,7 +493,8 @@ smoke-hooks:
 	mkdir -p app docs/specs docs/adr docs/notes scripts .claude/hooks; \
 	cp "$(KIT_DIR)/scripts/okf" scripts/okf; \
 	cp "$(KIT_DIR)/scripts/check-docs-sync.sh" .claude/hooks/check-docs-sync.sh; \
-	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' > docs/okf-map.yml; \
+	: 'phase 1: map present but no active mapping -> the crude prefix gate applies'; \
+	printf '%s\n' 'mappings:' > docs/okf-map.yml; \
 	printf '%s\n' '---' 'type: Spec' '---' > docs/specs/app.md; \
 	printf '%s\n' '# Log' > docs/log.md; \
 	printf '%s\n' 'export function app() { return 1; }' > app/main.js; \
@@ -438,21 +503,6 @@ smoke-hooks:
 	printf '%s\n' 'export function app() { return 2; }' > app/main.js; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ "$$output" == *'Code changed this session but nothing under /docs was updated'* ]]; \
-	printf '%s\n' 'unrelated' > docs/notes/other.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
-	[[ "$$output" == *'OKF stale mapping check failed'* ]]; \
-	printf '%s\n' 'mapped change' >> docs/specs/app.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
-	[[ -z "$$output" ]]; \
-	git add .; \
-	git -c user.email=a@example.com -c user.name=A commit -q -m mapped-doc-update; \
-	printf '%s\n' '# Readme' > README.md; \
-	git add README.md; \
-	git -c user.email=a@example.com -c user.name=A commit -q -m readme; \
-	printf '%s\n' '# changed' > README.md; \
-	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
-	[[ -z "$$output" ]]; \
-	printf '%s\n' 'export function app() { return 3; }' > app/main.js; \
 	output=$$(printf '%s' '{"stop_hook_active": true}' | CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh 2>.claude/loopwarn.txt); \
 	[[ -z "$$output" ]]; \
 	grep -q 'avoid a loop' .claude/loopwarn.txt; \
@@ -473,16 +523,58 @@ smoke-hooks:
 	printf '%s\n' '# Agents' > AGENTS.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
+	rm -rf .codex AGENTS.md; \
+	: 'phase 2: active mappings -> check-stale is the authority (ADR 0018)'; \
+	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' '  - source: "lib/**"' '    docs:' '      - "schemas/lib.schema.json"' > docs/okf-map.yml; \
+	mkdir -p lib schemas; \
+	printf '%s\n' '{}' > schemas/lib.schema.json; \
+	printf '%s\n' 'export function lib() { return 1; }' > lib/main.js; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m map; \
+	printf '%s\n' 'export function app() { return 2; }' > app/main.js; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ "$$output" == *'OKF stale mapping check failed'* ]]; \
+	[[ "$$output" != *'nothing under /docs was updated'* ]]; \
+	printf '%s\n' 'unrelated' > docs/notes/other.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ "$$output" == *'OKF stale mapping check failed'* ]]; \
+	printf '%s\n' 'mapped change' >> docs/specs/app.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m mapped-doc-update; \
+	: 'a mapped governing doc outside docs/ counts as documentation'; \
+	printf '%s\n' 'export function lib() { return 2; }' > lib/main.js; \
+	printf '%s\n' '{"v":2}' > schemas/lib.schema.json; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	git checkout -q -- lib schemas; \
+	: 'unmapped-only changes no longer hard-block once mappings exist'; \
+	printf '%s\n' 'not a license' > LICENSE-MIT; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	rm LICENSE-MIT; \
+	printf '%s\n' '# Readme' > README.md; \
+	git add README.md; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m readme; \
+	printf '%s\n' '# changed' > README.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
+	[[ -z "$$output" ]]; \
+	: 'SessionStart: tolerant inbox, candidate skip, valid JSON, stamp silence'; \
 	cp "$(KIT_DIR)/scripts/check-okf-version.sh" .claude/hooks/check-okf-version.sh; \
 	printf '%s\n' '---' 'status: proposed' 'title: One' '---' > docs/adr/0001-one.md; \
 	printf '%s\n' '---' 'status: accepted' 'title: Two' '---' > docs/adr/0002-two.md; \
 	printf '%s\n' '---' 'status: proposed' 'title: Three' '---' > docs/adr/0003-three.md; \
+	printf '%s\n' '# ADR-004: Four' '' '- Status: Proposed' > docs/adr/0004-four.md; \
+	printf '%s\n' '# ADR-005: Five' '' '## Status' '' 'Accepted (2026-07-13)' > docs/adr/0005-five.md; \
 	cp docs/adr/0001-one.md docs/adr/0001-one.2.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
-	[[ "$$output" == *'ADR review inbox: 2 ADR(s)'* ]]; \
+	[[ "$$output" == *'ADR review inbox: 3 ADR(s)'* ]]; \
+	[[ "$$output" != *'OKF version check'* ]]; \
 	printf '%s' "$$output" | python3 -m json.tool >/dev/null; \
 	sed -i.bak 's/^status: proposed/status: accepted/' docs/adr/0001-one.md docs/adr/0003-three.md; \
-	rm -f docs/adr/0001-one.md.bak docs/adr/0003-three.md.bak docs/adr/0001-one.2.md; \
+	sed -i.bak 's/^- Status: Proposed/- Status: Accepted/' docs/adr/0004-four.md; \
+	rm -f docs/adr/0001-one.md.bak docs/adr/0003-three.md.bak docs/adr/0004-four.md.bak docs/adr/0001-one.2.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
 	[[ "$$output" != *'ADR review inbox'* ]]; \
 	printf 'hook smoke ok\n'

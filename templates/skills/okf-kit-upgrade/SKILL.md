@@ -20,4 +20,4 @@ bash scripts/update-existing-repo /path/to/this-repo
 
 4. **Re-sync second-agent mirrors.** If this repo mirrors the hooks into another agent's config (`.codex/hooks/`, for example), the updater does not know about them — after adopting hook changes, copy the `.claude/hooks/` versions over the mirrors and keep them byte-identical.
 
-5. **Verify.** Run the target checks — `python3 -m json.tool .claude/settings.json`, `bash -n` on the kit scripts, `bash scripts/okf check-stale`, and this repo's own test command — and confirm `docs/index.md` now stamps the new `kit_version`. Log the upgrade in `docs/log.md` (what refreshed, what was preserved for review, what was merged).
+5. **Verify.** Run the target checks — `python3 -m json.tool .claude/settings.json`, `bash -n` on the kit scripts, `bash scripts/okf check-stale`, and this repo's own test command — and confirm the stamp file (`docs/index.md` by default; `layout: stamp_file` in `docs/okf-map.yml` may relocate it) now stamps the new `kit_version`. Log the upgrade in `docs/log.md` (what refreshed, what was preserved for review, what was merged).

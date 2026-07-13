@@ -78,6 +78,8 @@ Every new spec or ADR file gets YAML frontmatter with at least a `type:` field (
 
 `docs/okf-map.yml` maps source globs to the specs and ADRs that govern them. Keep it current when modules move or new source areas get their own contracts.
 
+Brownfield alternative: a repo that already keeps its specs or ADRs elsewhere points the kit at them with an optional `layout:` block in `docs/okf-map.yml` (keys `specs_dir`, `adr_dir`, `stamp_file`; defaults match the tree above). The helper, hooks, and installers all follow it — never relocate existing knowledge just to satisfy the default tree. Mapped governing docs may also be machine-readable contracts (JSON Schemas, OpenAPI) living outside `/docs`.
+
 # Agent config (committed to the repo)
 
 - `.claude/settings.json` — shared project settings: the guardrail hooks plus permission rules that deny reading local `.env` files. Committed.
@@ -121,7 +123,7 @@ The same SessionStart hook also compares `kit_version` in `docs/index.md` — st
 
 # OKF helper commands
 
-`scripts/okf` is a repo-local Bash helper installed by this kit. It is not an official OKF CLI, not a global command, and not a prompt. Always run it with `bash scripts/okf ...` unless this repo intentionally wraps it another way.
+`scripts/okf` is a repo-local Bash helper installed by this kit. It is not an official OKF CLI, not a global command, and not a prompt. Always run it with `bash scripts/okf ...` unless this repo intentionally wraps it another way. The knowledge paths named below are the defaults; when `docs/okf-map.yml` carries a `layout:` block, every command follows it instead, and `new-adr` follows whatever ADR numbering already exists.
 
 - `bash scripts/okf check-stale` — run after changing source files. If it reports stale mappings, update the mapped spec/ADR or add a dated `/docs/log.md` rationale explaining why no knowledge file changed. It also lists changed files with no mapping — non-blocking; add mappings as those areas gain their governing docs.
 - `bash scripts/okf draft [paths...]` — generate fact-based drafts under `/docs/specs/_drafts/`. Most useful in existing codebases with undocumented modules. Treat drafts as scaffolding: verify them, rewrite them into human-readable commitments, then move promoted specs into `/docs/specs/` and update `/docs/specs/index.md`.

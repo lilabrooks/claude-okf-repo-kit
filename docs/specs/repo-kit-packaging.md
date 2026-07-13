@@ -87,13 +87,15 @@ An installed target repo must have:
 - `docs/adr/index.md`
 - `docs/okf-map.yml`
 
-Specs and ADRs must use YAML frontmatter with at least `type:`.
+Specs and ADRs must use YAML frontmatter with at least `type:`. Pre-existing brownfield files are tolerated without it: kit tooling also reads `- Status:` bullets and `# Status` sections, and falls back to the first heading for titles, with frontmatter preferred for new files (ADR 0018).
+
+The spec and ADR indexes live at the layout-configured homes when the target's `docs/okf-map.yml` carries a `layout:` block (`specs_dir`, `adr_dir`, `stamp_file`; ADR 0018); the paths above are the canonical defaults. Mapped governing docs may also be machine-readable contracts (JSON Schemas, OpenAPI, proto) living outside `docs/`.
 
 The bundle root `docs/index.md` declares `okf_version`, and installer-written starter indexes also declare `kit_version` — the kit release that produced the install, read from the source `VERSION` file (ADR 0010) — and link the goal, the spec and ADR indexes, the log, and the source map.
 
 `docs/GOAL.md` is the goal-definition file installed from `templates/GOAL.md`. It must capture the repo kind (app, service, or utility), the problem, the target state, verifiable success criteria, and an ordered milestone backlog. Its success-criteria hints must include input tolerance (realistic input variants work, wrong input gets a clear error), its milestone preamble must require user-facing milestone verifications to name at least one rejected or edge input, and the milestone list must end with a suggested README-quickstart milestone (verification: the quickstart reproduces on a clean checkout) the owner may keep, adjust, or delete. The installed `CLAUDE.md` must instruct Claude Code to read it each session and take the first unchecked milestone when asked to continue without a specific task.
 
-The installed `CLAUDE.md` must preload session context with `@` imports of `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md`, and must not import larger or unbounded files such as `docs/log.md` or full specs (ADR 0008).
+The installed `CLAUDE.md` must preload session context with `@` imports of `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` — the index imports rewritten to the layout homes when the updater detected a non-canonical arrangement (ADR 0018) — and must not import larger or unbounded files such as `docs/log.md` or full specs (ADR 0008).
 
 The expanded procedures for the four episodic workflows — goal interview, acceptance pass, ADR review, kit upgrade — are delivered as installed skills at `.claude/skills/okf-*/SKILL.md` (ADR 0015). The installed `CLAUDE.md` keeps a binding compressed form of each that names its skill and stands alone when the skill fails to load; guardrails and loop semantics never move into skills. The contract items below may therefore be satisfied by the resident compressed form, with the named skill carrying the expansion.
 
