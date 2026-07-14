@@ -410,6 +410,7 @@ If you do this:
 - The `@` imports in `CLAUDE.md` and the env-file read denial in `.claude/settings.json` are Claude Code mechanisms. A ported playbook (such as `AGENTS.md`) needs explicit "read these files at session start" instructions instead of imports, and should state honestly that the second agent has no mechanical `.env` protection — for it, the secrets guardrail is policy prose.
 - If you want the docs-sync gate enforced in the second agent's sessions too, mirror the two hook scripts into its config (the shipped scripts resolve their root via `CLAUDE_PROJECT_DIR`, then `CODEX_PROJECT_DIR`, then the current directory, so unmodified copies work) and keep the mirrors byte-identical to the `.claude/hooks/` originals.
 - After a kit upgrade, re-sync any mirrors by hand: the updater manages only the `.claude/hooks/` copies and doesn't know about other agents' directories.
+- Because that re-sync is manual and easy to forget, guard it mechanically instead of by discipline: add a check to your repo's own test or validation gate that the mirrored hooks stay byte-identical and any mirrored skill set stays paired, skipped when the second stack is absent (it's optional). The check belongs to your repo, not the kit, so it fits whatever framework you already run — spec-agent-cli added one as a repo-health test after Codex config landed beside its Claude stack.
 
 ## Commit vs ignore
 
