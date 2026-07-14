@@ -380,14 +380,14 @@
           <p class="compact-eyebrow">Stack templates</p>
           <div>
             <h2 class="compact-section-title" id="stacks-title">The kit carries the process. A stack template carries the toolchain.</h2>
-            <p class="compact-section-copy">The kit stays deliberately stack-agnostic: it installs the operating contract and nothing about any language. Repeating toolchain decisions — packaging, quality gates, CI — belong in a separate template repository that layers <em>under</em> the kit, so neither release cadence pollutes the other.</p>
+            <p class="compact-section-copy">The kit stays deliberately stack-agnostic: it installs the operating contract and nothing about any language, and the goal loop builds a stack from an empty repository perfectly well on its own. A stack template is an optional accelerator, not a requirement — when you build the same kind of project often, it saves re-deriving a toolchain you already trust. Those repeating decisions — packaging, quality gates, CI — belong in a separate template repository that layers <em>under</em> the kit, so neither release cadence pollutes the other.</p>
           </div>
         </div>
         <div class="compact-grid">
           <article class="compact-card">
             <span class="compact-tag">The layering</span>
             <h3 class="compact-card-title">Template first, kit on top</h3>
-            <p>A stack template is a minimal working project — a walking skeleton that passes its own quality gate in its own CI, so it cannot rot silently the way a bag of file stubs does. Creating a project means starting from the template, renaming it, then running the kit's existing-repository installer over the result. The kit needs no changes to compose this way: layering onto whatever exists is what the brownfield path already does.</p>
+            <p>A stack template is a minimal working project — a walking skeleton that passes its own quality gate in its own CI, so it cannot rot silently the way a bag of file stubs does. When you choose to use one, creating a project means starting from the template, renaming it, then running the kit's existing-repository installer over the result. The kit needs no changes to compose this way: layering onto whatever exists is what the brownfield path already does — the same path an ordinary existing repository takes.</p>
           </article>
           <article class="compact-card">
             <span class="compact-tag">Being built next</span>
