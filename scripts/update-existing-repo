@@ -437,6 +437,7 @@ install_kit_script "$KIT_DIR/templates/skills/okf-goal-interview/SKILL.md" "$TAR
 install_kit_script "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.claude/skills/okf-acceptance-pass/SKILL.md" ".claude/skills/okf-acceptance-pass/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md" ".claude/skills/okf-adr-review/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md" ".claude/skills/okf-kit-upgrade/SKILL.md"
+install_kit_script "$KIT_DIR/templates/skills/okf-adopt/SKILL.md" "$TARGET/.claude/skills/okf-adopt/SKILL.md" ".claude/skills/okf-adopt/SKILL.md"
 
 # The installed map records the detected layout so every kit tool follows it
 # from the first session; canonical layouts get the template unchanged.
@@ -514,6 +515,32 @@ docs_index_content() {
 if [ ! -f "$TARGET/docs/index.md" ]; then
   docs_index_content > "$TARGET/docs/index.md"
   created+=("docs/index.md")
+elif head -1 "$TARGET/docs/index.md" | grep -qx -- '---' \
+  && grep -qE '^okf_version:' "$TARGET/docs/index.md"; then
+  # The bundle root already exists and declares okf_version in frontmatter:
+  # the only kit payload it is missing is the kit_version stamp, so stamp it
+  # in place instead of staging a whole-file replacement candidate (ADR 0019;
+  # the append_gitignore_entry precedent for mechanical one-line additions).
+  existing_kit_version="$(grep -m1 -E '^kit_version:' "$TARGET/docs/index.md" \
+    | sed -E 's/^kit_version:[[:space:]]*"?//; s/"?[[:space:]]*$//' || true)"
+  if [ "$existing_kit_version" = "$KIT_VERSION" ]; then
+    skipped+=("docs/index.md already stamped kit_version $KIT_VERSION")
+  elif [ -n "$existing_kit_version" ]; then
+    backup_file "$TARGET/docs/index.md"
+    tmp_stamp="$(mktemp "$BACKUP_DIR/stamp.XXXXXX")"
+    sed -E "s/^kit_version:.*/kit_version: \"$KIT_VERSION\"/" \
+      "$TARGET/docs/index.md" > "$tmp_stamp"
+    mv "$tmp_stamp" "$TARGET/docs/index.md"
+    updated+=("docs/index.md kit_version restamped $existing_kit_version -> $KIT_VERSION")
+  else
+    backup_file "$TARGET/docs/index.md"
+    tmp_stamp="$(mktemp "$BACKUP_DIR/stamp.XXXXXX")"
+    awk -v kv="kit_version: \"$KIT_VERSION\"" \
+      '{ print } /^okf_version:/ && !done { print kv; done = 1 }' \
+      "$TARGET/docs/index.md" > "$tmp_stamp"
+    mv "$tmp_stamp" "$TARGET/docs/index.md"
+    updated+=("docs/index.md stamped kit_version $KIT_VERSION")
+  fi
 else
   write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" < <(docs_index_content)
 fi

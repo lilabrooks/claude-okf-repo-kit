@@ -76,7 +76,7 @@ That validates script syntax, optional ShellCheck linting, `settings.json`, stal
 |-------------------------|-------------------------------------|----------------------------------------------------------------|
 | `templates/CLAUDE.md`   | `CLAUDE.md` (repo root)             | Master objective template, grounding rules, workflow. Loaded every session. |
 | `templates/GOAL.md`     | `docs/GOAL.md`                      | Goal template: repo kind, problem, target state, success criteria, milestone backlog. |
-| `templates/skills/okf-*/SKILL.md` | `.claude/skills/okf-*/SKILL.md` | Workflow skills loading on demand: goal interview, acceptance pass, ADR review, kit upgrade. `CLAUDE.md` keeps binding one-liners that stand alone if a skill doesn't load. |
+| `templates/skills/okf-*/SKILL.md` | `.claude/skills/okf-*/SKILL.md` | Workflow skills loading on demand: goal interview, acceptance pass, ADR review, kit upgrade, adoption pass. `CLAUDE.md` keeps binding one-liners that stand alone if a skill doesn't load. |
 | `settings.json`         | `.claude/settings.json`             | Registers both hooks and denies reading local `.env` files.    |
 | `scripts/check-docs-sync.sh`    | `.claude/hooks/check-docs-sync.sh`  | Stop hook. Blocks missing docs updates and stale mapped docs. |
 | `scripts/check-okf-version.sh`  | `.claude/hooks/check-okf-version.sh`| SessionStart hook. Reports OKF spec version drift so Claude migrates `/docs` formatting. |
@@ -197,7 +197,7 @@ cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
 cp "$KIT/okf-map.yml" "$TARGET/docs/okf-map.yml"
 cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
-for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do
   mkdir -p "$TARGET/.claude/skills/$skill"
   cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
 done
@@ -306,7 +306,7 @@ mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" 
 cp "$KIT/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
 cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
-for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do
   mkdir -p "$TARGET/.claude/skills/$skill"
   cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
 done
@@ -396,7 +396,9 @@ git pull
 bash scripts/update-existing-repo /path/to/target-repo
 ```
 
-The updater never overwrites your work. Kit-managed files (`scripts/okf`, the two hooks, and the four `okf-*` skills) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+The updater never overwrites your work. Kit-managed files (`scripts/okf`, the two hooks, and the five `okf-*` skills) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+
+For a repository that already has code and documentation, the installed `okf-adopt` skill carries the guided adoption pass that follows the updater — inventory the existing knowledge in place, populate the source map, backfill missing specs from `bash scripts/okf draft` output, and validate end to end — before the goal loop starts. Migrating the repository’s own layout or naming to the kit’s defaults is never automatic; it happens only at the owner’s direction, with the skill repairing the cross-links and CI rules a rename breaks.
 
 ### Using a second agent for repo chores (optional)
 

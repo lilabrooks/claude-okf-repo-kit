@@ -53,6 +53,8 @@ If `/docs/specs` or `/docs/adr` doesn't exist yet, create this structure before 
 
 Installer note: when setting up a repo from outside Claude Code, prefer `bash scripts/create-new-repo <target>` for empty repos or `bash scripts/update-existing-repo <target>` for existing repos. This bootstrap section is the in-session fallback when those scripts were not used.
 
+Adopting an existing codebase goes beyond bootstrap: after the updater runs, work through the adoption pass with me (the `okf-adopt` skill carries the full sequence) — inventory the existing knowledge without moving anything, populate `docs/okf-map.yml` so `check-stale` becomes the authority, backfill missing specs from `bash scripts/okf draft` output promoted per this repo's own conventions and validators, and validate end to end before the loop starts. Migrating this repo's layout or naming to the kit's defaults happens only at my direction, never by default.
+
 ```
 docs/
 ├── index.md        # bundle root: declares okf_version, links the bundle files
@@ -124,6 +126,8 @@ The same SessionStart hook also compares `kit_version` in `docs/index.md` — st
 # OKF helper commands
 
 `scripts/okf` is a repo-local Bash helper installed by this kit. It is not an official OKF CLI, not a global command, and not a prompt. Always run it with `bash scripts/okf ...` unless this repo intentionally wraps it another way. The knowledge paths named below are the defaults; when `docs/okf-map.yml` carries a `layout:` block, every command follows it instead, and `new-adr` follows whatever ADR numbering already exists.
+
+These commands are the deterministic path: prefer them over re-deriving numbering, index entries, or staleness by hand — the mechanics are computed in code so your judgment and context go to the content of the work. When a helper declines or misfires on this repo's conventions, do the workaround in the open and record it in a dated `docs/log.md` entry so the friction can be carried back into the kit; never quietly improvise the mechanics a helper exists for.
 
 - `bash scripts/okf check-stale` — run after changing source files. If it reports stale mappings, update the mapped spec/ADR or add a dated `/docs/log.md` rationale explaining why no knowledge file changed. It also lists changed files with no mapping — non-blocking; add mappings as those areas gain their governing docs.
 - `bash scripts/okf draft [paths...]` — generate fact-based drafts under `/docs/specs/_drafts/`. Most useful in existing codebases with undocumented modules. Treat drafts as scaffolding: verify them, rewrite them into human-readable commitments, then move promoted specs into `/docs/specs/` and update `/docs/specs/index.md`.

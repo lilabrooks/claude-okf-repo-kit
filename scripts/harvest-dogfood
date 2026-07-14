@@ -50,7 +50,8 @@ INDEX="$(dirname "$REGISTRY")/dogfood-index"
 
 KIT_MANAGED_RELS=".claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf
 .claude/skills/okf-goal-interview/SKILL.md .claude/skills/okf-acceptance-pass/SKILL.md
-.claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md"
+.claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md
+.claude/skills/okf-adopt/SKILL.md"
 
 kit_source_for() {
   case "$1" in

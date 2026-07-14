@@ -1,6 +1,6 @@
 ---
 okf_version: "0.1"
-kit_version: "0.2.0"
+kit_version: "0.3.0"
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

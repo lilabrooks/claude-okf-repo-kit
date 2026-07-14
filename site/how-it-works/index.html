@@ -157,6 +157,41 @@
       </div>
     </section>
 
+    <section class="compact-section" aria-labelledby="division-title">
+      <div class="compact-shell">
+        <div class="compact-section-head">
+          <p class="compact-eyebrow">Division of labor</p>
+          <div>
+            <h2 class="compact-section-title" id="division-title">Scripts for what must never vary. Hooks for what must never be skipped.</h2>
+            <p class="compact-section-copy">Claude Code doesn’t recalculate the bookkeeping each session — the kit puts each kind of work where it is cheapest and most reliable, and reserves judgment for the parts that need thinking.</p>
+          </div>
+        </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">Hooks</span>
+            <h3 class="compact-card-title">Never skipped</h3>
+            <p>The session-start inbox and the stop-time docs gate run as fixed code paths in the harness. Claude doesn’t choose to run them, and can’t forget them at the end of a long session.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">Helper</span>
+            <h3 class="compact-card-title">Never varies</h3>
+            <p>The playbook binds Claude to <code>bash scripts/okf</code> for the mechanics — the next ADR number, index entries, staleness from the source map. Computed in code: zero model tokens, identical every session, no improvised numbering on a bad day.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">Preloads</span>
+            <h3 class="compact-card-title">Always known</h3>
+            <p><code>CLAUDE.md</code> imports the goal and the spec and ADR indexes at load time, so every fresh context window starts with the map and reads individual documents from disk only on demand.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">Judgment</span>
+            <h3 class="compact-card-title">For the content</h3>
+            <p>What a spec commits to, what an ADR argues, what code satisfies a milestone — the work that needs thinking stays with Claude, and stays reviewable.</p>
+          </article>
+        </div>
+        <p class="compact-section-copy" style="margin-top:28px;"><strong>Misfires are harvested, not hidden.</strong> When a helper meets a shape it doesn’t recognize — an index kept as a table, a naming convention it hasn’t seen — it declines visibly rather than guessing, and Claude works around it in the open. That friction is carried back into the kit as a proposed change. A silent workaround would hide the defect and re-pay its cost in every session; harvesting it pays once, in the kit.</p>
+      </div>
+    </section>
+
     <section class="compact-section" aria-labelledby="decisions-title">
       <div class="compact-shell">
         <div class="compact-section-head">

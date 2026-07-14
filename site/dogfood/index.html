@@ -98,7 +98,7 @@
   <main id="content">
     <div class="compact-hero compact-shell">
       <div>
-        <p class="compact-eyebrow">Dogfood record · three repository shapes</p>
+        <p class="compact-eyebrow">Dogfood record · four repositories, five stories</p>
         <h1 class="compact-title">What changed after the kit met real work.</h1>
       </div>
       <div>
@@ -203,6 +203,74 @@
             <span class="compact-tag">What changed in the kit</span>
             <h3 class="compact-card-title">Provenance and precision</h3>
             <p>The goal interview now checks whether verification tools are available and records owner-gated steps. The starter map asks for narrow mappings. The stop hook gained a repeat-block guard, exact filename exclusions, portable project-root handling, and tolerance for second-agent configuration. Installed kit files now carry local provenance: an unedited kit file can be refreshed safely; an owner-edited file stays in place while the new version waits beside it for review. The post-goal review also proposes ordinary repository hygiene when it is still missing.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="compact-section" aria-labelledby="aws-feed-title">
+      <div class="compact-shell">
+        <div class="compact-section-head">
+          <p class="compact-eyebrow">04 · Hand-ported brownfield</p>
+          <div>
+            <h2 class="compact-section-title" id="aws-feed-title">AWS Alerting System</h2>
+            <p class="compact-section-copy">A Terraform-and-Python service that watches AWS public change feeds, matches announcements against subscriber routes, and delivers deduplicated alerts to Slack. <a href="https://github.com/lilabrooks/aws-public-change-feed">View repository ↗</a></p>
+          </div>
+        </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">What it tested</span>
+            <h3 class="compact-card-title">The model without the kit’s tree</h3>
+            <p>This repository carried the kit’s conceptual model, ported by hand into a different physical layout: chaptered specifications under <code>docs/architecture/specification/</code>, sixteen three-digit ADRs with body-style status bullets instead of frontmatter, JSON Schemas as first-class governing contracts, an <code>AGENTS.md</code> playbook with <code>CLAUDE.md</code> as a pure import shim, and no bundle root. Could the kit adopt the arrangement instead of bulldozing it?</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it found</span>
+            <h3 class="compact-card-title">Findings</h3>
+            <ul>
+              <li>Every mechanic assumed the canonical tree: the ADR scaffold would have forked a parallel numbering sequence, and body-status decisions were invisible to the review scan.</li>
+              <li>The version hook nagged every session because there was no stamp file to read.</li>
+              <li>The updater would have planted empty parallel indexes beside the real knowledge and staged its playbook against the wrong file.</li>
+              <li>The stop-time gate misclassified mapped machine-readable schemas as undocumented code.</li>
+            </ul>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What changed in the kit</span>
+            <h3 class="compact-card-title">Layout tolerance</h3>
+            <p>Kit 0.2.0 (ADR 0018): a three-key <code>layout:</code> block in the source map relocates the knowledge homes; status and numbering detection read the conventions repositories actually use; missing indexes are seeded from the files beside them, never created empty; the playbook stages against <code>AGENTS.md</code> where that is the real playbook; the version check stays silent without a stamp; and once real mappings exist, the stale-map check — not a path prefix — is the authority on what counts as documentation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="compact-section" aria-labelledby="spec-agent-2-title">
+      <div class="compact-shell">
+        <div class="compact-section-head">
+          <p class="compact-eyebrow">05 · Brownfield adoption, round two</p>
+          <div>
+            <h2 class="compact-section-title" id="spec-agent-2-title">Spec Agent CLI, again</h2>
+            <p class="compact-section-copy">The repository that seeded the kit’s first knowledge bundle returned as an adoption target — closing the loop. <a href="https://github.com/lilabrooks/spec-agent-cli">View repository ↗</a></p>
+          </div>
+        </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">What it tested</span>
+            <h3 class="compact-card-title">The inverse brownfield</h3>
+            <p>The opposite arrangement from the hand-ported service: canonical directories and a stamped bundle root, but its own file conventions — <code>adr-0001-*</code> and <code>spec-000-*</code> names, table-style indexes with prose after the tables, and its own frontmatter validator running in CI.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it found</span>
+            <h3 class="compact-card-title">Findings</h3>
+            <ul>
+              <li>The numbering scan was blind to alpha-prefixed names and would have forked a parallel sequence — the same failure the previous round fixed for bare numbers.</li>
+              <li>Appending a bullet corrupted table-style indexes, and the last line was no signal: real indexes keep prose after the table.</li>
+              <li>The updater staged a whole bundle-root candidate whose only real payload was the missing version stamp.</li>
+              <li>The thorough first-time pass — find every piece of knowledge, map it, backfill the gaps — had no defined procedure and was re-derived per adoption.</li>
+            </ul>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What changed in the kit</span>
+            <h3 class="compact-card-title">Naming tolerance and a guided adoption pass</h3>
+            <p>Kit 0.3.0 (ADRs 0019 and 0020): the scaffolds continue a repository’s own ID sequences instead of forking them; a table-style index gets no guessed row — the helper declines and prints the entry for a manual add; the updater stamps the version into an existing bundle root in place; and a fifth installed skill, <code>okf-adopt</code>, carries the adoption pass itself — inventory without moving anything, map, backfill, validate — with migration to the kit’s defaults only at the owner’s direction.</p>
           </article>
         </div>
       </div>

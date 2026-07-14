@@ -143,11 +143,11 @@ smoke-install:
 	grep -qF 'Read(./.env)' .claude/settings.json; \
 	grep -qF 'Read(./**/.env)' .claude/settings.json; \
 	test -f .okf-kit-backups/candidate-manifest; \
-	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 7 ]; \
+	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 8 ]; \
 	grep -q 'scripts/okf' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-docs-sync.sh' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-okf-version.sh' .okf-kit-backups/candidate-manifest; \
-	for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade; do \
+	for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do \
 		test -f ".claude/skills/$$skill/SKILL.md"; \
 		grep -q "^name: $$skill" ".claude/skills/$$skill/SKILL.md"; \
 		grep -q "$$skill" .okf-kit-backups/candidate-manifest; \
@@ -156,6 +156,7 @@ smoke-install:
 	grep -q 'okf-acceptance-pass' CLAUDE.md; \
 	grep -q 'okf-adr-review' CLAUDE.md; \
 	grep -q 'okf-kit-upgrade' CLAUDE.md; \
+	grep -q 'okf-adopt' CLAUDE.md; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \
@@ -238,6 +239,24 @@ smoke-existing:
 	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
 	! grep -q 'site/' docs/okf-map.yml; \
 	! grep -q 'site/' docs/okf-map.2.yml; \
+	: 'a stamped bundle root gets kit_version in place, not a candidate (ADR 0019)'; \
+	starget="$$tmp/stamped"; \
+	mkdir -p "$$starget/docs"; \
+	cd "$$starget"; \
+	git init -q; \
+	printf '%s\n' '---' 'okf_version: "0.1"' 'title: Docs index' '---' '' '# Documentation' '' 'Owner prose stays.' > docs/index.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget" >/dev/null; \
+	test ! -f docs/index.2.md; \
+	grep -q '^okf_version: "0.1"' docs/index.md; \
+	grep -q "^kit_version: \"$$(cat "$(KIT_DIR)/VERSION")\"" docs/index.md; \
+	grep -q '^title: Docs index' docs/index.md; \
+	grep -q 'Owner prose stays.' docs/index.md; \
+	[ "$$(head -1 docs/index.md)" = '---' ]; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget" >/dev/null; \
+	test ! -f docs/index.2.md; \
+	[ "$$(grep -c '^kit_version:' docs/index.md)" -eq 1 ]; \
 	printf 'existing-repo install smoke ok\n'
 
 smoke-idempotent:
@@ -688,4 +707,36 @@ smoke-okf:
 	test -f docs/specs/payments-contract.md; \
 	grep -q 'type: Spec' docs/specs/payments-contract.md; \
 	grep -q 'Payments contract' docs/specs/index.md; \
+	: 'a sole alpha-prefixed convention is continued, not forked (ADR 0019)'; \
+	prefdir="$$tmp/prefixed"; \
+	mkdir -p "$$prefdir/docs/specs" "$$prefdir/docs/adr" "$$prefdir/scripts"; \
+	cp "$(KIT_DIR)/scripts/okf" "$$prefdir/scripts/okf"; \
+	cd "$$prefdir"; \
+	git init -q; \
+	printf '%s\n' '---' 'title: First' 'status: accepted' '---' > docs/adr/adr-0001-first.md; \
+	printf '%s\n' '---' 'title: Ninth' 'status: accepted' '---' > docs/adr/adr-0009-ninth.md; \
+	printf '%s\n' '# ADRs' '' '- [0001 First](adr-0001-first.md): x' > docs/adr/index.md; \
+	printf '%s\n' '---' 'title: Objective' '---' > docs/specs/spec-000-objective.md; \
+	printf '%s\n' '---' 'title: Core' '---' > docs/specs/spec-008-core.md; \
+	printf '%s\n' '| ID | Spec |' '| --- | --- |' '| SPEC-000 | [Objective](spec-000-objective.md) |' '' 'Prose after the table stays last.' > docs/specs/index.md; \
+	bash scripts/okf new-adr tenth-thing "Tenth thing" >/dev/null; \
+	test -f docs/adr/adr-0010-tenth-thing.md; \
+	grep -q '0010 Tenth thing' docs/adr/index.md; \
+	grep -q 'adr-0010-tenth-thing.md' docs/adr/index.md; \
+	output=$$(bash scripts/okf new-spec new-surface "New surface"); \
+	test -f docs/specs/spec-009-new-surface.md; \
+	[[ "$$output" == *'table layout'* ]]; \
+	[[ "$$output" == *'spec-009-new-surface.md'* ]]; \
+	! grep -q 'spec-009-new-surface.md' docs/specs/index.md; \
+	[ "$$(tail -1 docs/specs/index.md)" = 'Prose after the table stays last.' ]; \
+	: 'bare-numeric names keep precedence when both forms coexist'; \
+	mixdir="$$tmp/mixed"; \
+	mkdir -p "$$mixdir/docs/adr" "$$mixdir/scripts"; \
+	cp "$(KIT_DIR)/scripts/okf" "$$mixdir/scripts/okf"; \
+	cd "$$mixdir"; \
+	git init -q; \
+	printf '%s\n' '---' 'title: Third' 'status: accepted' '---' > docs/adr/003-third.md; \
+	printf '%s\n' '---' 'title: Ninth' 'status: accepted' '---' > docs/adr/adr-0009-ninth.md; \
+	bash scripts/okf new-adr fourth-thing "Fourth thing" >/dev/null; \
+	test -f docs/adr/004-fourth-thing.md; \
 	printf 'okf command smoke ok\n'

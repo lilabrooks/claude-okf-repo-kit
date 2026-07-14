@@ -41,6 +41,7 @@ It must create:
 - `.claude/skills/okf-acceptance-pass/SKILL.md`
 - `.claude/skills/okf-adr-review/SKILL.md`
 - `.claude/skills/okf-kit-upgrade/SKILL.md`
+- `.claude/skills/okf-adopt/SKILL.md`
 - `scripts/okf`
 - `docs/index.md`
 - `docs/log.md`
@@ -61,7 +62,7 @@ It must add these ignores:
 - `.env.*`
 - `!.env.example` (keeps the sample env file trackable)
 
-It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed files it installs (`scripts/okf`, the two hooks, and the four `okf-*` skills — seven entries), so a later updater run can prove they are unedited kit output and refresh them in place (ADRs 0013, 0015). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
+It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed files it installs (`scripts/okf`, the two hooks, and the five `okf-*` skills — eight entries), so a later updater run can prove they are unedited kit output and refresh them in place (ADRs 0013, 0015). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
 
 # Existing repo installer
 
@@ -71,7 +72,7 @@ It must:
 
 - require the target directory to exist
 - create `.okf-kit-backups/<timestamp>/`
-- refresh a kit-managed file (`scripts/okf`, the two hooks, the four `okf-*` skills) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADRs 0013, 0015)
+- refresh a kit-managed file (`scripts/okf`, the two hooks, the five `okf-*` skills) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADRs 0013, 0015)
 - merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
 - append the required `.gitignore` entries (the same seven the new-repo installer adds) while preserving existing entries
 - leave existing Markdown files untouched and write same-folder numbered candidates when names collide
@@ -84,7 +85,7 @@ It must:
 - create a missing spec or ADR index seeded with an entry per knowledge file already in its directory (titles from frontmatter or the first heading) — never an empty index beside existing work — and create a missing `docs/log.md`; existing indexes and log files are left untouched with no heading-only numbered candidate, since a heading-only starter carries nothing worth reviewing (ADR 0018)
 - print a clear completion summary that lists created, updated, skipped, backed-up, and review-needed files, then names the verification checks it ran
 
-Starter `docs/index.md` content written by either installer must link `GOAL.md`, the spec and ADR indexes at their layout homes (`specs/index.md` and `adr/index.md` in the canonical tree), `log.md`, and `okf-map.yml` — plus `docs/runbooks/` and a root `schemas/` directory when the target has them (ADR 0018) — and must declare `okf_version` plus the installing kit's `kit_version` read from the source `VERSION` file (ADR 0010). The existing-repo installer carries the same content in the numbered candidate it writes when a `docs/index.md` already exists.
+Starter `docs/index.md` content written by either installer must link `GOAL.md`, the spec and ADR indexes at their layout homes (`specs/index.md` and `adr/index.md` in the canonical tree), `log.md`, and `okf-map.yml` — plus `docs/runbooks/` and a root `schemas/` directory when the target has them (ADR 0018) — and must declare `okf_version` plus the installing kit's `kit_version` read from the source `VERSION` file (ADR 0010). When a `docs/index.md` already exists and opens with a frontmatter block declaring `okf_version`, the existing-repo installer stamps `kit_version` into that frontmatter directly — after a backup — inserting the line after `okf_version` when absent, correcting it in place when it differs from the installing kit, and skipping when it already matches; no bundle-root candidate is written (ADR 0019). Otherwise the installer carries the starter content in the numbered candidate it writes beside the existing file.
 
 # Wrapper and verification helpers
 

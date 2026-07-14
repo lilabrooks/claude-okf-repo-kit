@@ -40,7 +40,7 @@ Report, per registered repo:
 
 - `kit_version` stamp from the target's `docs/index.md` compared against the kit `VERSION`, with an explicit drift marker.
 - Commits since the recorded SHA (`git log --oneline`), and the added `docs/log.md` lines from that range — the docs-sync hook guarantees this carries the narrative. Lines mentioning the kit by name, "upstream", or the word "kit" are repeated under a flagged section. A recorded SHA that no longer resolves falls back to recent history with a warning instead of failing.
-- Kit-managed file status for `scripts/okf`, the two hooks, and the four `okf-*` skills: `matches kit` (byte-identical to current kit source), `unedited older kit output` (digest recorded in the target's candidate manifest, so the updater refreshes it in place), `owner-edited or unrecorded` (the updater preserves it and writes a candidate), or `missing` (the updater installs it) — the ADR 0013 classification extended to the ADR 0015 skills.
+- Kit-managed file status for `scripts/okf`, the two hooks, and the five `okf-*` skills: `matches kit` (byte-identical to current kit source), `unedited older kit output` (digest recorded in the target's candidate manifest, so the updater refreshes it in place), `owner-edited or unrecorded` (the updater preserves it and writes a candidate), or `missing` (the updater installs it) — the ADR 0013 classification extended to the ADR 0015 skills.
 - The target's proposed-ADR review inbox via its own `bash scripts/okf pending`.
 - An uncommitted-changes count when the target's working tree is dirty, and a note when second-agent config (`AGENTS.md`, `.codex/`) is present.
 - A registered path that no longer exists is reported as skipped, not an error.

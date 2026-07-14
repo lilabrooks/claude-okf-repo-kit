@@ -24,6 +24,7 @@ The source repo keeps these install artifacts:
 - `templates/skills/okf-acceptance-pass/SKILL.md`
 - `templates/skills/okf-adr-review/SKILL.md`
 - `templates/skills/okf-kit-upgrade/SKILL.md`
+- `templates/skills/okf-adopt/SKILL.md`
 - `settings.json`
 - `okf-map.yml`
 - `scripts/okf`
@@ -97,7 +98,7 @@ The bundle root `docs/index.md` declares `okf_version`, and installer-written st
 
 The installed `CLAUDE.md` must preload session context with `@` imports of `docs/GOAL.md`, `docs/specs/index.md`, and `docs/adr/index.md` — the index imports rewritten to the layout homes when the updater detected a non-canonical arrangement (ADR 0018) — and must not import larger or unbounded files such as `docs/log.md` or full specs (ADR 0008).
 
-The expanded procedures for the four episodic workflows — goal interview, acceptance pass, ADR review, kit upgrade — are delivered as installed skills at `.claude/skills/okf-*/SKILL.md` (ADR 0015). The installed `CLAUDE.md` keeps a binding compressed form of each that names its skill and stands alone when the skill fails to load; guardrails and loop semantics never move into skills. The contract items below may therefore be satisfied by the resident compressed form, with the named skill carrying the expansion.
+The expanded procedures for the five episodic workflows — goal interview, acceptance pass, ADR review, kit upgrade, adoption pass — are delivered as installed skills at `.claude/skills/okf-*/SKILL.md` (ADRs 0015, 0020). The `okf-adopt` skill must carry the brownfield adoption pass (ADR 0020): inventory the repo’s knowledge without moving files, adapt-in-place as the default with migration to canonical only at owner direction (repairing the cross-links, IDs, and CI rules a migration breaks), map population so `check-stale` becomes the authority, draft-based backfill promoted per the target repo’s own conventions and validators, end-to-end validation, and a dated `docs/log.md` record — proposing ADRs for decision-shaped findings instead of deciding them. The installed `CLAUDE.md` keeps a binding compressed form of each that names its skill and stands alone when the skill fails to load; guardrails and loop semantics never move into skills. The contract items below may therefore be satisfied by the resident compressed form, with the named skill carrying the expansion.
 
 The installed `CLAUDE.md` must also carry the autonomous iteration contract (ADR 0007):
 

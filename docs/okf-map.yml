@@ -48,6 +48,7 @@ mappings:
       - "docs/specs/repo-kit-packaging.md"
       - "docs/specs/installer-scripts.md"
       - "docs/adr/0015-workflow-skills.md"
+      - "docs/adr/0020-adoption-pass-skill.md"
       # site-drift reminder (see templates/CLAUDE.md mapping above)
       - "site/index.html"
 

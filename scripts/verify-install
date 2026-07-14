@@ -153,6 +153,7 @@ check_file .claude/skills/okf-goal-interview/SKILL.md
 check_file .claude/skills/okf-acceptance-pass/SKILL.md
 check_file .claude/skills/okf-adr-review/SKILL.md
 check_file .claude/skills/okf-kit-upgrade/SKILL.md
+check_file .claude/skills/okf-adopt/SKILL.md
 check_file scripts/okf
 check_file docs/index.md
 check_file docs/GOAL.md

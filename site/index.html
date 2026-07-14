@@ -292,7 +292,7 @@
           <article class="compact-card">
             <span class="compact-tag">.claude/skills/okf-*</span>
             <h3 class="compact-card-title">Workflow skills</h3>
-            <p>Four skills load on demand — goal interview, acceptance pass, ADR review, and kit upgrade — with binding one-liners kept in CLAUDE.md for when a skill does not load.</p>
+            <p>Five skills load on demand — goal interview, acceptance pass, ADR review, kit upgrade, and a guided adoption pass for existing repositories — with binding one-liners kept in CLAUDE.md for when a skill does not load.</p>
           </article>
         </div>
       </div>
@@ -329,7 +329,8 @@
             <p>A stop-time hook can prevent a turn from ending when code changed without a documentation update. A mapped spec, ADR, or dated rationale satisfies the check.</p>
           </article>
         </div>
-        <p class="compact-section-copy" style="margin-top:28px;"><strong>The enforcement boundary matters.</strong> The hooks verify that expected files changed and mappings remain current. They cannot judge the quality of the reasoning. Test discipline, security rules, and consent rules remain instructions unless the target repository enforces them through CI, permissions, or branch protection.</p>
+        <p class="compact-section-copy" style="margin-top:28px;"><strong>Within those layers, the division of labor is deliberate.</strong> Hooks carry what must never be skipped: they run as fixed code paths at session start and stop, whether or not anyone remembers them. The <code>scripts/okf</code> helper carries what must never vary: numbering, index entries, and staleness are computed in code, so Claude runs one command instead of re-deriving the mechanics each session and spends its judgment — and its context window — on the content of the work. Preloaded indexes carry what every session must know. When a mechanism misfires in a real repository, the helper declines visibly rather than guessing, Claude works around it in the open, and the friction is carried back into the kit — that is the <a href="dogfood/">dogfood record</a>, not a failure mode.</p>
+        <p class="compact-section-copy" style="margin-top:16px;"><strong>The enforcement boundary matters.</strong> The hooks verify that expected files changed and mappings remain current. They cannot judge the quality of the reasoning. Test discipline, security rules, and consent rules remain instructions unless the target repository enforces them through CI, permissions, or branch protection.</p>
       </div>
     </section>
 
@@ -359,7 +360,7 @@
           <article class="compact-card">
             <span class="compact-tag">Existing repository</span>
             <h3 class="compact-card-title">Add the contract carefully</h3>
-            <p>The existing-repository path preserves current files, merges compatible settings, and writes review candidates when names or locally edited kit files conflict.</p>
+            <p>The existing-repository path preserves current files, merges compatible settings, and writes review candidates when names or locally edited kit files conflict. After the updater, the installed adoption skill carries a guided pass: inventory the existing knowledge in place, map it to the source it governs, backfill missing specs, and validate before the loop starts.</p>
             <ol>
               <li>Apply the safe updater to the repository. Existing project files and documentation stay in place.</li>
               <li>Review the generated candidates. Merge the pieces that fit the repository and keep project-specific instructions intact.</li>
@@ -414,7 +415,7 @@
           <p class="compact-eyebrow">Evidence from use</p>
           <div>
             <h2 class="compact-section-title" id="evidence-title">The kit changes when real repositories find a weak spot.</h2>
-            <p class="compact-section-copy">Spec Agent CLI, Repo Pulse, and Skywatch exercised different repository shapes. Their findings changed the kit’s goal interview, acceptance pass, hooks, source mapping, upgrade policy, and review loop.</p>
+            <p class="compact-section-copy">Spec Agent CLI, Repo Pulse, Skywatch, and an AWS alerting service exercised different repository shapes — greenfield, scheduled multi-service, and two kinds of brownfield. Their findings changed the kit’s goal interview, acceptance pass, hooks, source mapping, upgrade policy, review loop, and brownfield adoption path.</p>
           </div>
         </div>
         <div class="compact-grid">

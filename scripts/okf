@@ -448,11 +448,73 @@ index_append() {
       printf -- '- [%s](%s)\n' "$(index_title_of "$existing_file")" "$existing_base" >> "$index_file"
     done
   fi
+  # A table-style index (ADR 0019): appending a bullet would corrupt or
+  # trail the table, and writing a table row means guessing the column
+  # layout. Any table row in the file marks the index as table-style —
+  # real ones keep prose after the table, so the last line is no signal.
+  # Decline; the caller reports the entry for a manual add.
+  if grep -q '^|' "$index_file"; then
+    return 1
+  fi
   last_line="$(awk 'NF { line = $0 } END { print line }' "$index_file")"
   case "$last_line" in
     '#'*) printf '\n%s\n' "$entry" >> "$index_file" ;;
     *) printf '%s\n' "$entry" >> "$index_file" ;;
   esac
+}
+
+# Numbering-convention scan (ADRs 0018, 0019). Bare-numeric names (0001-*,
+# 001-*) take precedence; when none exist and every alpha-prefixed name
+# (adr-0001-*) shares one prefix word, that convention can be followed
+# instead. Index files and installer-written numbered review candidates are
+# excluded, matching the pending scan. Sets: bare_found, bare_next,
+# bare_width, pref_word (empty when none), pref_mixed, pref_next, pref_width.
+scan_numbering() {
+  scan_dir="$1"
+  bare_found=0
+  bare_next=1
+  bare_width=0
+  pref_word=""
+  pref_mixed=0
+  pref_next=1
+  pref_width=0
+  for scanned in "$scan_dir"/*.md; do
+    [ -e "$scanned" ] || continue
+    scanned_base="$(basename "$scanned")"
+    case "$scanned_base" in
+      index.md|*.[0-9].md|*.[0-9][0-9].md) continue ;;
+    esac
+    head_part="${scanned_base%%-*}"
+    case "$scanned_base" in
+      [0-9]*-*)
+        case "$head_part" in
+          *[!0-9]*) continue ;;
+        esac
+        num=$((10#$head_part))
+        [ "$num" -ge "$bare_next" ] && bare_next=$((num + 1))
+        [ "${#head_part}" -gt "$bare_width" ] && bare_width="${#head_part}"
+        bare_found=1
+        ;;
+      [A-Za-z]*-[0-9]*-*)
+        case "$head_part" in
+          *[!A-Za-z]*) continue ;;
+        esac
+        num_part="${scanned_base#*-}"
+        num_part="${num_part%%-*}"
+        case "$num_part" in
+          ''|*[!0-9]*) continue ;;
+        esac
+        if [ -z "$pref_word" ]; then
+          pref_word="$head_part"
+        elif [ "$pref_word" != "$head_part" ]; then
+          pref_mixed=1
+        fi
+        num=$((10#$num_part))
+        [ "$num" -ge "$pref_next" ] && pref_next=$((num + 1))
+        [ "${#num_part}" -gt "$pref_width" ] && pref_width="${#num_part}"
+        ;;
+    esac
+  done
 }
 
 new_adr() {
@@ -472,25 +534,28 @@ new_adr() {
 
   # Follow whatever numbering already exists: next = highest number + 1, and
   # the zero-pad width matches the widest existing prefix (so a repo with
-  # 001-*.md ADRs gets 017-, not 0001-). Four digits when the directory holds
-  # no numbered ADRs yet.
-  next=1
-  width=0
-  for existing in "$adr_dir"/[0-9]*-*.md; do
-    [ -e "$existing" ] || continue
-    prefix="$(basename "$existing")"
-    prefix="${prefix%%-*}"
-    case "$prefix" in
-      ''|*[!0-9]*) continue ;;
-    esac
-    num=$((10#$prefix))
-    [ "$num" -ge "$next" ] && next=$((num + 1))
-    [ "${#prefix}" -gt "$width" ] && width="${#prefix}"
-  done
+  # 001-*.md ADRs gets 017-, not 0001-). Bare-numeric names take precedence;
+  # a sole alpha-prefixed convention (adr-0001-*) is continued as
+  # adr-0011-<slug>.md (ADR 0019). Four digits when the directory holds no
+  # numbered ADRs yet.
+  scan_numbering "$adr_dir"
+  name_prefix=""
+  if [ "$bare_found" -eq 1 ]; then
+    next="$bare_next"
+    width="$bare_width"
+  elif [ -n "$pref_word" ] && [ "$pref_mixed" -eq 0 ]; then
+    name_prefix="$pref_word-"
+    next="$pref_next"
+    width="$pref_width"
+  else
+    next=1
+    width=4
+  fi
   [ "$width" -gt 0 ] || width=4
   number="$(printf "%0${width}d" "$next")"
+  adr_name="$name_prefix$number-$slug.md"
 
-  out="$adr_dir/$number-$slug.md"
+  out="$adr_dir/$adr_name"
   [ ! -e "$out" ] || {
     printf 'Refusing to overwrite existing file: %s\n' "${out#"$ROOT"/}" >&2
     return 1
@@ -532,10 +597,13 @@ Proposed (authored per the decision policy; awaiting owner review)
 [The observable condition under which this decision gets reverted or reopened, and what reverting takes.]
 ADR
 
-  index_append "$adr_dir/index.md" "# ADRs" "- [$number $title]($number-$slug.md): [one-line description]"
-
   printf 'Wrote %s (status: proposed)\n' "${out#"$ROOT"/}"
-  printf 'Indexed in %s\n' "$ADR_DIR/index.md"
+  if index_append "$adr_dir/index.md" "# ADRs" "- [$number $title]($adr_name): [one-line description]"; then
+    printf 'Indexed in %s\n' "$ADR_DIR/index.md"
+  else
+    printf '%s/index.md uses a table layout; add the entry there by hand (ADR 0019):\n' "$ADR_DIR"
+    printf '  [%s %s](%s)\n' "$number" "$title" "$adr_name"
+  fi
   printf 'Fill every bracket, replace the index description, and flag the ADR in docs/log.md.\n'
 }
 
@@ -554,7 +622,17 @@ new_spec() {
     return 1
   }
 
-  out="$spec_dir/$slug.md"
+  # Follow an alpha-prefixed ID sequence (spec-000-*) when it is the sole
+  # convention in the spec home (ADR 0019). Bare-numeric chapter names
+  # (01-overview.md) are deliberately not followed: chapter position is an
+  # editorial decision, so those repos keep plain <slug>.md.
+  scan_numbering "$spec_dir"
+  spec_name="$slug.md"
+  if [ "$bare_found" -eq 0 ] && [ -n "$pref_word" ] && [ "$pref_mixed" -eq 0 ]; then
+    spec_name="$pref_word-$(printf "%0${pref_width}d" "$pref_next")-$slug.md"
+  fi
+
+  out="$spec_dir/$spec_name"
   [ ! -e "$out" ] || {
     printf 'Refusing to overwrite existing file: %s\n' "${out#"$ROOT"/}" >&2
     return 1
@@ -583,10 +661,13 @@ timestamp: $timestamp
 [How conformance is checked: the automated tests that cover it, and any manual checks with their steps.]
 SPEC
 
-  index_append "$spec_dir/index.md" "# Specs" "- [$title]($slug.md): [one-line description]"
-
   printf 'Wrote %s\n' "${out#"$ROOT"/}"
-  printf 'Indexed in %s\n' "$SPECS_DIR/index.md"
+  if index_append "$spec_dir/index.md" "# Specs" "- [$title]($spec_name): [one-line description]"; then
+    printf 'Indexed in %s\n' "$SPECS_DIR/index.md"
+  else
+    printf '%s/index.md uses a table layout; add the entry there by hand (ADR 0019):\n' "$SPECS_DIR"
+    printf '  [%s](%s)\n' "$title" "$spec_name"
+  fi
   printf 'Fill every bracket, replace the index description, and map the governed source in docs/okf-map.yml.\n'
 }
 
