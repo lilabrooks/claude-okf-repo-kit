@@ -52,6 +52,27 @@ copy_created() {
   created+=("${dest#"$TARGET"/}")
 }
 
+# Owner-carrying templates get the target's git identity substituted at
+# install time: bracket placeholders read as YAML lists and fail strict
+# frontmatter validators in target repos. Falls back to the placeholder when
+# no identity is configured; the goal interview fills it then.
+OWNER_NAME="$(git -C "$TARGET" config user.name 2>/dev/null || true)"
+[ -n "$OWNER_NAME" ] || OWNER_NAME="[owner name]"
+
+render_owner() {
+  awk -v owner="$OWNER_NAME" \
+    'BEGIN { gsub(/&/, "\\\\&", owner) } { gsub(/\[owner name\]/, owner); print }' \
+    "${1:--}"
+}
+
+render_created() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  render_owner "$src" > "$dest"
+  created+=("${dest#"$TARGET"/}")
+}
+
 append_gitignore_entry() {
   local entry="$1"
   if grep -qxF "$entry" "$TARGET/.gitignore"; then
@@ -88,13 +109,13 @@ seed_manifest() {
   created+=(".okf-kit-backups/candidate-manifest (git-ignored provenance seed)")
 }
 
-copy_created "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
+render_created "$KIT_DIR/templates/CLAUDE.md" "$TARGET/CLAUDE.md"
 copy_created "$KIT_DIR/settings.json" "$TARGET/.claude/settings.json"
 copy_created "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
 copy_created "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
 copy_created "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf"
 copy_created "$KIT_DIR/okf-map.yml" "$TARGET/docs/okf-map.yml"
-copy_created "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+render_created "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
 copy_created "$KIT_DIR/templates/skills/okf-goal-interview/SKILL.md" "$TARGET/.claude/skills/okf-goal-interview/SKILL.md"
 copy_created "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.claude/skills/okf-acceptance-pass/SKILL.md"
 copy_created "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md"

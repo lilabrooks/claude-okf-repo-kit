@@ -18,7 +18,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
   <meta property="article:author" content="https://github.com/lilabrooks">
-  <meta property="article:modified_time" content="2026-07-12">
+  <meta property="article:modified_time" content="2026-07-14">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Dogfood findings | Claude OKF repo kit">
   <meta name="twitter:description" content="Lila Brooks documents 3 repositories, the gaps they exposed, and the changes carried back into the kit.">
@@ -59,7 +59,7 @@
         "url": "https://lilabrooks.github.io/dogfood/",
         "headline": "What changed after the kit met real work",
         "description": "How Spec Agent CLI, Repo Pulse, and Skywatch exposed gaps and changed the Claude OKF repo kit.",
-        "dateModified": "2026-07-12",
+        "dateModified": "2026-07-14",
         "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
         "creator": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
         "publisher": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
@@ -273,6 +273,27 @@
             <p>Kit 0.3.0 (ADRs 0019 and 0020): the scaffolds continue a repository’s own ID sequences instead of forking them; a table-style index gets no guessed row — the helper declines and prints the entry for a manual add; the updater stamps the version into an existing bundle root in place; and a fifth installed skill, <code>okf-adopt</code>, carries the adoption pass itself — inventory without moving anything, map, backfill, validate — with migration to the kit’s defaults only at the owner’s direction.</p>
           </article>
         </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">What happened</span>
+            <h3 class="compact-card-title">The live adoption</h3>
+            <p>With 0.3.0 committed, the updater ran against the live repository — not a scratch copy. No candidate conflicts, nothing flagged for review; the adoption pass mapped every module from the specs’ own component lists, and the repository’s own CI validator, the stale-map check, and <code>verify-install</code> were green on the first pass.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it found</span>
+            <h3 class="compact-card-title">Findings from the live pass</h3>
+            <ul>
+              <li>The goal template shipped <code>owner: [owner name]</code> — a bracket placeholder that parses as a YAML list and fails a strict frontmatter validator — while the playbook template hardcoded the kit author’s name, wrong for every adopter but one.</li>
+              <li>The goal template’s milestone-mechanics paragraph restated the playbook’s Goal iteration section, and both files preload into every session.</li>
+              <li>A repository adopted at its target state has no honest backlog to write; the template assumed one and left that case to be re-derived.</li>
+            </ul>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What changed in the kit</span>
+            <h3 class="compact-card-title">Owner-rendered templates</h3>
+            <p>Kit 0.3.1: both installers render the owner-carrying templates instead of copying them, substituting the target’s <code>git config user.name</code> wherever they are written; the goal template’s milestone mechanics shrink to a pointer at the playbook plus the one backlog-local rule; and the template and the <code>okf-adopt</code> skill now name the empty-backlog idiom for repositories adopted at their target state.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -285,7 +306,7 @@
             <p class="compact-section-copy">After Repo Pulse and Skywatch, the kit gained a read-only harvest record for registered dogfood repositories. It reports new commits, dated log entries, proposed decisions, version drift, and local changes to kit-managed files since the last review.</p>
           </div>
         </div>
-        <p class="compact-section-copy">This closes the same loop at a higher level. Target repositories keep their own intent and history. The kit can inspect the delta, identify a repeated weakness, and carry the general fix back into the source. The registered paths stay local to the maintainer’s machine, and the target repositories remain unchanged by the review.</p>
+        <p class="compact-section-copy">This closes the same loop at a higher level. Target repositories keep their own intent and history. The kit can inspect the delta, identify a repeated weakness, and carry the general fix back into the source. The registered paths stay local to the maintainer’s machine, and the target repositories remain unchanged by the review. As of the Spec Agent CLI adoption, the loop is live against a repository the kit did not build: the first post-adoption delta — new commits, a pending decision, dated log entries — is already on record.</p>
       </div>
     </section>
 

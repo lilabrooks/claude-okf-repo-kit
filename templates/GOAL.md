@@ -4,8 +4,8 @@ title: Project goal
 description: The goal, success criteria, and milestone backlog Claude Code iterates toward in this repo.
 tags: [goal, milestones]
 timestamp: 2026-07-07T00:00:00Z
-owner: [owner name]
-deciders: [owner name]
+owner: "[owner name]"
+deciders: ["[owner name]"]
 ---
 
 <!-- Template. Fill every [bracket], update the timestamp, then delete this comment.
@@ -47,15 +47,15 @@ Verifiable checks that prove the goal is met:
 
 # Milestones
 
-Ordered backlog. When asked to continue without a specific task, Claude Code
-takes the first unchecked milestone. Check a milestone off only when its
-verification passes, and record progress in `docs/log.md`. A user-facing
+Ordered backlog; selection, check-off, and goal-met mechanics live in the
+playbook's Goal iteration section, which is preloaded alongside this file —
+the rules stay in one place. One rule binds the backlog itself: a user-facing
 milestone's verification names at least one rejected or edge input alongside
-the happy path. When the backlog is empty, Claude Code runs a first-time-user
-acceptance pass, reports the goal met, and proposes candidate milestones
-(from `docs/log.md` known items, ADR revisit triggers, acceptance-pass
-findings, missing repo hygiene, and in-scope extensions); the owner
-chooses what gets added.
+the happy path.
+
+A repo adopted at its target state keeps this section with an empty backlog
+and a dated note that the success criteria pass; the empty-backlog mechanics
+(acceptance pass, goal-met report, candidate proposals) then apply as usual.
 
 - [ ] [first shippable slice + how to verify it]
 - [ ] [next milestone + how to verify it]

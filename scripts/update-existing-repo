@@ -388,6 +388,19 @@ fi
 
 mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/$SPECS_DIR/_drafts" "$TARGET/$ADR_DIR"
 
+# Owner-carrying templates get the target's git identity substituted at
+# install time: bracket placeholders read as YAML lists and fail strict
+# frontmatter validators in target repos. Falls back to the placeholder when
+# no identity is configured; the goal interview fills it then.
+OWNER_NAME="$(git -C "$TARGET" config user.name 2>/dev/null || true)"
+[ -n "$OWNER_NAME" ] || OWNER_NAME="[owner name]"
+
+render_owner() {
+  awk -v owner="$OWNER_NAME" \
+    'BEGIN { gsub(/&/, "\\\\&", owner) } { gsub(/\[owner name\]/, owner); print }' \
+    "${1:--}"
+}
+
 # Playbook staging: when AGENTS.md is the repo's real playbook and CLAUDE.md
 # is absent or a pure @-import shim, the kit playbook lands as an AGENTS.md
 # candidate instead of a CLAUDE.2.md that competes with the shim. Preloaded
@@ -396,7 +409,7 @@ mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/$SPECS_DIR/_drafts" 
 render_playbook() {
   sed -e "s|^@docs/specs/index.md$|@$SPECS_DIR/index.md|" \
     -e "s|^@docs/adr/index.md$|@$ADR_DIR/index.md|" \
-    "$KIT_DIR/templates/CLAUDE.md"
+    "$KIT_DIR/templates/CLAUDE.md" | render_owner
 }
 
 is_import_shim() {
@@ -479,10 +492,10 @@ if [ -f "$TARGET/docs/GOAL.md" ]; then
   if goal_is_filled; then
     skipped+=("docs/GOAL.md already filled; no template candidate written")
   else
-    write_numbered_candidate "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md" "docs/GOAL.md"
+    write_numbered_content_candidate "$TARGET/docs/GOAL.md" "docs/GOAL.md" < <(render_owner "$KIT_DIR/templates/GOAL.md")
   fi
 else
-  cp "$KIT_DIR/templates/GOAL.md" "$TARGET/docs/GOAL.md"
+  render_owner "$KIT_DIR/templates/GOAL.md" > "$TARGET/docs/GOAL.md"
   created+=("docs/GOAL.md")
 fi
 
