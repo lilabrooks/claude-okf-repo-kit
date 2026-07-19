@@ -4,12 +4,12 @@ title: Kit-managed second-agent mirror sync
 description: Teach the updater to refresh declared second-agent hook mirrors in place, byte-identical to the .claude/hooks originals, removing the manual re-sync step; skills stay owner-managed.
 tags: [adr, second-agent, installer, mirrors]
 timestamp: 2026-07-14T19:02:00Z
-status: proposed
+status: accepted
 ---
 
 # Status
 
-Proposed (authored per the decision policy; awaiting owner review). Implementation is deferred until this decision is accepted — this ADR records the design and its bounds, not a landed change.
+Accepted (2026-07-18, by the owner). Implementation landed with the acceptance: the `mirrors:` declaration, the updater sync through the ADR 0013 provenance path, `verify-install` parity warnings, and smoke coverage.
 
 # Context
 

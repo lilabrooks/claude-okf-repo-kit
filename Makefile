@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
@@ -87,7 +87,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -428,6 +428,51 @@ smoke-candidates:
 	test -f "$$target/CLAUDE.3.md"; \
 	grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.3.md"; \
 	printf 'candidate refresh smoke ok\n'
+
+smoke-mirrors:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	kit="$$tmp/kit"; \
+	mkdir -p "$$kit/scripts" "$$kit/templates"; \
+	cp "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
+	cp -R "$(KIT_DIR)/templates/." "$$kit/templates/"; \
+	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
+	target="$$tmp/target"; \
+	mkdir -p "$$target"; \
+	cd "$$target"; \
+	git init -q; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	: 'no mirrors declared: no second-agent directories appear (ADR 0021)'; \
+	test ! -e .codex; \
+	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" == *'.codex/hooks/check-docs-sync.sh'* ]]; \
+	cmp -s .claude/hooks/check-docs-sync.sh .codex/hooks/check-docs-sync.sh; \
+	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'mirror .codex/hooks/check-docs-sync.sh matches'* ]]; \
+	: 'idempotent rerun writes no mirror candidates'; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	test ! -e .codex/hooks/check-docs-sync.2.sh; \
+	: 'kit release: unedited mirror refreshed in place alongside the original'; \
+	printf '%s\n' '# kit vNEXT marker' >> "$$kit/scripts/check-docs-sync.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'kit vNEXT marker' .claude/hooks/check-docs-sync.sh; \
+	grep -q 'kit vNEXT marker' .codex/hooks/check-docs-sync.sh; \
+	test ! -e .codex/hooks/check-docs-sync.2.sh; \
+	: 'owner-edited mirror preserved with a candidate; verify-install warns'; \
+	printf 'owner edit\n' >> .codex/hooks/check-okf-version.sh; \
+	printf '%s\n' '# kit vNEXT2 marker' >> "$$kit/scripts/check-okf-version.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'owner edit' .codex/hooks/check-okf-version.sh; \
+	test -f .codex/hooks/check-okf-version.2.sh; \
+	grep -q 'kit vNEXT2 marker' .codex/hooks/check-okf-version.2.sh; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'differs from .claude/hooks/check-okf-version.sh'* ]]; \
+	: 'mappings after a mirrors block stay clean in check-stale'; \
+	bash scripts/okf check-stale >/dev/null; \
+	printf 'second-agent mirror smoke ok\n'
 
 smoke-paths:
 	@set -eu; \

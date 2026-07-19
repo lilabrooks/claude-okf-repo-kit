@@ -241,6 +241,45 @@ if [ -f "$TARGET/$STAMP_REL" ]; then
   fi
 fi
 
+# Declared second-agent hook mirrors (ADR 0021): each directory in the map's
+# top-level `mirrors:` list should carry byte-identical copies of the two kit
+# hooks. Warn on missing or drifted mirror hooks; never fail — an owner-edited
+# mirror is legitimate, the warning just keeps the drift visible.
+if [ -f "$TARGET/docs/okf-map.yml" ]; then
+  while IFS= read -r mirror_dir; do
+    [ -n "$mirror_dir" ] || continue
+    mirror_dir="${mirror_dir%/}"
+    case "$mirror_dir" in /*|*../*|*/..|..|.claude/hooks) continue ;; esac
+    for hook in check-docs-sync.sh check-okf-version.sh; do
+      if [ ! -f "$TARGET/$mirror_dir/$hook" ]; then
+        warn "declared mirror $mirror_dir is missing $hook (run the safe updater to sync it)"
+      elif cmp -s "$TARGET/.claude/hooks/$hook" "$TARGET/$mirror_dir/$hook"; then
+        pass "mirror $mirror_dir/$hook matches .claude/hooks/$hook"
+      else
+        warn "mirror $mirror_dir/$hook differs from .claude/hooks/$hook (owner-edited or stale; mirrors are meant to stay byte-identical)"
+      fi
+    done
+  done < <(awk '
+    function clean(s) {
+      gsub(/#.*/, "", s)
+      gsub(/^[[:space:]"'\'']+/, "", s)
+      gsub(/[[:space:]"'\'']+$/, "", s)
+      return s
+    }
+    /^mirrors:/ { in_mirrors = 1; next }
+    /^[^[:space:]#]/ { in_mirrors = 0 }
+    in_mirrors {
+      line = $0
+      sub(/^[[:space:]]*/, "", line)
+      if (line ~ /^-/) {
+        sub(/^-[[:space:]]*/, "", line)
+        line = clean(line)
+        if (line != "") print line
+      }
+    }
+  ' "$TARGET/docs/okf-map.yml")
+fi
+
 # Unresolved numbered kit candidates (installer-scripts spec): the manifest
 # records every review candidate the installers wrote; one still on disk means
 # the review-merge-delete pass hasn't happened yet. Manifest absent (fresh
