@@ -402,7 +402,7 @@ render_owner() {
 }
 
 # Playbook staging: when AGENTS.md is the repo's real playbook and CLAUDE.md
-# is absent or a pure @-import shim, the kit playbook lands as an AGENTS.md
+# is absent or an @-import shim, the kit playbook lands as an AGENTS.md
 # candidate instead of a CLAUDE.2.md that competes with the shim. Preloaded
 # import lines are rewritten to the detected layout so they resolve to the
 # real indexes.
@@ -416,7 +416,16 @@ is_import_shim() {
   local f="$1"
   [ -f "$f" ] || return 1
   grep -qE '^@' "$f" || return 1
-  ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .
+  # Pure shim: nothing but @-imports and blank lines.
+  if ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .; then
+    return 0
+  fi
+  # Commented shim (ADR 0022): an @AGENTS.md import plus short explanatory
+  # prose still redirects to AGENTS.md. Headings or length mean a real
+  # playbook, which keeps the CLAUDE.2.md candidate path.
+  grep -qxF '@AGENTS.md' "$f" || return 1
+  grep -qE '^#' "$f" && return 1
+  [ "$(grep -cvE '^[[:space:]]*$' "$f")" -le 10 ]
 }
 
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then

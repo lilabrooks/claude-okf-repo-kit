@@ -48,6 +48,8 @@ The hook fails silent when offline or when the upstream spec or version file can
 
 The same hook also reports the ADR review inbox: it counts files under the ADR home (`docs/adr/` by default, per the layout block) whose status is `proposed`, skipping `index.md` and installer-written numbered candidates — the same files `bash scripts/okf pending` lists, with the same tolerant status detection (frontmatter `status:`, then a `- Status:` bullet, then a `# Status` section, normalized to the lowercased first word; ADR 0018) — and notes the count so proposed decisions stay visible every session instead of only in the goal-met report. This check is local and offline; it stays silent at zero.
 
+The same hook also reports unresolved numbered kit candidates: it reads the machine-local candidate manifest (`.okf-kit-backups/candidate-manifest`), selects the recorded paths with numbered-candidate names (`CLAUDE.2.md` and similar), and notes any that still exist on disk — inactive review copies from an install or upgrade that should be merged and deleted, not committed. The note tells the agent to remind the owner rather than resolve candidates itself, matching the installed playbook's kit-version policy. Local and offline; silent when the manifest is absent (fresh clone, pre-manifest install) or every recorded candidate is gone.
+
 When anything is detected, the hook injects context for Claude Code rather than modifying files directly. OKF drift, kit drift, and the ADR inbox note are combined into a single context injection. The installed `CLAUDE.md` policies tell Claude Code what to do with each note.
 
 # Version migration policy
