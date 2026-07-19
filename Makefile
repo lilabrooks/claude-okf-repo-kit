@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
@@ -87,7 +87,7 @@ links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs
 	@printf 'links ok\n'
 
-smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+smoke: smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 smoke-source:
 	@bash scripts/okf check-stale >/dev/null
@@ -186,8 +186,11 @@ smoke-existing:
 	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
 	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$target"); \
 	[[ "$$output" == *'Claude Code OKF kit update complete'* ]]; \
+	: 'summary labels are a stable output contract (ADR 0023)'; \
 	[[ "$$output" == *'Created:'* ]]; \
 	[[ "$$output" == *'Updated:'* ]]; \
+	[[ "$$output" == *'Skipped:'* ]]; \
+	[[ "$$output" == *'Backed up:'* ]]; \
 	[[ "$$output" == *'Needs review:'* ]]; \
 	[[ "$$output" == *'Verification run:'* ]]; \
 	test -f CLAUDE.md; \
@@ -239,6 +242,16 @@ smoke-existing:
 	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
 	! grep -q 'site/' docs/okf-map.yml; \
 	! grep -q 'site/' docs/okf-map.2.yml; \
+	: 'unresolved candidates surface at session start and in verify-install'; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'Kit candidate review:'* ]]; \
+	[[ "$$output" == *'CLAUDE.2.md'* ]]; \
+	python3 -c 'import json,sys; json.loads(sys.stdin.read())' <<<"$$output"; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'unresolved numbered kit candidate'* ]]; \
+	rm CLAUDE.2.md docs/GOAL.2.md docs/index.2.md docs/okf-map.2.yml; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" != *'Kit candidate review:'* ]]; \
 	: 'a stamped bundle root gets kit_version in place, not a candidate (ADR 0019)'; \
 	starget="$$tmp/stamped"; \
 	mkdir -p "$$starget/docs"; \
@@ -361,6 +374,31 @@ smoke-brownfield:
 	test ! -f docs/GOAL.2.md; \
 	test ! -f docs/adr/index.2.md; \
 	test ! -f docs/architecture/specification/index.2.md; \
+	: 'a commented @-import shim still counts as a shim (ADR 0022)'; \
+	ctarget="$$tmp/brown-commented"; \
+	mkdir -p "$$ctarget"; \
+	cd "$$ctarget"; \
+	git init -q; \
+	printf '%s\n' '# Agent instructions' '' 'Playbook lives here.' > AGENTS.md; \
+	printf '%s\n' 'Repository instructions live in AGENTS.md, shared with a second agent.' 'Edit AGENTS.md, not this file.' '' '@AGENTS.md' > CLAUDE.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$ctarget" >/dev/null; \
+	test ! -f CLAUDE.2.md; \
+	test -f AGENTS.2.md; \
+	grep -q 'Edit AGENTS.md, not this file.' CLAUDE.md; \
+	: 'a real playbook that merely imports AGENTS.md keeps the CLAUDE.2.md path'; \
+	ptarget="$$tmp/brown-playbook"; \
+	mkdir -p "$$ptarget"; \
+	cd "$$ptarget"; \
+	git init -q; \
+	printf '%s\n' '# Agent instructions' > AGENTS.md; \
+	printf '%s\n' '# Real playbook' '' 'Rules here.' '' '@AGENTS.md' > CLAUDE.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$ptarget" >/dev/null; \
+	test -f CLAUDE.2.md; \
+	test ! -f AGENTS.2.md; \
 	printf 'brownfield adoption smoke ok\n'
 
 smoke-candidates:
@@ -390,6 +428,79 @@ smoke-candidates:
 	test -f "$$target/CLAUDE.3.md"; \
 	grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.3.md"; \
 	printf 'candidate refresh smoke ok\n'
+
+smoke-mirrors:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	kit="$$tmp/kit"; \
+	mkdir -p "$$kit/scripts" "$$kit/templates"; \
+	cp "$(KIT_DIR)/scripts/update-existing-repo" "$(KIT_DIR)/scripts/check-docs-sync.sh" "$(KIT_DIR)/scripts/check-okf-version.sh" "$(KIT_DIR)/scripts/okf" "$$kit/scripts/"; \
+	cp -R "$(KIT_DIR)/templates/." "$$kit/templates/"; \
+	cp "$(KIT_DIR)/settings.json" "$(KIT_DIR)/okf-map.yml" "$(KIT_DIR)/VERSION" "$$kit/"; \
+	target="$$tmp/target"; \
+	mkdir -p "$$target"; \
+	cd "$$target"; \
+	git init -q; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	: 'no mirrors declared: no second-agent directories appear (ADR 0021)'; \
+	test ! -e .codex; \
+	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" == *'.codex/hooks/check-docs-sync.sh'* ]]; \
+	cmp -s .claude/hooks/check-docs-sync.sh .codex/hooks/check-docs-sync.sh; \
+	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'mirror .codex/hooks/check-docs-sync.sh matches'* ]]; \
+	: 'idempotent rerun writes no mirror candidates'; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	test ! -e .codex/hooks/check-docs-sync.2.sh; \
+	: 'kit release: unedited mirror refreshed in place alongside the original'; \
+	printf '%s\n' '# kit vNEXT marker' >> "$$kit/scripts/check-docs-sync.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'kit vNEXT marker' .claude/hooks/check-docs-sync.sh; \
+	grep -q 'kit vNEXT marker' .codex/hooks/check-docs-sync.sh; \
+	test ! -e .codex/hooks/check-docs-sync.2.sh; \
+	: 'owner-edited mirror preserved with a candidate; verify-install warns'; \
+	printf 'owner edit\n' >> .codex/hooks/check-okf-version.sh; \
+	printf '%s\n' '# kit vNEXT2 marker' >> "$$kit/scripts/check-okf-version.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
+	grep -q 'owner edit' .codex/hooks/check-okf-version.sh; \
+	test -f .codex/hooks/check-okf-version.2.sh; \
+	grep -q 'kit vNEXT2 marker' .codex/hooks/check-okf-version.2.sh; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'differs from .claude/hooks/check-okf-version.sh'* ]]; \
+	: 'mappings after a mirrors block stay clean in check-stale'; \
+	bash scripts/okf check-stale >/dev/null; \
+	printf 'second-agent mirror smoke ok\n'
+
+smoke-paths:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	: 'installer and verifier survive glob characters and spaces in the target path'; \
+	target="$$tmp/kit [new] target"; \
+	bash "$(KIT_DIR)/scripts/create-new-repo" "$$target" >/dev/null; \
+	test -f "$$target/CLAUDE.md"; \
+	test -f "$$target/scripts/okf"; \
+	test -f "$$target/.claude/hooks/check-docs-sync.sh"; \
+	bash "$(KIT_DIR)/scripts/verify-install" "$$target" >/dev/null; \
+	etarget="$$tmp/kit [existing] target"; \
+	mkdir -p "$$etarget"; \
+	cd "$$etarget"; \
+	git init -q; \
+	printf '%s\n' '# Owner CLAUDE' > CLAUDE.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$etarget" >/dev/null; \
+	test -f "$$etarget/CLAUDE.2.md"; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$etarget" >/dev/null; \
+	test ! -f "$$etarget/CLAUDE.3.md"; \
+	bash "$(KIT_DIR)/scripts/verify-install" "$$etarget" >/dev/null; \
+	bash scripts/okf check-stale >/dev/null; \
+	output=$$(CLAUDE_PROJECT_DIR="$$etarget" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'Kit candidate review:'* ]]; \
+	printf 'special-character path smoke ok\n'
 
 smoke-scripts:
 	@set -eu; \

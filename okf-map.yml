@@ -21,6 +21,18 @@
 #   specs_dir: docs/specs      # spec home; drafts live in <specs_dir>/_drafts
 #   adr_dir: docs/adr          # ADR home; index at <adr_dir>/index.md
 #   stamp_file: docs/index.md  # okf_version / kit_version stamp home
+#
+# Optional mirrors list (ADR 0021): a repo that keeps byte-identical copies of
+# the two kit hooks in a second agent's config declares those directories here.
+# The safe updater then refreshes declared mirrors exactly like the
+# .claude/hooks/ originals — in place only when provably unedited kit output,
+# preserved with a numbered candidate otherwise — and verify-install warns
+# when a declared mirror is missing a hook or has drifted. Hooks only; mirror
+# skills stay owner-managed. Undeclared directories are never treated as
+# mirrors:
+#
+# mirrors:
+#   - .codex/hooks
 
 mappings:
   # Add one entry per source area after installing this kit in a real repo.

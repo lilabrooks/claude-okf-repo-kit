@@ -346,6 +346,33 @@ map_layout_value() {
   ' "$target_map"
 }
 
+# Second-agent hook mirrors (ADR 0021): a top-level `mirrors:` list in the
+# target's docs/okf-map.yml names the directories that keep byte-identical
+# copies of the two kit hooks for another agent. Declared, never detected.
+map_mirror_dirs() {
+  local target_map="$TARGET/docs/okf-map.yml"
+  [ -f "$target_map" ] || return 0
+  awk '
+    function clean(s) {
+      gsub(/#.*/, "", s)
+      gsub(/^[[:space:]"'\'']+/, "", s)
+      gsub(/[[:space:]"'\'']+$/, "", s)
+      return s
+    }
+    /^mirrors:/ { in_mirrors = 1; next }
+    /^[^[:space:]#]/ { in_mirrors = 0 }
+    in_mirrors {
+      line = $0
+      sub(/^[[:space:]]*/, "", line)
+      if (line ~ /^-/) {
+        sub(/^-[[:space:]]*/, "", line)
+        line = clean(line)
+        if (line != "") print line
+      }
+    }
+  ' "$target_map"
+}
+
 dir_has_md() {
   find "$1" -maxdepth 1 -name '*.md' ! -name 'index.md' 2>/dev/null | grep -q .
 }
@@ -402,7 +429,7 @@ render_owner() {
 }
 
 # Playbook staging: when AGENTS.md is the repo's real playbook and CLAUDE.md
-# is absent or a pure @-import shim, the kit playbook lands as an AGENTS.md
+# is absent or an @-import shim, the kit playbook lands as an AGENTS.md
 # candidate instead of a CLAUDE.2.md that competes with the shim. Preloaded
 # import lines are rewritten to the detected layout so they resolve to the
 # real indexes.
@@ -416,7 +443,16 @@ is_import_shim() {
   local f="$1"
   [ -f "$f" ] || return 1
   grep -qE '^@' "$f" || return 1
-  ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .
+  # Pure shim: nothing but @-imports and blank lines.
+  if ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .; then
+    return 0
+  fi
+  # Commented shim (ADR 0022): an @AGENTS.md import plus short explanatory
+  # prose still redirects to AGENTS.md. Headings or length mean a real
+  # playbook, which keeps the CLAUDE.2.md candidate path.
+  grep -qxF '@AGENTS.md' "$f" || return 1
+  grep -qE '^#' "$f" && return 1
+  [ "$(grep -cvE '^[[:space:]]*$' "$f")" -le 10 ]
 }
 
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then
@@ -445,6 +481,23 @@ merge_settings
 
 install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh" ".claude/hooks/check-docs-sync.sh"
 install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh" ".claude/hooks/check-okf-version.sh"
+
+# Declared mirrors get the same hooks through the same provenance path as the
+# .claude/hooks/ originals: refreshed in place only when provably unedited kit
+# output, preserved with a numbered candidate otherwise (ADRs 0013, 0021).
+# Hooks only — mirror skills carry per-agent substitutions the kit cannot
+# reproduce, so they stay owner-managed.
+while IFS= read -r mirror_dir; do
+  [ -n "$mirror_dir" ] || continue
+  mirror_dir="${mirror_dir%/}"
+  case "$mirror_dir" in
+    /*|*../*|*/..|..) skipped+=("mirror $mirror_dir ignored (must be a repo-relative path without ..)"); continue ;;
+    .claude/hooks) skipped+=("mirror .claude/hooks ignored (it is the original, not a mirror)"); continue ;;
+  esac
+  install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/$mirror_dir/check-docs-sync.sh" "$mirror_dir/check-docs-sync.sh"
+  install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/$mirror_dir/check-okf-version.sh" "$mirror_dir/check-okf-version.sh"
+done < <(map_mirror_dirs)
+
 install_kit_script "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf" "scripts/okf"
 install_kit_script "$KIT_DIR/templates/skills/okf-goal-interview/SKILL.md" "$TARGET/.claude/skills/okf-goal-interview/SKILL.md" ".claude/skills/okf-goal-interview/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.claude/skills/okf-acceptance-pass/SKILL.md" ".claude/skills/okf-acceptance-pass/SKILL.md"

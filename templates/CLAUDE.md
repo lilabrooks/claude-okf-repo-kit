@@ -123,6 +123,8 @@ Never modify spec or ADR content as part of a version migration; only formatting
 
 The same SessionStart hook also compares `kit_version` in `docs/index.md` — stamped by the kit installers — against the kit's published `VERSION` on the source kit's main branch. When it reports drift, tell me and recommend the safe updater, `scripts/update-existing-repo` from an up-to-date kit clone (the `okf-kit-upgrade` skill carries the walkthrough): it refreshes provably unedited kit files in place after a backup and writes same-folder numbered candidates for everything else; reviewing candidates is my decision. If `docs/index.md` carries no `kit_version`, the hook stays silent and this policy is inactive.
 
+The same hook also reports numbered kit candidates (`CLAUDE.2.md` and similar) still unresolved from an install or upgrade. They are inactive review copies no agent loads: remind me to merge what I want into the live files and delete each candidate rather than resolving them yourself, and never commit one unresolved.
+
 # OKF helper commands
 
 `scripts/okf` is a repo-local Bash helper installed by this kit. It is not an official OKF CLI, not a global command, and not a prompt. Always run it with `bash scripts/okf ...` unless this repo intentionally wraps it another way. The knowledge paths named below are the defaults; when `docs/okf-map.yml` carries a `layout:` block, every command follows it instead, and `new-adr` follows whatever ADR numbering already exists.
@@ -163,7 +165,7 @@ Tests and verification:
 Security:
 
 - Never write secrets — API keys, tokens, passwords, private keys, connection strings — into tracked files. Read them from the environment, and before creating an env or credentials file, confirm `.gitignore` covers it.
-- Document required and optional environment variables in a committed `.env.example` holding placeholder values only; real values live in the git-ignored `.env`. The installers ignore `.env` and `.env.*` while keeping `.env.example` trackable.
+- Document required and optional environment variables in a committed `.env.example` holding placeholder values only; real values live in the git-ignored `.env`. The installers ignore `.env` and `.env.*` while keeping `.env.example` trackable. State in `.env.example` how the stack loads `.env` — and when nothing does, say so and show the export step, because "copy to `.env`" instructions for a stack with no loader fail silently.
 - The shipped settings deny reading `.env` files so secrets stay out of conversation context. Never remove, weaken, or work around that denial; if a task seems to require reading `.env`, stop and ask me.
 - Treat changes touching auth, sessions, input parsing, file paths, network exposure, crypto, or permissions as security-sensitive: validate input at trust boundaries, use parameterized queries, grant least privilege, and run `bash scripts/okf adr-suggest`; when it flags the change, record the decision as a proposed ADR.
 - New runtime dependencies are decision-shaped: the proposed ADR names the alternatives considered and the maintenance and security tradeoff.

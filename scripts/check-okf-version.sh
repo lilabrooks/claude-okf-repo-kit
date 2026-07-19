@@ -128,6 +128,26 @@ if [ "$pending_count" -gt 0 ]; then
   append_note "ADR review inbox: $pending_count ADR(s) are status: proposed awaiting the owner's review. List them with: bash scripts/okf pending. The decision policy in the repo playbook applies."
 fi
 
+# Kit candidate review: numbered review candidates (CLAUDE.2.md and friends)
+# are inactive copies the installers wrote beside same-name files. The
+# machine-local manifest records every one; a recorded candidate still on
+# disk means the review-merge-delete pass hasn't happened. Stays silent when
+# the manifest is absent (fresh clone, pre-manifest install). Local scan only.
+CANDIDATE_MANIFEST="$ROOT/.okf-kit-backups/candidate-manifest"
+if [ -f "$CANDIDATE_MANIFEST" ]; then
+  unresolved=""
+  unresolved_count=0
+  while IFS= read -r rel; do
+    [ -n "$rel" ] || continue
+    [ -f "$ROOT/$rel" ] || continue
+    unresolved_count=$((unresolved_count + 1))
+    if [ -n "$unresolved" ]; then unresolved="$unresolved, $rel"; else unresolved="$rel"; fi
+  done < <(cut -f2 "$CANDIDATE_MANIFEST" | grep -E '\.[0-9]+(\.[A-Za-z0-9]+)?$' | sort -u)
+  if [ "$unresolved_count" -gt 0 ]; then
+    append_note "Kit candidate review: $unresolved_count unresolved numbered kit candidate file(s): $unresolved. These are inactive review copies written by the kit installer, not files any agent loads. Tell the owner: merge what they want into the live files, then delete the candidates - they should not be committed unresolved. The Kit version policy in the repo playbook applies."
+  fi
+fi
+
 if [ -n "$notes" ]; then
   cat <<EOF
 {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "$notes"}}

@@ -168,10 +168,10 @@ The new-repo script creates the target directory if needed, but it refuses a non
 For an existing repo:
 
 1. Run `bash /path/to/kit/scripts/update-existing-repo /path/to/existing-repo`.
-2. Review the printed summary. It lists created, updated, skipped, backed-up, and review-needed files.
+2. Review the printed summary. It lists created, updated, skipped, backed-up, and review-needed files under fixed section labels that scripts wrapping the installer can rely on.
 3. Review `.okf-kit-backups/<timestamp>/` for replaced-file backups.
 4. Review same-folder numbered candidates such as `CLAUDE.2.md` and `docs/okf-map.2.yml`.
-5. Merge any candidate content that belongs in the existing repo files.
+5. Merge any candidate content that belongs in the existing repo files, then delete each candidate — the session-start hook and `verify-install` keep reminding you about unresolved ones so they don't slip into a commit.
 6. Confirm `.gitignore` kept existing entries and gained the kit's required local-file ignores.
 7. Add or update `docs/okf-map.yml` gradually, starting with the modules Claude changes most.
 8. Run `bash scripts/okf check-stale` and `bash scripts/okf adr-suggest` from the target repo root.
