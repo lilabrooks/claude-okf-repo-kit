@@ -447,12 +447,19 @@ is_import_shim() {
   if ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .; then
     return 0
   fi
-  # Commented shim (ADR 0022): an @AGENTS.md import plus short explanatory
-  # prose still redirects to AGENTS.md. Headings or length mean a real
-  # playbook, which keeps the CLAUDE.2.md candidate path.
+  # Commented shim (ADRs 0022, 0025): an @AGENTS.md import plus short
+  # explanatory prose still redirects to AGENTS.md. A heading disqualifies
+  # only when the @AGENTS.md import sits under it — a real playbook imports
+  # AGENTS.md beneath its own headings, while a shim redirects first and may
+  # then carry the kit's preloaded-context block (heading, prose, imports).
+  # Length beyond the budget still means a real playbook.
   grep -qxF '@AGENTS.md' "$f" || return 1
-  grep -qE '^#' "$f" && return 1
-  [ "$(grep -cvE '^[[:space:]]*$' "$f")" -le 10 ]
+  import_line="$(grep -nxF '@AGENTS.md' "$f" | head -n 1 | cut -d: -f1)"
+  first_heading="$(grep -nE '^#' "$f" | head -n 1 | cut -d: -f1)"
+  if [ -n "$first_heading" ] && [ "$first_heading" -lt "$import_line" ]; then
+    return 1
+  fi
+  [ "$(grep -cvE '^[[:space:]]*$' "$f")" -le 15 ]
 }
 
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then

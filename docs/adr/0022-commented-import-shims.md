@@ -37,3 +37,5 @@ Everything else — headings, length, or an import set that does not include `@A
 - AGENTS.md-first repos whose shim carries explanatory prose get the ADR 0018 behavior: kit playbook as `AGENTS.2.md`, shim untouched.
 - A short heading-free `CLAUDE.md` that is genuinely a playbook (unlikely but possible) would be misclassified; the cost is a preserved live file and the kit playbook staged beside `AGENTS.md` instead of beside `CLAUDE.md` — no content is lost.
 - Revisit trigger: a dogfood or downstream repo whose real playbook is misclassified as a shim, or a shim convention that exceeds 10 non-blank lines in practice.
+
+Amendment (2026-07-19, with ADR 0025): the revisit trigger fired — the live spec-drift repo's shim carries the kit's preloaded-context block (a heading plus imports, 12 non-blank lines) and was misclassified as a real playbook. ADR 0025 refines the bounds: a heading disqualifies only when the `@AGENTS.md` import sits under it, and the budget rises to 15 non-blank lines. The tested real-playbook counter-edge (import under a heading) keeps the `CLAUDE.2.md` path.

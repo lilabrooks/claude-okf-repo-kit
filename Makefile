@@ -388,6 +388,19 @@ smoke-brownfield:
 	test ! -f CLAUDE.2.md; \
 	test -f AGENTS.2.md; \
 	grep -q 'Edit AGENTS.md, not this file.' CLAUDE.md; \
+	: 'a shim carrying the preloaded-context block under a heading is a shim (ADR 0025)'; \
+	htarget="$$tmp/brown-heading-shim"; \
+	mkdir -p "$$htarget"; \
+	cd "$$htarget"; \
+	git init -q; \
+	printf '%s\n' '# Agent instructions' '' 'Playbook lives here.' > AGENTS.md; \
+	printf '%s\n' 'Repository instructions live in AGENTS.md, shared with Codex — the master' 'objective, grounding rules, decision policy, guardrails, and task workflow.' 'Edit AGENTS.md, not this file.' '' '@AGENTS.md' '' '# Preloaded context' '' 'These imports resolve when Claude Code loads this file, so the goal and the' 'knowledge indexes are in context at session start without a read step.' '' '@docs/GOAL.md' '@docs/specs/index.md' '@docs/adr/index.md' > CLAUDE.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$htarget" >/dev/null; \
+	test ! -f CLAUDE.2.md; \
+	test -f AGENTS.2.md; \
+	grep -q 'Edit AGENTS.md, not this file.' CLAUDE.md; \
 	: 'a real playbook that merely imports AGENTS.md keeps the CLAUDE.2.md path'; \
 	ptarget="$$tmp/brown-playbook"; \
 	mkdir -p "$$ptarget"; \
