@@ -33,7 +33,10 @@ TARGET="$1"
 mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
 
-if find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | grep -q .; then
+# Output capture instead of `| grep -q .`: under pipefail the early-exit
+# reader races the find writer (SIGPIPE), which could make a non-empty
+# target look empty and defeat this safety refusal.
+if [ -n "$(find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | head -n 1)" ]; then
   printf 'Target is not empty: %s\n' "$TARGET" >&2
   printf 'Use bash scripts/update-existing-repo for existing repos.\n' >&2
   exit 1
