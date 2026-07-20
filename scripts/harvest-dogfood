@@ -33,8 +33,9 @@ Report probes, per registered repo:
   - kit-managed script drift, with manifest provenance (ADR 0013): matches
     the kit, unedited older kit output, or owner-edited
   - the proposed-ADR review inbox (scripts/okf pending)
-  - kit_version stamp vs this kit's VERSION, agent-config surfaces, and
-    whether the working tree holds uncommitted changes
+  - kit_version stamp vs this kit's VERSION, agent-config surfaces (noting
+    whether hook mirrors are declared in the map's mirrors: list, ADR 0021),
+    and whether the working tree holds uncommitted changes
 
 Environment:
   OKF_DOGFOOD_REGISTRY  Registry file override. Defaults to
@@ -51,7 +52,7 @@ INDEX="$(dirname "$REGISTRY")/dogfood-index"
 KIT_MANAGED_RELS=".claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf
 .claude/skills/okf-goal-interview/SKILL.md .claude/skills/okf-acceptance-pass/SKILL.md
 .claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md
-.claude/skills/okf-adopt/SKILL.md"
+.claude/skills/okf-adopt/SKILL.md .claude/skills/okf-second-agent/SKILL.md"
 
 kit_source_for() {
   case "$1" in
@@ -219,7 +220,36 @@ report_repo() {
   if [ -f "$path/AGENTS.md" ]; then agents="AGENTS.md"; fi
   if [ -d "$path/.codex" ]; then agents="${agents:+$agents, }.codex/"; fi
   if [ -n "$agents" ]; then
-    printf 'second-agent config present: %s (re-sync hook mirrors after kit updates)\n' "$agents"
+    # Declaration-aware note (ADR 0021): declared hook mirrors ride the safe
+    # updater; without a mirrors: list any hook mirror is owner-synced.
+    local declared=""
+    if [ -f "$path/docs/okf-map.yml" ]; then
+      declared="$(awk '
+        function clean(s) {
+          gsub(/#.*/, "", s)
+          gsub(/^[[:space:]"'\'']+/, "", s)
+          gsub(/[[:space:]"'\''\/]+$/, "", s)
+          return s
+        }
+        /^mirrors:/ { in_mirrors = 1; next }
+        /^[^[:space:]#]/ { in_mirrors = 0 }
+        in_mirrors {
+          line = $0
+          sub(/^[[:space:]]*/, "", line)
+          if (line ~ /^-/) {
+            sub(/^-[[:space:]]*/, "", line)
+            line = clean(line)
+            if (line != "") print line
+          }
+        }
+      ' "$path/docs/okf-map.yml" | tr '\n' ' ')"
+      declared="${declared% }"
+    fi
+    if [ -n "$declared" ]; then
+      printf 'second-agent config present: %s (hook mirrors declared: %s - the safe updater syncs them; mirrored skills stay owner-managed)\n' "$agents" "$declared"
+    else
+      printf 'second-agent config present: %s (no mirrors: declaration in docs/okf-map.yml - hook mirrors, if any, stay owner-synced until declared)\n' "$agents"
+    fi
   fi
   return 0
 }

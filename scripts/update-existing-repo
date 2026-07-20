@@ -504,6 +504,7 @@ install_kit_script "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TA
 install_kit_script "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md" ".claude/skills/okf-adr-review/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md" ".claude/skills/okf-kit-upgrade/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-adopt/SKILL.md" "$TARGET/.claude/skills/okf-adopt/SKILL.md" ".claude/skills/okf-adopt/SKILL.md"
+install_kit_script "$KIT_DIR/templates/skills/okf-second-agent/SKILL.md" "$TARGET/.claude/skills/okf-second-agent/SKILL.md" ".claude/skills/okf-second-agent/SKILL.md"
 
 # The installed map records the detected layout so every kit tool follows it
 # from the first session; canonical layouts get the template unchanged.

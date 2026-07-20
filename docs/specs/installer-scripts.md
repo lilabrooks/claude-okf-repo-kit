@@ -42,6 +42,7 @@ It must create:
 - `.claude/skills/okf-adr-review/SKILL.md`
 - `.claude/skills/okf-kit-upgrade/SKILL.md`
 - `.claude/skills/okf-adopt/SKILL.md`
+- `.claude/skills/okf-second-agent/SKILL.md`
 - `scripts/okf`
 - `docs/index.md`
 - `docs/log.md`
@@ -62,7 +63,7 @@ It must add these ignores:
 - `.env.*`
 - `!.env.example` (keeps the sample env file trackable)
 
-It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed files it installs (`scripts/okf`, the two hooks, and the five `okf-*` skills — eight entries), so a later updater run can prove they are unedited kit output and refresh them in place (ADRs 0013, 0015). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
+It must seed `.okf-kit-backups/candidate-manifest` with the digests of the kit-managed files it installs (`scripts/okf`, the two hooks, and the six `okf-*` skills — nine entries), so a later updater run can prove they are unedited kit output and refresh them in place (ADRs 0013, 0015). The manifest is git-ignored, per-working-copy provenance — not a tracked artifact.
 
 # Existing repo installer
 
@@ -72,7 +73,7 @@ It must:
 
 - require the target directory to exist
 - create `.okf-kit-backups/<timestamp>/`
-- refresh a kit-managed file (`scripts/okf`, the two hooks, the five `okf-*` skills) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADRs 0013, 0015)
+- refresh a kit-managed file (`scripts/okf`, the two hooks, the six `okf-*` skills) in place — after a backup — only when the manifest proves its current content is the installer's own unedited output; record identical content in the manifest (the opt-in path for pre-manifest installs); leave differing content with no recorded provenance untouched and write the kit version as a same-folder numbered candidate (such as `check-docs-sync.2.sh`) listed under review (ADRs 0013, 0015)
 - sync declared second-agent hook mirrors (ADR 0021): each repo-relative directory in the target map's top-level `mirrors:` list receives the two kit hooks through the same provenance path as `.claude/hooks/` — created when absent, refreshed in place when provably unedited kit output, preserved with a numbered candidate otherwise. Hooks only (mirror skills stay owner-managed), declared never detected, and absolute or `..`-containing entries (or `.claude/hooks` itself) are ignored with a note in the summary
 - merge `.claude/settings.json` hooks and `permissions` rules (union by exact rule) while preserving existing settings
 - append the required `.gitignore` entries (the same seven the new-repo installer adds) while preserving existing entries
@@ -99,7 +100,7 @@ Starter `docs/index.md` content written by either installer must link `GOAL.md`,
 
 The wrapper must print the selected mode and delegated command before running it.
 
-`bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, the env-file read deny rules, shell syntax, required `.gitignore` entries (including the env-file set), and basic `scripts/okf` execution, resolving the spec home, ADR home, and stamp file through the target's layout block (ADR 0018). It must warn — not fail — when the stamp file lacks a `kit_version` stamp, when `.env.example` is ignored, when a knowledge index lists no entries while knowledge files sit beside it, when the candidate manifest records a numbered review candidate that still exists on disk (an unresolved candidate should not reach a commit; manifest absent means nothing to check), or when a declared second-agent mirror is missing a hook or differs from its `.claude/hooks/` original (ADR 0021 — owner-edited mirrors are legitimate, the warning keeps drift visible), and it must not judge project-specific content.
+`bash scripts/verify-install /path/to/target-repo` must check installed files, settings JSON, hook commands, the env-file read deny rules, shell syntax, required `.gitignore` entries (including the env-file set), and basic `scripts/okf` execution, resolving the spec home, ADR home, and stamp file through the target's layout block (ADR 0018). It must warn — not fail — when the stamp file lacks a `kit_version` stamp, when `.env.example` is ignored, when a knowledge index lists no entries while knowledge files sit beside it, when the candidate manifest records a numbered review candidate that still exists on disk (an unresolved candidate should not reach a commit; manifest absent means nothing to check), or when a declared second-agent mirror is missing a hook or differs from its `.claude/hooks/` original (ADR 0021 — owner-edited mirrors are legitimate, the warning keeps drift visible), and it must not judge project-specific content. It must also warn about undeclared mirrors: a directory outside `.claude/hooks/` holding a byte-identical copy of a kit hook with no covering `mirrors:` entry draws an advisory recommending the declaration — byte-identical matches only, and detection never drives a sync (ADR 0021 amendment, proposed ADR 0024).
 
 `bash scripts/check-placeholders /path/to/target-repo` must report remaining template placeholders in `CLAUDE.md` and `docs/GOAL.md`, and missing active mappings in `docs/okf-map.yml`. It must not modify files.
 

@@ -85,13 +85,15 @@ Brownfield alternative: a repo that already keeps its specs or ADRs elsewhere po
 # Agent config (committed to the repo)
 
 - `.claude/settings.json` — shared project settings: the guardrail hooks plus permission rules that deny reading local `.env` files. Committed.
-- `.claude/skills/okf-*/SKILL.md` — kit-installed workflow skills (goal interview, acceptance pass, ADR review, kit upgrade) carrying the expanded procedures the one-liners in this file point to. Committed. If a skill doesn't load, the resident rule still binds — proceed from the one-liner here.
+- `.claude/skills/okf-*/SKILL.md` — kit-installed workflow skills (goal interview, acceptance pass, ADR review, kit upgrade, adoption pass, second-agent port) carrying the expanded procedures the one-liners in this file point to. Committed. If a skill doesn't load, the resident rule still binds — proceed from the one-liner here.
 - `.claude/hooks/check-docs-sync.sh` — Stop hook, invoked via `bash` so no executable bit is needed. Committed. Don't move, rename, or disable it; if it blocks a stop, do the doc update it asks for.
 - `.claude/hooks/check-okf-version.sh` — SessionStart hook, invoked via `bash`. Committed. Reports OKF spec version drift; act per the OKF version policy above.
 - `scripts/okf` — repo-local OKF helper command. Committed. Use it for stale mapping checks, spec drafts, and ADR suggestions.
 - `docs/okf-map.yml` — source-to-knowledge mapping used by `scripts/okf check-stale`. Committed.
 - `.claude/settings.local.json` — personal overrides only. Never commit it.
 - `CLAUDE.local.md` — personal per-repo memory. Never commit it.
+
+Adding a second agent (Codex CLI, for example) beside Claude Code is a guided port, not a copy — the `okf-second-agent` skill carries the full procedure. The binding rules if the skill doesn't load: the ported playbook (`AGENTS.md`) replaces `@` imports with explicit session-start reads and states honestly which guardrails are policy-only for that agent (the env-file read denial is mechanical only in Claude Code); hook copies stay byte-identical to `.claude/hooks/` and their directory is declared in a top-level `mirrors:` list in `docs/okf-map.yml` so the safe updater syncs them on kit upgrades; adapted skills stay paired with the `.claude/skills/` set by hand; and a parity check belongs in this repo's own test gate.
 
 During bootstrap, ensure `.gitignore` contains these entries (the same set the installers append and `verify-install` requires — `!.env.example` keeps the sample env file trackable):
 

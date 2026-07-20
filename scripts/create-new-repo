@@ -103,7 +103,7 @@ seed_manifest() {
   for rel in .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh scripts/okf \
     .claude/skills/okf-goal-interview/SKILL.md .claude/skills/okf-acceptance-pass/SKILL.md \
     .claude/skills/okf-adr-review/SKILL.md .claude/skills/okf-kit-upgrade/SKILL.md \
-    .claude/skills/okf-adopt/SKILL.md; do
+    .claude/skills/okf-adopt/SKILL.md .claude/skills/okf-second-agent/SKILL.md; do
     printf '%s\t%s\n' "$(file_digest "$TARGET/$rel")" "$rel" >> "$manifest"
   done
   created+=(".okf-kit-backups/candidate-manifest (git-ignored provenance seed)")
@@ -121,6 +121,7 @@ copy_created "$KIT_DIR/templates/skills/okf-acceptance-pass/SKILL.md" "$TARGET/.
 copy_created "$KIT_DIR/templates/skills/okf-adr-review/SKILL.md" "$TARGET/.claude/skills/okf-adr-review/SKILL.md"
 copy_created "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET/.claude/skills/okf-kit-upgrade/SKILL.md"
 copy_created "$KIT_DIR/templates/skills/okf-adopt/SKILL.md" "$TARGET/.claude/skills/okf-adopt/SKILL.md"
+copy_created "$KIT_DIR/templates/skills/okf-second-agent/SKILL.md" "$TARGET/.claude/skills/okf-second-agent/SKILL.md"
 
 cat > "$TARGET/docs/index.md" <<EOF
 ---
