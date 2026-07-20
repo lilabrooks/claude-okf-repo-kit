@@ -154,6 +154,7 @@ check_file .claude/skills/okf-acceptance-pass/SKILL.md
 check_file .claude/skills/okf-adr-review/SKILL.md
 check_file .claude/skills/okf-kit-upgrade/SKILL.md
 check_file .claude/skills/okf-adopt/SKILL.md
+check_file .claude/skills/okf-second-agent/SKILL.md
 check_file scripts/okf
 check_file docs/index.md
 check_file docs/GOAL.md
@@ -245,25 +246,13 @@ fi
 # top-level `mirrors:` list should carry byte-identical copies of the two kit
 # hooks. Warn on missing or drifted mirror hooks; never fail — an owner-edited
 # mirror is legitimate, the warning just keeps the drift visible.
+declared_mirrors=""
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
-  while IFS= read -r mirror_dir; do
-    [ -n "$mirror_dir" ] || continue
-    mirror_dir="${mirror_dir%/}"
-    case "$mirror_dir" in /*|*../*|*/..|..|.claude/hooks) continue ;; esac
-    for hook in check-docs-sync.sh check-okf-version.sh; do
-      if [ ! -f "$TARGET/$mirror_dir/$hook" ]; then
-        warn "declared mirror $mirror_dir is missing $hook (run the safe updater to sync it)"
-      elif cmp -s "$TARGET/.claude/hooks/$hook" "$TARGET/$mirror_dir/$hook"; then
-        pass "mirror $mirror_dir/$hook matches .claude/hooks/$hook"
-      else
-        warn "mirror $mirror_dir/$hook differs from .claude/hooks/$hook (owner-edited or stale; mirrors are meant to stay byte-identical)"
-      fi
-    done
-  done < <(awk '
+  declared_mirrors="$(awk '
     function clean(s) {
       gsub(/#.*/, "", s)
       gsub(/^[[:space:]"'\'']+/, "", s)
-      gsub(/[[:space:]"'\'']+$/, "", s)
+      gsub(/[[:space:]"'\''\/]+$/, "", s)
       return s
     }
     /^mirrors:/ { in_mirrors = 1; next }
@@ -277,7 +266,53 @@ if [ -f "$TARGET/docs/okf-map.yml" ]; then
         if (line != "") print line
       }
     }
-  ' "$TARGET/docs/okf-map.yml")
+  ' "$TARGET/docs/okf-map.yml")"
+fi
+if [ -n "$declared_mirrors" ]; then
+  while IFS= read -r mirror_dir; do
+    [ -n "$mirror_dir" ] || continue
+    case "$mirror_dir" in /*|*../*|*/..|..|.claude/hooks) continue ;; esac
+    for hook in check-docs-sync.sh check-okf-version.sh; do
+      if [ ! -f "$TARGET/$mirror_dir/$hook" ]; then
+        warn "declared mirror $mirror_dir is missing $hook (run the safe updater to sync it)"
+      elif cmp -s "$TARGET/.claude/hooks/$hook" "$TARGET/$mirror_dir/$hook"; then
+        pass "mirror $mirror_dir/$hook matches .claude/hooks/$hook"
+      else
+        warn "mirror $mirror_dir/$hook differs from .claude/hooks/$hook (owner-edited or stale; mirrors are meant to stay byte-identical)"
+      fi
+    done
+  done <<EOF
+$declared_mirrors
+EOF
+fi
+
+# Undeclared mirror advisory (ADR 0021): a directory outside .claude/hooks
+# holding a byte-identical copy of a kit hook is mirror-shaped, but the safe
+# updater syncs only declared directories. Detection here only ever warns —
+# it never drives a sync — so the advisory suggests the `mirrors:` declaration
+# that makes future kit upgrades cover the directory. Byte-identical matches
+# only: a same-named but different file may be the target's own script and
+# draws no claim.
+if [ -d "$TARGET/.claude/hooks" ]; then
+  undeclared_mirrors=""
+  while IFS= read -r found; do
+    [ -n "$found" ] || continue
+    rel="${found#"$TARGET"/}"
+    case "$rel" in */*) ;; *) continue ;; esac
+    mirror_dir="${rel%/*}"
+    hook="${rel##*/}"
+    [ "$mirror_dir" = ".claude/hooks" ] && continue
+    printf '%s\n' "$declared_mirrors" | grep -qxF "$mirror_dir" && continue
+    [ -f "$TARGET/.claude/hooks/$hook" ] || continue
+    cmp -s "$TARGET/.claude/hooks/$hook" "$found" || continue
+    case " $undeclared_mirrors " in
+      *" $mirror_dir "*) ;;
+      *) undeclared_mirrors="${undeclared_mirrors:+$undeclared_mirrors }$mirror_dir" ;;
+    esac
+  done < <(find "$TARGET" -maxdepth 4 \( -name .git -o -name .okf-kit-backups -o -name node_modules \) -prune -o -type f \( -name check-docs-sync.sh -o -name check-okf-version.sh \) -print 2>/dev/null)
+  for mirror_dir in $undeclared_mirrors; do
+    warn "undeclared kit hook mirror at $mirror_dir (byte-identical to .claude/hooks): declare it in a top-level mirrors: list in docs/okf-map.yml so the safe updater keeps it synced on kit upgrades"
+  done
 fi
 
 # Unresolved numbered kit candidates (installer-scripts spec): the manifest

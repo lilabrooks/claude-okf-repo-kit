@@ -143,11 +143,11 @@ smoke-install:
 	grep -qF 'Read(./.env)' .claude/settings.json; \
 	grep -qF 'Read(./**/.env)' .claude/settings.json; \
 	test -f .okf-kit-backups/candidate-manifest; \
-	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 8 ]; \
+	[ "$$(wc -l < .okf-kit-backups/candidate-manifest | tr -d ' ')" -eq 9 ]; \
 	grep -q 'scripts/okf' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-docs-sync.sh' .okf-kit-backups/candidate-manifest; \
 	grep -q '.claude/hooks/check-okf-version.sh' .okf-kit-backups/candidate-manifest; \
-	for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do \
+	for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt okf-second-agent; do \
 		test -f ".claude/skills/$$skill/SKILL.md"; \
 		grep -q "^name: $$skill" ".claude/skills/$$skill/SKILL.md"; \
 		grep -q "$$skill" .okf-kit-backups/candidate-manifest; \
@@ -157,6 +157,7 @@ smoke-install:
 	grep -q 'okf-adr-review' CLAUDE.md; \
 	grep -q 'okf-kit-upgrade' CLAUDE.md; \
 	grep -q 'okf-adopt' CLAUDE.md; \
+	grep -q 'okf-second-agent' CLAUDE.md; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \
@@ -445,6 +446,15 @@ smoke-mirrors:
 	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
 	: 'no mirrors declared: no second-agent directories appear (ADR 0021)'; \
 	test ! -e .codex; \
+	: 'undeclared byte-identical mirror draws the advisory, never a sync'; \
+	mkdir -p .codex/hooks; \
+	cp .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh .codex/hooks/; \
+	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
+	[[ "$$output" == *'undeclared kit hook mirror at .codex/hooks'* ]]; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'Second-agent mirror check:'* ]]; \
+	[[ "$$output" == *'.codex/hooks'* ]]; \
+	python3 -c 'import json,sys; json.loads(sys.stdin.read())' <<<"$$output"; \
 	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
 	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
 	[[ "$$output" == *'.codex/hooks/check-docs-sync.sh'* ]]; \
@@ -452,6 +462,10 @@ smoke-mirrors:
 	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \
 	output=$$(bash "$(KIT_DIR)/scripts/verify-install" "$$target"); \
 	[[ "$$output" == *'mirror .codex/hooks/check-docs-sync.sh matches'* ]]; \
+	: 'declared mirror silences both advisories'; \
+	[[ "$$output" != *'undeclared kit hook mirror'* ]]; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" != *'Second-agent mirror check:'* ]]; \
 	: 'idempotent rerun writes no mirror candidates'; \
 	bash "$$kit/scripts/update-existing-repo" "$$target" >/dev/null; \
 	test ! -e .codex/hooks/check-docs-sync.2.sh; \
@@ -711,6 +725,15 @@ smoke-hooks:
 	rm -f docs/adr/0001-one.md.bak docs/adr/0003-three.md.bak docs/adr/0004-four.md.bak docs/adr/0001-one.2.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
 	[[ "$$output" != *'ADR review inbox'* ]]; \
+	: 'map with active mappings stays silent; empty map draws the coverage note'; \
+	[[ "$$output" != *'OKF map check:'* ]]; \
+	cp docs/okf-map.yml docs/okf-map.keep.yml; \
+	printf '%s\n' 'mappings:' '  # - source: "app/**"' > docs/okf-map.yml; \
+	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'OKF map check:'* ]]; \
+	[[ "$$output" == *'no active mappings'* ]]; \
+	python3 -c 'import json,sys; json.loads(sys.stdin.read())' <<<"$$output"; \
+	mv docs/okf-map.keep.yml docs/okf-map.yml; \
 	printf 'hook smoke ok\n'
 
 smoke-harvest:

@@ -197,7 +197,7 @@ cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
 cp "$KIT/okf-map.yml" "$TARGET/docs/okf-map.yml"
 cp "$KIT/templates/GOAL.md" "$TARGET/docs/GOAL.md"
-for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt okf-second-agent; do
   mkdir -p "$TARGET/.claude/skills/$skill"
   cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
 done
@@ -306,7 +306,7 @@ mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/docs/specs/_drafts" 
 cp "$KIT/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh"
 cp "$KIT/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh"
 cp "$KIT/scripts/okf" "$TARGET/scripts/okf"
-for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt; do
+for skill in okf-goal-interview okf-acceptance-pass okf-adr-review okf-kit-upgrade okf-adopt okf-second-agent; do
   mkdir -p "$TARGET/.claude/skills/$skill"
   cp "$KIT/templates/skills/$skill/SKILL.md" "$TARGET/.claude/skills/$skill/SKILL.md"
 done
@@ -396,7 +396,7 @@ git pull
 bash scripts/update-existing-repo /path/to/target-repo
 ```
 
-The updater never overwrites your work. Kit-managed files (`scripts/okf`, the two hooks, and the five `okf-*` skills) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
+The updater never overwrites your work. Kit-managed files (`scripts/okf`, the two hooks, and the six `okf-*` skills) are refreshed in place — after a backup under `.okf-kit-backups/<timestamp>/` — only when a digest manifest proves the current content is the kit's own unedited output; a script you edited is left exactly as you had it, with the new kit version written beside it as a numbered candidate (such as `check-docs-sync.2.sh`) under "Needs review". Changed templates get same-folder numbered candidates (such as `CLAUDE.2.md`) the same way. Across repeated upgrades it refreshes its own untouched candidates in place instead of stacking `CLAUDE.3.md`, `CLAUDE.4.md`, and so on — only candidates you edited keep their content and get a new number beside them. Review the candidates, merge what you want, and delete the rest. The manifest lives in the git-ignored `.okf-kit-backups/`, so it never leaves your working copy; repos installed or updated before the manifest existed take the safe path (preserve plus candidate) once, then opt in. Repos installed before the version stamp existed stay silent about drift until one updater run (or a hand-added `kit_version` in `docs/index.md`) opts them in — `verify-install` warns when the stamp is missing.
 
 For a repository that already has code and documentation, the installed `okf-adopt` skill carries the guided adoption pass that follows the updater — inventory the existing knowledge in place, populate the source map, backfill missing specs from `bash scripts/okf draft` output, and validate end to end — before the goal loop starts. Migrating the repository’s own layout or naming to the kit’s defaults is never automatic; it happens only at the owner’s direction, with the skill repairing the cross-links and CI rules a rename breaks.
 
@@ -404,12 +404,14 @@ For a repository that already has code and documentation, the installed `okf-ado
 
 The kit is built for Claude Code, and the goal loop — the interview, milestones, proposed ADRs, and guardrails — stays with it. Optionally, you can point a second agent (Codex CLI, for example) at the same installed repo for commodity chores: a license, CI, dependency-update automation, badges, repository metadata. Both dogfood repos used exactly this split, and the docs discipline held — chore commits still landed their `docs/log.md` entries and ADRs.
 
+The installed `okf-second-agent` skill walks Claude Code through this port end to end — every dogfood repo that added a second agent converged on the same shape, so the procedure is now kit-owned. The bullets below are the compressed form.
+
 If you do this:
 
 - Commit the second agent's config (`AGENTS.md`, `.codex/`, or the equivalent). The shipped hooks already treat those paths as agent config rather than implementation code, so their presence won't re-trigger the docs-sync block every turn.
 - The `@` imports in `CLAUDE.md` and the env-file read denial in `.claude/settings.json` are Claude Code mechanisms. A ported playbook (such as `AGENTS.md`) needs explicit "read these files at session start" instructions instead of imports, and should state honestly that the second agent has no mechanical `.env` protection — for it, the secrets guardrail is policy prose.
 - If you want the docs-sync gate enforced in the second agent's sessions too, mirror the two hook scripts into its config (the shipped scripts resolve their root via `CLAUDE_PROJECT_DIR`, then `CODEX_PROJECT_DIR`, then the current directory, so unmodified copies work) and keep the mirrors byte-identical to the `.claude/hooks/` originals.
-- Declare the mirror directories in a top-level `mirrors:` list in `docs/okf-map.yml` (for example `- .codex/hooks`), and the safe updater keeps them current on every kit upgrade (ADR 0021): each declared mirror gets the same hooks through the same provenance path as `.claude/hooks/` — created when absent, refreshed in place when provably unedited kit output, preserved with a numbered candidate when you've edited it. `verify-install` warns when a declared mirror is missing a hook or has drifted. Hooks only: mirrored skills carry per-agent substitutions the kit can't reproduce, so they stay yours to maintain, and an undeclared mirror keeps the manual re-sync behavior.
+- Declare the mirror directories in a top-level `mirrors:` list in `docs/okf-map.yml` (for example `- .codex/hooks`), and the safe updater keeps them current on every kit upgrade (ADR 0021): each declared mirror gets the same hooks through the same provenance path as `.claude/hooks/` — created when absent, refreshed in place when provably unedited kit output, preserved with a numbered candidate when you've edited it. `verify-install` warns when a declared mirror is missing a hook or has drifted. Hooks only: mirrored skills carry per-agent substitutions the kit can't reproduce, so they stay yours to maintain, and an undeclared mirror keeps the manual re-sync behavior — `verify-install` and the SessionStart hook flag byte-identical hook copies that no `mirrors:` entry covers, so an undeclared mirror doesn't stay invisible.
 - A parity check in your repo's own test or validation gate (mirrored hooks byte-identical, mirrored skill sets paired, skipped when the second stack is absent) is still worth having as belt-and-suspenders: it catches undeclared mirrors and hand edits the updater deliberately leaves alone — spec-agent-cli added one as a repo-health test after Codex config landed beside its Claude stack.
 
 ## Commit vs ignore

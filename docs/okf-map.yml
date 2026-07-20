@@ -49,6 +49,7 @@ mappings:
       - "docs/specs/installer-scripts.md"
       - "docs/adr/0015-workflow-skills.md"
       - "docs/adr/0020-adoption-pass-skill.md"
+      - "docs/adr/0024-second-agent-port-skill.md"
       # site-drift reminder (see templates/CLAUDE.md mapping above)
       - "site/index.html"
 
@@ -68,6 +69,7 @@ mappings:
       - "docs/specs/claude-hooks.md"
       - "docs/adr/0003-claude-hook-guardrails.md"
       - "docs/adr/0010-kit-version-stamp.md"
+      - "docs/adr/0024-second-agent-port-skill.md"
 
   - source: "VERSION"
     docs:
@@ -150,6 +152,7 @@ mappings:
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0005-safe-installer-scripts.md"
       - "docs/adr/0011-env-read-denial.md"
+      - "docs/adr/0024-second-agent-port-skill.md"
 
 
   - source: "scripts/check-placeholders"
