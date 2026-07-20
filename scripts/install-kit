@@ -35,7 +35,7 @@ fi
 if [ ! -d "$TARGET" ]; then
   mode="new repo"
   command=(bash "$SCRIPT_DIR/create-new-repo" "$TARGET")
-elif find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | grep -q .; then
+elif [ -n "$(find "$TARGET" -mindepth 1 -maxdepth 1 ! -name '.git' | head -n 1)" ]; then
   mode="existing repo"
   command=(bash "$SCRIPT_DIR/update-existing-repo" "$TARGET")
 else

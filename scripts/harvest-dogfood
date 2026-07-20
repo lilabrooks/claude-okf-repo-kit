@@ -99,7 +99,7 @@ cmd_add() {
     printf 'Not a git repo with at least one commit: %s\n' "$path" >&2
     exit 1
   }
-  if registry_lines | cut -f1 | grep -qxF "$name"; then
+  if [ -n "$(registry_lines | cut -f1 | grep -xF "$name")" ]; then
     printf 'Already registered under name: %s (see: harvest-dogfood list)\n' "$name" >&2
     exit 1
   fi

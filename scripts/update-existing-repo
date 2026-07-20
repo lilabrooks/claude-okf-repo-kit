@@ -552,8 +552,12 @@ goal_is_filled() {
   if [ ! -f "$f" ]; then return 1; fi
   if grep -q 'Template. Fill every \[bracket\]' "$f"; then return 1; fi
   if grep -qF '[app | service | utility]' "$f"; then return 1; fi
-  if ! grep -qE '^# Goal' "$f"; then return 1; fi
-  if ! grep -qE '^# Milestones' "$f"; then return 1; fi
+  # Tolerant heading detection (ADR 0018 spirit): a filled goal may title its
+  # headings ("# Goal: AWS Public Change Alerting") and name its backlog
+  # "## Implementation milestones" — heading level and prefix are the owner's
+  # style, not a signal the goal is unfilled.
+  if ! grep -qiE '^#{1,6} *goal(:| |$)' "$f"; then return 1; fi
+  if ! grep -qiE '^#{1,6}[^#]*milestones' "$f"; then return 1; fi
   return 0
 }
 
@@ -597,7 +601,7 @@ docs_index_content() {
 if [ ! -f "$TARGET/docs/index.md" ]; then
   docs_index_content > "$TARGET/docs/index.md"
   created+=("docs/index.md")
-elif head -1 "$TARGET/docs/index.md" | grep -qx -- '---' \
+elif [ "$(head -n 1 "$TARGET/docs/index.md")" = '---' ] \
   && grep -qE '^okf_version:' "$TARGET/docs/index.md"; then
   # The bundle root already exists and declares okf_version in frontmatter:
   # the only kit payload it is missing is the kit_version stamp, so stamp it
