@@ -41,7 +41,7 @@ The scope is deliberately narrow:
 - The 0.3.2 target-side parity check becomes belt-and-suspenders rather than the only guard: it still catches an undeclared mirror or a hand-edit the updater deliberately left alone.
 - `verify-install` and `harvest-dogfood` may need to understand the `mirrors:` declaration so their reports stay accurate.
 
-Amendment (2026-07-19, with proposed ADR 0024): the "auto-detect mirror directories" rejection above concerns the updater *acting* on a detected guess, where a wrong guess overwrites real work. Detection used only to *warn* is a different risk class: `verify-install` and the SessionStart hook now flag a byte-identical copy of a kit hook in an undeclared directory and recommend the `mirrors:` declaration, and a wrong guess there costs one advisory line. Declaration remains the only path to mechanical sync.
+Amendment (2026-07-19, with ADR 0024): the "auto-detect mirror directories" rejection above concerns the updater *acting* on a detected guess, where a wrong guess overwrites real work. Detection used only to *warn* is a different risk class: `verify-install` and the SessionStart hook now flag a byte-identical copy of a kit hook in an undeclared directory and recommend the `mirrors:` declaration, and a wrong guess there costs one advisory line. Declaration remains the only path to mechanical sync.
 
 # Rollback / revisit trigger
 
