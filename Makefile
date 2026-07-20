@@ -81,6 +81,14 @@ scan:
 		printf 'stale reference scan could not run (exit %s)\n' "$$status" >&2; \
 		exit 1; \
 	fi; \
+	for f in scripts/*; do \
+		grep -q 'pipefail' "$$f" 2>/dev/null || continue; \
+		hits=$$(grep -nE '\|[[:space:]]*grep -q' "$$f" | grep -vE '^[0-9]+:[[:space:]]*#' || true); \
+		if [ -n "$$hits" ]; then \
+			printf 'pipefail hazard: early-exit "| grep -q" consumer in %s (SIGPIPE race; capture output instead):\n%s\n' "$$f" "$$hits" >&2; \
+			exit 1; \
+		fi; \
+	done; \
 	printf 'scan ok\n'
 
 links:
@@ -329,7 +337,7 @@ smoke-brownfield:
 	printf '%s\n' '# System overview' 'text' > docs/architecture/specification/01-overview.md; \
 	printf '%s\n' '# Operations runbook' > docs/runbooks/operations.md; \
 	printf '%s\n' '{"x":1}' > schemas/config.schema.json; \
-	printf '%s\n' '# Goal' '' 'Kind: service' '' 'Problem: real text.' '' '# Milestones' '' '- [x] Baseline. Verify: true.' > docs/GOAL.md; \
+	printf '%s\n' '# Goal: Alerting Service' '' 'Kind: service' '' 'Problem: real text.' '' '## Implementation milestones' '' '- [x] Baseline. Verify: true.' > docs/GOAL.md; \
 	git add .; \
 	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
 	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$target"); \
