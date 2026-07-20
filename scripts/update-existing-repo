@@ -373,8 +373,11 @@ map_mirror_dirs() {
   ' "$target_map"
 }
 
+# Output capture instead of `| grep -q .`: the early-exit reader races the
+# find writer under pipefail (see is_import_shim). `head` bounds the capture
+# and its content is deterministic regardless of writer signaling.
 dir_has_md() {
-  find "$1" -maxdepth 1 -name '*.md' ! -name 'index.md' 2>/dev/null | grep -q .
+  [ -n "$(find "$1" -maxdepth 1 -name '*.md' ! -name 'index.md' 2>/dev/null | head -n 1)" ]
 }
 
 detect_specs_dir() {
@@ -393,7 +396,7 @@ detect_adr_dir() {
   local candidate
   for candidate in docs/adr docs/adrs docs/decisions docs/architecture/decisions; do
     if [ -d "$TARGET/$candidate" ] \
-      && find "$TARGET/$candidate" -maxdepth 1 -name '[0-9]*-*.md' 2>/dev/null | grep -q .; then
+      && [ -n "$(find "$TARGET/$candidate" -maxdepth 1 -name '[0-9]*-*.md' 2>/dev/null | head -n 1)" ]; then
       printf '%s\n' "$candidate"
       return 0
     fi
@@ -443,8 +446,11 @@ is_import_shim() {
   local f="$1"
   [ -f "$f" ] || return 1
   grep -qE '^@' "$f" || return 1
-  # Pure shim: nothing but @-imports and blank lines.
-  if ! grep -vE '^(@|[[:space:]]*$)' "$f" | grep -q .; then
+  # Pure shim: nothing but @-imports and blank lines. Single grep, no
+  # pipeline: under `set -o pipefail` a `grep -v | grep -q` pair races —
+  # the reader exits on its first match and the writer takes SIGPIPE (141),
+  # which pipefail turns into a bogus "pure shim" on real-size playbooks.
+  if ! grep -qvE '^(@|[[:space:]]*$)' "$f"; then
     return 0
   fi
   # Commented shim (ADRs 0022, 0025): an @AGENTS.md import plus short
@@ -454,8 +460,10 @@ is_import_shim() {
   # then carry the kit's preloaded-context block (heading, prose, imports).
   # Length beyond the budget still means a real playbook.
   grep -qxF '@AGENTS.md' "$f" || return 1
-  import_line="$(grep -nxF '@AGENTS.md' "$f" | head -n 1 | cut -d: -f1)"
-  first_heading="$(grep -nE '^#' "$f" | head -n 1 | cut -d: -f1)"
+  # grep -m 1 stops the producer itself; a `| head -n 1` consumer would race
+  # the same way under pipefail on files with many matches.
+  import_line="$(grep -m 1 -nxF '@AGENTS.md' "$f" | cut -d: -f1)"
+  first_heading="$(grep -m 1 -nE '^#' "$f" | cut -d: -f1 || true)"
   if [ -n "$first_heading" ] && [ "$first_heading" -lt "$import_line" ]; then
     return 1
   fi

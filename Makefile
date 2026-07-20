@@ -413,6 +413,22 @@ smoke-brownfield:
 	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$ptarget" >/dev/null; \
 	test -f CLAUDE.2.md; \
 	test ! -f AGENTS.2.md; \
+	: 'classification is deterministic under pipefail on a real-size playbook'; \
+	btarget="$$tmp/brown-big-playbook"; \
+	mkdir -p "$$btarget"; \
+	cd "$$btarget"; \
+	git init -q; \
+	printf '%s\n' '# Agent instructions' > AGENTS.md; \
+	cp "$(KIT_DIR)/templates/CLAUDE.md" CLAUDE.md; \
+	printf '%s\n' '' '# Local addition' 'Owner-filled content.' >> CLAUDE.md; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	fn="$$tmp/shimfn.sh"; \
+	sed -n '/^is_import_shim()/,/^}/p' "$(KIT_DIR)/scripts/update-existing-repo" > "$$fn"; \
+	bash -c "set -euo pipefail; source '$$fn'; for i in $$(seq 1 60 | tr '\n' ' '); do if is_import_shim '$$btarget/CLAUDE.md'; then exit 1; fi; done"; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$btarget" >/dev/null; \
+	test -f CLAUDE.2.md; \
+	test ! -f AGENTS.2.md; \
 	printf 'brownfield adoption smoke ok\n'
 
 smoke-candidates:
