@@ -17,6 +17,31 @@ else
   MAP_FILE="$ROOT/docs/okf-map.yml"
 fi
 
+# OKF-SHARED-BEGIN layout-awk
+# Canonical parser for the map's `layout:` block (ADR 0018). Byte-identical
+# in every kit script that carries it; `make parity` enforces the match.
+# Reads `-v key=<name>`; prints the cleaned value or nothing.
+OKF_LAYOUT_AWK='
+  function clean(s) {
+    gsub(/#.*/, "", s)
+    gsub(/^[[:space:]"'\'']+/, "", s)
+    gsub(/[[:space:]"'\''\/]+$/, "", s)
+    return s
+  }
+  /^layout:/ { in_layout = 1; next }
+  /^[^[:space:]#]/ { in_layout = 0 }
+  in_layout {
+    line = $0
+    sub(/^[[:space:]]+/, "", line)
+    if (index(line, key ":") == 1) {
+      sub(key ":", "", line)
+      print clean(line)
+      exit
+    }
+  }
+'
+# OKF-SHARED-END layout-awk
+
 # Optional layout block in the map file (ADR 0018): a brownfield repo that
 # already keeps its specs or ADRs elsewhere points the kit at them here.
 # Absent keys fall back to the canonical tree, so existing installs are
@@ -26,25 +51,7 @@ layout_value() {
   default="$2"
   value=""
   if [ -f "$MAP_FILE" ]; then
-    value="$(awk -v key="$key" '
-      function clean(s) {
-        gsub(/#.*/, "", s)
-        gsub(/^[[:space:]"'\'']+/, "", s)
-        gsub(/[[:space:]"'\'']+$/, "", s)
-        return s
-      }
-      /^layout:/ { in_layout = 1; next }
-      /^[^[:space:]#]/ { in_layout = 0 }
-      in_layout {
-        line = $0
-        sub(/^[[:space:]]+/, "", line)
-        if (index(line, key ":") == 1) {
-          sub(key ":", "", line)
-          print clean(line)
-          exit
-        }
-      }
-    ' "$MAP_FILE")"
+    value="$(awk -v key="$key" "$OKF_LAYOUT_AWK" "$MAP_FILE")"
   fi
   if [ -n "$value" ]; then
     printf '%s\n' "${value%/}"

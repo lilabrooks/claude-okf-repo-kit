@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 KIT_DIR := $(CURDIR)
 
-.PHONY: help test check-docs syntax shellcheck json scan links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
+.PHONY: help test check-docs syntax shellcheck json scan parity links smoke smoke-source smoke-install smoke-existing smoke-idempotent smoke-brownfield smoke-candidates smoke-mirrors smoke-paths smoke-scripts smoke-helpers smoke-hooks smoke-okf smoke-harvest
 
 help:
 	@printf '%s\n' \
@@ -14,6 +14,7 @@ help:
 		'  make shellcheck      Run ShellCheck when installed.' \
 		'  make json            Validate JSON files.' \
 		'  make scan            Search for stale repo references and local paths.' \
+		'  make parity          Enforce cross-file sync rules (shared parsers, exclusion lists, skill roster, summary labels).' \
 		'  make links           Check local Markdown links.' \
 		'  make smoke           Run temp-repo smoke tests.' \
 		'  make smoke-source    Test helper commands in this source-kit layout.' \
@@ -28,13 +29,13 @@ help:
 		'  make smoke-okf       Test draft and ADR helper behavior.' \
 		'  make smoke-harvest   Test the dogfood harvest registry and report.'
 
-test: syntax shellcheck json scan links smoke
+test: syntax shellcheck json scan parity links smoke
 
 # Fast gate for documentation-only changes (ADR status flips, log-only edits):
 # the checks that actually cover docs/ prose, without the installer and hook
 # smoke simulations that a doc edit cannot affect. Not a replacement for `make
 # test` — changes touching scripts, templates, settings, or VERSION need it.
-check-docs: scan links
+check-docs: scan parity links
 	@bash scripts/okf check-stale >/dev/null
 	@bash scripts/okf pending >/dev/null
 	@printf 'check-docs ok\n'
@@ -90,6 +91,13 @@ scan:
 		fi; \
 	done; \
 	printf 'scan ok\n'
+
+# Cross-file sync rules the specs pin as "must not drift", enforced instead of
+# trusted: shared parser blocks byte-identical, hook/helper exclusion lists
+# equal, the skill roster named on every claimed surface, summary labels
+# present and ordered (ADR 0023).
+parity:
+	@python3 scripts/check-parity.py
 
 links:
 	@python3 scripts/check-md-links.py README.md 'Claude Code OKF Kit Guide.md' CLAUDE.md docs

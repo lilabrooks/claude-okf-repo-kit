@@ -115,6 +115,11 @@ mappings:
       - "docs/specs/validation-workflow.md"
       - "docs/adr/0004-source-kit-validation-makefile.md"
 
+  - source: "scripts/check-parity.py"
+    docs:
+      - "docs/specs/validation-workflow.md"
+      - "docs/adr/0004-source-kit-validation-makefile.md"
+
   - source: ".github/workflows/test.yml"
     docs:
       - "docs/specs/validation-workflow.md"

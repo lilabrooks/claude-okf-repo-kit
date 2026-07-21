@@ -76,7 +76,7 @@ That validates script syntax, optional ShellCheck linting, `settings.json`, stal
 |-------------------------|-------------------------------------|----------------------------------------------------------------|
 | `templates/CLAUDE.md`   | `CLAUDE.md` (repo root)             | Master objective template, grounding rules, workflow. Loaded every session. |
 | `templates/GOAL.md`     | `docs/GOAL.md`                      | Goal template: repo kind, problem, target state, success criteria, milestone backlog. |
-| `templates/skills/okf-*/SKILL.md` | `.claude/skills/okf-*/SKILL.md` | Workflow skills loading on demand: goal interview, acceptance pass, ADR review, kit upgrade, adoption pass, second-agent port. `CLAUDE.md` keeps binding one-liners that stand alone if a skill doesn't load. |
+| `templates/skills/okf-*/SKILL.md` | `.claude/skills/okf-*/SKILL.md` | Workflow skills loading on demand: `okf-goal-interview`, `okf-acceptance-pass`, `okf-adr-review`, `okf-kit-upgrade`, `okf-adopt`, `okf-second-agent`. `CLAUDE.md` keeps binding one-liners that stand alone if a skill doesn't load. |
 | `settings.json`         | `.claude/settings.json`             | Registers both hooks and denies reading local `.env` files.    |
 | `scripts/check-docs-sync.sh`    | `.claude/hooks/check-docs-sync.sh`  | Stop hook. Blocks missing docs updates and stale mapped docs. |
 | `scripts/check-okf-version.sh`  | `.claude/hooks/check-okf-version.sh`| SessionStart hook. Reports OKF spec version drift so Claude migrates `/docs` formatting. |
