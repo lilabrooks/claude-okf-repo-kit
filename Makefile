@@ -262,6 +262,13 @@ smoke-existing:
 	rm CLAUDE.2.md docs/GOAL.2.md docs/index.2.md docs/okf-map.2.yml; \
 	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
 	[[ "$$output" != *'Kit candidate review:'* ]]; \
+	: 'a note embedding a quoted filename still emits valid JSON'; \
+	printf '%s\n' 'inactive copy' > 'CLAUDE"quoted.2.md'; \
+	printf 'deadbeef\tCLAUDE"quoted.2.md\n' >> .okf-kit-backups/candidate-manifest; \
+	output=$$(CLAUDE_PROJECT_DIR="$$target" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" == *'Kit candidate review:'* ]]; \
+	python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); assert "CLAUDE\"quoted.2.md" in d["hookSpecificOutput"]["additionalContext"]' <<<"$$output"; \
+	rm 'CLAUDE"quoted.2.md'; \
 	: 'a stamped bundle root gets kit_version in place, not a candidate (ADR 0019)'; \
 	starget="$$tmp/stamped"; \
 	mkdir -p "$$starget/docs"; \
@@ -291,6 +298,24 @@ smoke-existing:
 	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget" >/dev/null; \
 	test ! -f docs/index.2.md; \
 	[ "$$(grep -c '^kit_version:' docs/index.md)" -eq 1 ]; \
+	: 'a layout-relocated stamp is the only stamp; no docs/index.md appears beside it'; \
+	rtarget="$$tmp/relocated"; \
+	mkdir -p "$$rtarget/docs"; \
+	cd "$$rtarget"; \
+	git init -q; \
+	printf '%s\n' '---' 'okf_version: "0.1"' 'kit_version: "0.0.1"' '---' '' '# Meta' > docs/META.md; \
+	printf '%s\n' 'layout:' '  stamp_file: docs/META.md' '' 'mappings:' > docs/okf-map.yml; \
+	git add .; \
+	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$rtarget"); \
+	[[ "$$output" == *'docs/META.md kit_version restamped'* ]]; \
+	grep -q "^kit_version: \"$$(cat "$(KIT_DIR)/VERSION")\"" docs/META.md; \
+	test ! -e docs/index.md; \
+	output=$$(CLAUDE_PROJECT_DIR="$$rtarget" bash .claude/hooks/check-okf-version.sh </dev/null); \
+	[[ "$$output" != *'0.0.1'* ]]; \
+	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$rtarget" >/dev/null; \
+	test ! -e docs/index.md; \
+	[ "$$(grep -c '^kit_version:' docs/META.md)" -eq 1 ]; \
 	printf 'existing-repo install smoke ok\n'
 
 smoke-idempotent:
@@ -525,7 +550,8 @@ smoke-mirrors:
 	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
 	[[ "$$output" == *'undeclared kit hook mirror at .codex/hooks'* ]]; \
 	[[ "$$output" == *'mirrors:'* ]]; \
-	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
+	: 'a trailing slash in the declaration normalizes for sync and advisory alike'; \
+	printf '%s\n' '' 'mirrors:' '  - .codex/hooks/' >> docs/okf-map.yml; \
 	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
 	[[ "$$output" != *'undeclared kit hook mirror'* ]]; \
 	[[ "$$output" == *'.codex/hooks/check-docs-sync.sh'* ]]; \
@@ -737,12 +763,14 @@ smoke-hooks:
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
 	rm .env.example; \
-	mkdir -p .codex; \
+	mkdir -p .codex .agents/skills/okf-adopt; \
 	printf '%s\n' '{}' > .codex/hooks.json; \
 	printf '%s\n' '# Agents' > AGENTS.md; \
+	printf '%s\n' '# adapted skill' > .agents/skills/okf-adopt/SKILL.md; \
+	printf '%s\n' '# codex memory' > Codex.local.md; \
 	output=$$(CLAUDE_PROJECT_DIR="$$tmp" bash .claude/hooks/check-docs-sync.sh </dev/null); \
 	[[ -z "$$output" ]]; \
-	rm -rf .codex AGENTS.md; \
+	rm -rf .codex .agents AGENTS.md Codex.local.md; \
 	: 'phase 2: active mappings -> check-stale is the authority (ADR 0018)'; \
 	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' '  - source: "lib/**"' '    docs:' '      - "schemas/lib.schema.json"' > docs/okf-map.yml; \
 	mkdir -p lib schemas; \
@@ -878,14 +906,18 @@ smoke-okf:
 	[[ "$$output" == *'OKF mappings are current.'* ]]; \
 	[[ "$$output" == *'no okf-map.yml mapping'* ]]; \
 	[[ "$$output" == *'package.json'* ]]; \
-	mkdir -p .codex; \
+	mkdir -p .codex .agents/skills/okf-adopt; \
 	printf '%s\n' '{}' > .codex/hooks.json; \
 	printf '%s\n' '# Agents' > AGENTS.md; \
+	printf '%s\n' '# adapted skill' > .agents/skills/okf-adopt/SKILL.md; \
+	printf '%s\n' '# codex memory' > Codex.local.md; \
 	output=$$(bash scripts/okf check-stale); \
 	[[ "$$output" == *'package.json'* ]]; \
 	[[ "$$output" != *'AGENTS.md'* ]]; \
 	[[ "$$output" != *'.codex'* ]]; \
-	rm -rf .codex AGENTS.md; \
+	[[ "$$output" != *'.agents'* ]]; \
+	[[ "$$output" != *'Codex.local.md'* ]]; \
+	rm -rf .codex .agents AGENTS.md Codex.local.md; \
 	bash scripts/okf new-adr cache-layer "Cache layer" >/dev/null; \
 	test -f docs/adr/0001-cache-layer.md; \
 	grep -q 'status: proposed' docs/adr/0001-cache-layer.md; \

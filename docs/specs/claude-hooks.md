@@ -30,7 +30,7 @@ The deny set must not use an `.env.*` glob: deny rules cannot be negated, and th
 
 If `scripts/okf` exists in the target repo, the Stop hook also runs `bash scripts/okf check-stale` in hook mode.
 
-README, changelog, license, `.gitignore`, `.editorconfig`, `.env.example`, Claude local memory, hook/helper files, and agent config — `.claude/`, `CLAUDE.md`, plus a second agent's `.codex/` and `AGENTS.md` when present — are not treated as implementation files. File-name exclusions are end-anchored exact matches (so `LICENSE-MIT` or `CLAUDE.md.bak` count as code); directory exclusions keep prefix semantics.
+README, changelog, license, `.gitignore`, `.editorconfig`, `.env.example`, Claude local memory, hook/helper files, and agent config — `.claude/`, `CLAUDE.md`, plus a second agent's `.codex/`, `.agents/` (its skill home), `AGENTS.md`, and `Codex.local.md` when present — are not treated as implementation files. File-name exclusions are end-anchored exact matches (so `LICENSE-MIT` or `CLAUDE.md.bak` count as code); directory exclusions keep prefix semantics.
 
 This non-implementation list is exactly the union of the `check-stale` exclusions in `scripts/okf` — its workflow/agent-config set and its repo-meta set (OKF helper command spec). A file added to either side is added to the other in the same change; the two lists must not drift.
 
@@ -54,7 +54,7 @@ The same hook also reports map coverage: when the map file exists but carries no
 
 The same hook also carries the undeclared-mirror advisory (ADR 0021 amendment, ADR 0024): it scans a bounded depth for byte-identical copies of the two kit hooks outside `.claude/hooks/` (skipping `.git`, `.okf-kit-backups`, and `node_modules`), and notes any directory not covered by the map's top-level `mirrors:` list, recommending the declaration and pointing at the `okf-second-agent` skill. Byte-identical matches only — a same-named but different file may be the target's own script and draws no claim — and detection never drives a sync; the safe updater acts only on declared mirrors. The mirrors parser is a minimal inline copy of the `verify-install` parser so a mirrored copy of the hook stands alone. Local and offline; silent when every mirror-shaped directory is declared.
 
-When anything is detected, the hook injects context for Claude Code rather than modifying files directly. All notes — OKF drift, kit drift, the ADR inbox, unresolved candidates, map coverage, and the mirror advisory — are combined into a single valid-JSON context injection. The installed `CLAUDE.md` policies tell Claude Code what to do with each note.
+When anything is detected, the hook injects context for Claude Code rather than modifying files directly. All notes — OKF drift, kit drift, the ADR inbox, unresolved candidates, map coverage, and the mirror advisory — are combined into a single valid-JSON context injection, with backslashes and double quotes escaped at the emit boundary so an odd filename or stamp path embedded in a note cannot break the payload. The installed `CLAUDE.md` policies tell Claude Code what to do with each note.
 
 # Version migration policy
 

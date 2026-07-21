@@ -5,7 +5,9 @@
 # the mapped knowledge file was not touched.
 #
 # Keep patterns repo-relative. Quote glob patterns so YAML readers do not treat
-# `*` as an alias marker.
+# `*` as an alias marker. Patterns match with shell globbing where `*` crosses
+# `/`, so `app/*` and `app/**` govern the same tree — write `**` for recursive
+# intent so the map reads as it behaves.
 #
 # Prefer one mapping per module or contract as specs emerge. A single broad
 # glob pointed at a stack ADR (for example "app/**" -> the ADR that chose the

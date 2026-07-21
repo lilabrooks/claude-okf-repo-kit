@@ -34,3 +34,7 @@ Every label prints on every run (`none` under an empty section), numbered review
 - The summary labels join the kit's public surface: spec-pinned, smoke-asserted, versioned.
 - Wording inside list items stays free to evolve; only the section labels and their presence are pinned.
 - Revisit trigger: a downstream consumer needing structured (parseable) summaries, or a second consumer testing against item-level wording.
+
+# Amendment (2026-07-21, kit 0.3.8/0.3.9)
+
+Kit 0.3.8 exercised the new-label allowance: `update-existing-repo` gained an `Advisories:` section, placed between `Needs review:` and `Verification run:`. The allowance is hereby stated precisely — new labels may be inserted at any position provided every pinned label keeps its exact name and prints on every run; consumers match labels by name, not by position or by slicing between adjacent labels. `create-new-repo`'s label set is unchanged. The installer-scripts spec records the updater's current sequence: `Created:`, `Updated:`, `Skipped:`, `Backed up:`, `Needs review:`, `Advisories:`, then `Verification run:`.
