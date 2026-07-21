@@ -17,6 +17,13 @@ Checks:
 4. The installer summary labels pinned by ADR 0023 appear, in the pinned
    order, in the scripts that print them, and every label appears in the
    installer-scripts spec and in ADR 0023.
+5. The target-installed surface stays standalone bash (ADR 0026): the two
+   hooks and scripts/okf keep bash shebangs and never invoke python3 — the
+   mirror contract requires files that work alone in another agent's config.
+6. Kit Python floor conventions (ADR 0026 amendment): every scripts/*.py
+   file carries `from __future__ import annotations`, which keeps modern
+   type annotations legal on the 3.9 floor; the floor itself is enforced by
+   the CI floor pass that reruns the suite under Python 3.9.
 
 The audit that motivated this gate found drift exactly where prose was the
 only guard (a README table row, an exclusion list two specs said must not
@@ -242,12 +249,49 @@ def check_summary_labels() -> None:
     ok("summary labels present and ordered on every pinned surface")
 
 
+INSTALLED_SURFACE = [
+    "scripts/check-docs-sync.sh",
+    "scripts/check-okf-version.sh",
+    "scripts/okf",
+]
+
+
+def check_bash_boundary() -> None:
+    for rel in INSTALLED_SURFACE:
+        text = read(rel)
+        if not text.startswith("#!/usr/bin/env bash"):
+            fail(f"{rel}: installed-surface file must keep its bash shebang (ADR 0026)")
+        if "python3" in text:
+            fail(
+                f"{rel}: installed-surface file invokes or mentions python3 —"
+                " the mirror contract requires standalone bash (ADR 0026)"
+            )
+    ok(f"installed surface ({len(INSTALLED_SURFACE)} files) stays standalone bash")
+
+
+def check_python_floor_conventions() -> None:
+    python_files = sorted(
+        p.relative_to(ROOT).as_posix()
+        for p in (ROOT / "scripts").iterdir()
+        if p.is_file() and p.suffix == ".py"
+    )
+    for rel in python_files:
+        if "from __future__ import annotations" not in read(rel):
+            fail(
+                f"{rel}: missing `from __future__ import annotations` — required"
+                " so annotations stay legal on the Python 3.9 floor (ADR 0026)"
+            )
+    ok(f"python floor conventions hold across {len(python_files)} kit Python files")
+
+
 def main() -> int:
     print("kit parity gate:")
     check_shared_blocks()
     check_exclusion_union()
     check_skill_roster()
     check_summary_labels()
+    check_bash_boundary()
+    check_python_floor_conventions()
     if failures:
         print("\nparity failures:")
         for failure in failures:

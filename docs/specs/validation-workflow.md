@@ -34,7 +34,7 @@ The validation workflow must include:
 - JSON validation for `settings.json`
 - stale-reference scanning for old names and local machine paths; the scan must run with ripgrep when installed, fall back to `grep -rnEI` otherwise, and fail rather than report success when the scanner itself cannot run
 - a pipefail hazard scan: any script under `scripts/` that sets `pipefail` must contain no non-comment `| grep -q` pipeline — the early-exit consumer races its writer (SIGPIPE), and under pipefail the race silently flips the pipeline's meaning (the kit 0.3.6 shim-classifier bug); capture output and test it instead
-- a parity gate (`make parity`, `scripts/check-parity.py`, stdlib-only) converting the specs' "must not drift" prose into build failures: the `OKF-SHARED` parser blocks (layout and mirrors awk) byte-identical across every script that carries them and present nowhere unlisted; the Stop hook's exclusion pattern set-equal to the union of `scripts/okf`'s workflow and meta sets; the `templates/skills/okf-*` roster named in the README install-artifacts table row, both installers (create-new-repo twice — copy plus manifest seed), `verify-install`, and the installer-scripts spec; and the ADR 0023 summary labels present, in pinned order, in the scripts that print them plus the spec and the ADR. The gate runs in `make test` and `make check-docs`
+- a parity gate (`make parity`, `scripts/check-parity.py`, stdlib-only) converting the specs' "must not drift" prose into build failures: the `OKF-SHARED` parser blocks (layout and mirrors awk) byte-identical across every script that carries them and present nowhere unlisted; the Stop hook's exclusion pattern set-equal to the union of `scripts/okf`'s workflow and meta sets; the `templates/skills/okf-*` roster named in the README install-artifacts table row, both installers (create-new-repo twice — copy plus manifest seed), `verify-install`, and the installer-scripts spec; the ADR 0023 summary labels present, in pinned order, in the scripts that print them plus the spec and the ADR; the installed surface (`check-docs-sync.sh`, `check-okf-version.sh`, `scripts/okf`) keeping bash shebangs with no python3 mention (ADR 0026's standalone-bash boundary); and every `scripts/*.py` file carrying `from __future__ import annotations` (the ADR 0026 amendment's floor convention). The gate runs in `make test` and `make check-docs`
 - source-kit smoke checks
 - OKF source-kit stale mapping and ADR suggestion checks
 - new-repo install simulation
@@ -47,12 +47,12 @@ The validation workflow must include:
 - install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
-- GitHub Actions validation that runs `make test` on push and pull request
+- GitHub Actions validation that runs `make test` on push and pull request, then reruns it under a provisioned Python 3.9 — the kit's Python floor (ADR 0026 amendment) — so newer-than-floor syntax in any kit Python tool fails CI instead of a stock machine; a runner that can no longer provision the floor version is the signal to raise the floor, not to drop the pass
 - Dependabot configuration at `.github/dependabot.yml` that keeps GitHub Actions workflow action versions current on a weekly schedule
 
 # Smoke test expectations
 
-New-repo install simulation must verify the target install layout and basic helper execution.
+New-repo install simulation must verify the target install layout and basic helper execution, and that a fresh target contains no `.py` file — the installed surface is bash only (ADR 0026).
 
 New-repo install simulation must exercise `scripts/create-new-repo`.
 

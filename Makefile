@@ -174,6 +174,8 @@ smoke-install:
 	grep -q 'okf-kit-upgrade' CLAUDE.md; \
 	grep -q 'okf-adopt' CLAUDE.md; \
 	grep -q 'okf-second-agent' CLAUDE.md; \
+	: 'the installed surface is bash only: a fresh target holds no Python files (ADR 0026)'; \
+	[ -z "$$(find . -name '*.py' -not -path './.git/*' | head -n 1)" ]; \
 	bash scripts/okf check-stale >/dev/null; \
 	bash scripts/okf draft >/dev/null; \
 	bash scripts/okf adr-suggest >/dev/null; \

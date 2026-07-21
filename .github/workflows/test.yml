@@ -18,3 +18,19 @@ jobs:
 
       - name: Run validation
         run: make test
+
+      # Floor pass (ADR 0026 amendment): the whole suite again under the
+      # kit's Python floor, so newer-than-floor syntax in any kit Python
+      # tool — today's checkers and heredocs, tomorrow's rewritten
+      # installers — fails here instead of on a stock machine. If this
+      # step ever cannot provision the floor version, that is the signal
+      # to raise the floor, not to drop the step.
+      - name: Set up floor Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Run validation under the floor Python
+        run: |
+          python3 --version
+          make test
