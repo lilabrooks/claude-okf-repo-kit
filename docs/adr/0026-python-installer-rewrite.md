@@ -49,6 +49,14 @@ Implementation triggers (whichever fires first): the next SIGPIPE/quoting-class 
 - The installed surface, its provenance mechanics, and every downstream consumer contract are explicitly unchanged; a target repo cannot observe the rewrite except through identical behavior.
 - The `make parity` shared-block check shrinks to the bash scripts that remain; the Python side imports its one parser.
 
+# Amendment (2026-07-21): Python floor and enforced boundary
+
+Accepted the same day at the owner's direction, pinned before any rewrite code exists so the first Python file is born under the constraint rather than retrofitted to it.
+
+Floor: kit-side Python targets **Python 3.9**. The number tracks the oldest interpreter a stock supported machine actually ships — macOS Command Line Tools (`/usr/bin/python3` at 3.9.x), Debian 11, RHEL 9 — and is revisited annually or when those reference platforms move, not merely when upstream Python EOLs a version. Style rules bound with the floor: `from __future__ import annotations` in every kit Python file (modern annotations stay legal on 3.9), no 3.10+ runtime syntax (`match` statements, `X | Y` in `isinstance`), stdlib only.
+
+Enforcement is mechanical, per the parity-gate principle: the CI workflow runs the full suite a second time under a provisioned Python 3.9 (a runtime `sys.version_info` guard cannot do this job — newer-than-floor syntax fails at parse time, before any guard executes), so the floor covers today's checkers and installer heredocs and every future rewritten tool automatically; if CI can no longer provision the floor version, that failure is the signal to raise the floor, not to drop the pass. The bash boundary is likewise gated: `make parity` asserts the installed surface (`check-docs-sync.sh`, `check-okf-version.sh`, `scripts/okf`) keeps bash shebangs and never mentions python3, and the new-repo smoke asserts a fresh target contains no `.py` file. No runtime version asserts in the Python tools themselves: the CI floor makes them redundant, and for parse-time failures they are provably useless.
+
 # Rollback / revisit trigger
 
 Rollback: the bash originals stay in git history and, during migration, in the tree until their replacement has passed a full release cycle; reverting a tool is restoring the bash file and re-pointing the Makefile smoke invocations. Revisit if a target-side constraint ever forces python3 off the supported-tools list (would block the kit-side tools too), or if the migration's A/B harness surfaces behavioral divergence that the smoke suite cannot pin — in that case stop, extend the smoke suite first, and only then continue.
