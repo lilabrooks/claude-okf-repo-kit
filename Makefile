@@ -201,6 +201,7 @@ smoke-existing:
 	[[ "$$output" == *'Skipped:'* ]]; \
 	[[ "$$output" == *'Backed up:'* ]]; \
 	[[ "$$output" == *'Needs review:'* ]]; \
+	[[ "$$output" == *'Advisories:'* ]]; \
 	[[ "$$output" == *'Verification run:'* ]]; \
 	test -f CLAUDE.md; \
 	grep -q '# Existing CLAUDE' CLAUDE.md; \
@@ -267,9 +268,20 @@ smoke-existing:
 	cd "$$starget"; \
 	git init -q; \
 	printf '%s\n' '---' 'okf_version: "0.1"' 'title: Docs index' '---' '' '# Documentation' '' 'Owner prose stays.' > docs/index.md; \
+	printf '%s\n' 'mappings:' '  - source: "app/**"' '    docs:' '      - "docs/specs/app.md"' > docs/okf-map.yml; \
+	mkdir -p .agents/skills/okf-goal-interview; \
 	git add .; \
 	git -c user.email=a@example.com -c user.name=A commit -q -m init; \
-	bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget" >/dev/null; \
+	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget"); \
+	: 'a populated canonical map gets no template candidate (ADR 0018 spirit)'; \
+	test ! -f docs/okf-map.2.yml; \
+	[[ "$$output" == *'docs/okf-map.yml already populated'* ]]; \
+	: 'an opted-in second-agent skill home with gaps draws the pairing advisory'; \
+	[[ "$$output" == *'second-agent skill home .agents/skills is missing:'* ]]; \
+	[[ "$$output" == *'okf-second-agent'* ]]; \
+	for s in .claude/skills/okf-*; do mkdir -p ".agents/skills/$$(basename "$$s")"; done; \
+	output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$starget"); \
+	[[ "$$output" != *'second-agent skill home'* ]]; \
 	test ! -f docs/index.2.md; \
 	grep -q '^okf_version: "0.1"' docs/index.md; \
 	grep -q "^kit_version: \"$$(cat "$(KIT_DIR)/VERSION")\"" docs/index.md; \
@@ -465,6 +477,23 @@ smoke-candidates:
 	! grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.2.md"; \
 	test -f "$$target/CLAUDE.3.md"; \
 	grep -q 'TEMPLATE V3 MARKER' "$$target/CLAUDE.3.md"; \
+	: 'a version-crossing upgrade writes the kit-only template delta beside the backups'; \
+	git -C "$$kit" init -q; \
+	git -C "$$kit" add -A; \
+	git -C "$$kit" -c user.email=a@example.com -c user.name=A commit -q -m release; \
+	printf '%s\n' '9.9.9-test' > "$$kit/VERSION"; \
+	printf '%s\n' 'TEMPLATE V4 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" == *'playbook template changed since kit'* ]]; \
+	delta=$$(ls "$$target"/.okf-kit-backups/*/CLAUDE.md.template-delta.diff); \
+	grep -q 'TEMPLATE V4 MARKER' "$$delta"; \
+	: 'the delta covers only the stamped release onward, not the whole template'; \
+	! grep -q 'TEMPLATE V3 MARKER' "$$delta"; \
+	grep -q 'TEMPLATE V4 MARKER' "$$target/CLAUDE.3.md"; \
+	: 'same-version rerun stays delta-silent'; \
+	printf '%s\n' 'TEMPLATE V5 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" != *'playbook template changed since kit'* ]]; \
 	printf 'candidate refresh smoke ok\n'
 
 smoke-mirrors:
@@ -492,8 +521,13 @@ smoke-mirrors:
 	[[ "$$output" == *'Second-agent mirror check:'* ]]; \
 	[[ "$$output" == *'.codex/hooks'* ]]; \
 	python3 -c 'import json,sys; json.loads(sys.stdin.read())' <<<"$$output"; \
+	: 'the updater itself names the undeclared mirror it is not syncing'; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" == *'undeclared kit hook mirror at .codex/hooks'* ]]; \
+	[[ "$$output" == *'mirrors:'* ]]; \
 	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
 	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
+	[[ "$$output" != *'undeclared kit hook mirror'* ]]; \
 	[[ "$$output" == *'.codex/hooks/check-docs-sync.sh'* ]]; \
 	cmp -s .claude/hooks/check-docs-sync.sh .codex/hooks/check-docs-sync.sh; \
 	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \

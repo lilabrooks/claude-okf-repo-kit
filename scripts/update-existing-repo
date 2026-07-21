@@ -49,6 +49,7 @@ updated=()
 skipped=()
 backed_up=()
 review=()
+advisories=()
 
 backup_file() {
   local path="$1"
@@ -416,6 +417,47 @@ if [ "$SPECS_DIR" != "docs/specs" ] || [ "$ADR_DIR" != "docs/adr" ]; then
   CANONICAL_LAYOUT=0
 fi
 
+# The kit version this target was on before this run, read from the stamp file
+# ahead of the restamp below. It names the release whose template the playbook
+# candidate review must diff against (see write_playbook_template_delta).
+STAMP_FILE="$(map_layout_value stamp_file)"
+[ -n "$STAMP_FILE" ] || STAMP_FILE="docs/index.md"
+PRIOR_KIT_VERSION=""
+if [ -f "$TARGET/$STAMP_FILE" ]; then
+  PRIOR_KIT_VERSION="$(grep -m1 -E '^kit_version:' "$TARGET/$STAMP_FILE" \
+    | sed -E 's/^kit_version:[[:space:]]*"?//; s/"?[[:space:]]*$//' || true)"
+fi
+
+# Undeclared mirror advisory (ADRs 0021, 0024): the declared-mirror sync below
+# covers only directories in the map's `mirrors:` list, so a byte-identical
+# hook copy elsewhere starts drifting with this very release. Detection must
+# look at the pre-refresh originals — once this run refreshes .claude/hooks, a
+# mirror of the previous release no longer matches anything on disk and the
+# drift the advisory exists to name would go unreported. Same warn-only rule
+# as verify-install and the SessionStart hook: byte-identical matches only,
+# and detection never drives a sync.
+detect_undeclared_mirrors() {
+  local declared_flat seen found rel mirror_dir hook ref
+  declared_flat=" $(map_mirror_dirs | tr '\n' ' ') "
+  seen=""
+  while IFS= read -r found; do
+    [ -n "$found" ] || continue
+    rel="${found#"$TARGET"/}"
+    case "$rel" in */*) ;; *) continue ;; esac
+    mirror_dir="${rel%/*}"
+    hook="${rel##*/}"
+    [ "$mirror_dir" = ".claude/hooks" ] && continue
+    case "$declared_flat" in *" $mirror_dir "*) continue ;; esac
+    case " $seen " in *" $mirror_dir "*) continue ;; esac
+    ref="$TARGET/.claude/hooks/$hook"
+    [ -f "$ref" ] || ref="$KIT_DIR/scripts/$hook"
+    cmp -s "$ref" "$found" || continue
+    seen="${seen:+$seen }$mirror_dir"
+    advisories+=("undeclared kit hook mirror at $mirror_dir was not synced by this run; declare it in a top-level mirrors: list in docs/okf-map.yml (mirrors: with entry - $mirror_dir) so kit upgrades keep it current, or re-copy the .claude/hooks/ files by hand this once")
+  done < <(find "$TARGET" -maxdepth 4 \( -name .git -o -name .okf-kit-backups -o -name node_modules \) -prune -o -type f \( -name check-docs-sync.sh -o -name check-okf-version.sh \) -print 2>/dev/null)
+}
+detect_undeclared_mirrors
+
 mkdir -p "$TARGET/.claude/hooks" "$TARGET/scripts" "$TARGET/$SPECS_DIR/_drafts" "$TARGET/$ADR_DIR"
 
 # Owner-carrying templates get the target's git identity substituted at
@@ -470,6 +512,49 @@ is_import_shim() {
   [ "$(grep -cvE '^[[:space:]]*$' "$f")" -le 15 ]
 }
 
+# Template-delta review aid: a playbook candidate staged after releases of
+# drift is reviewed by separating the kit's template delta from the owner's
+# fills (the okf-kit-upgrade skill's candidate-review step). This run holds
+# every ingredient of that delta — the stamp names the installed release and
+# the kit clone's history carries its template — so it is written next to the
+# backups instead of leaving the reviewer to re-derive it in the kit clone.
+# Best-effort: any missing ingredient (no prior stamp, no git history, a
+# version with no release commit) skips silently and review falls back to the
+# skill's manual technique. The raw templates are diffed, not the rendered
+# output — the delta describes what the kit changed, and rendering only
+# substitutes the owner name identically on both sides.
+write_playbook_template_delta() {
+  local commit release_commit="" old_template delta
+  [ -n "$PRIOR_KIT_VERSION" ] || return 0
+  [ "$PRIOR_KIT_VERSION" != "$KIT_VERSION" ] || return 0
+  git -C "$KIT_DIR" rev-parse --git-dir >/dev/null 2>&1 || return 0
+  while IFS= read -r commit; do
+    if [ "$(git -C "$KIT_DIR" show "$commit:VERSION" 2>/dev/null)" = "$PRIOR_KIT_VERSION" ]; then
+      release_commit="$commit"
+      break
+    fi
+  done < <(git -C "$KIT_DIR" log --format=%H -- VERSION 2>/dev/null)
+  [ -n "$release_commit" ] || return 0
+  old_template="$(mktemp "$BACKUP_DIR/template.XXXXXX")"
+  if ! git -C "$KIT_DIR" show "$release_commit:templates/CLAUDE.md" > "$old_template" 2>/dev/null; then
+    rm -f "$old_template"
+    return 0
+  fi
+  delta="$BACKUP_DIR/CLAUDE.md.template-delta.diff"
+  if diff -u --label "templates/CLAUDE.md@$PRIOR_KIT_VERSION" \
+    --label "templates/CLAUDE.md@$KIT_VERSION" \
+    "$old_template" "$KIT_DIR/templates/CLAUDE.md" > "$delta"; then
+    rm -f "$delta"
+  else
+    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; the kit-only delta is at ${delta#"$TARGET"/} — merge that delta into the live playbook instead of re-deriving what changed (okf-kit-upgrade candidate-review step)")
+  fi
+  rm -f "$old_template"
+}
+
+# The delta is written only when this run actually staged or refreshed a
+# playbook candidate — tracked by growth of the review list around the call.
+playbook_review_count="${#review[@]}"
+
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then
   # Process substitution, not a pipe: the candidate machinery mutates the
   # summary arrays and must run in this shell.
@@ -490,6 +575,10 @@ elif [ -f "$TARGET/CLAUDE.md" ]; then
 else
   render_playbook > "$TARGET/CLAUDE.md"
   created+=("CLAUDE.md")
+fi
+
+if [ "${#review[@]}" -gt "$playbook_review_count" ]; then
+  write_playbook_template_delta
 fi
 
 merge_settings
@@ -521,6 +610,44 @@ install_kit_script "$KIT_DIR/templates/skills/okf-kit-upgrade/SKILL.md" "$TARGET
 install_kit_script "$KIT_DIR/templates/skills/okf-adopt/SKILL.md" "$TARGET/.claude/skills/okf-adopt/SKILL.md" ".claude/skills/okf-adopt/SKILL.md"
 install_kit_script "$KIT_DIR/templates/skills/okf-second-agent/SKILL.md" "$TARGET/.claude/skills/okf-second-agent/SKILL.md" ".claude/skills/okf-second-agent/SKILL.md"
 
+# Second-agent skill-set pairing advisory (ADR 0024): the kit refreshes only
+# .claude/skills and never syncs adapted copies, so a release that adds a
+# skill leaves a second agent's set silently unpaired — a repo with a parity
+# gate finds out from a red build, one without finds out never. Advisory
+# only, and only for skill homes that already opted into the okf-* set; the
+# okf-second-agent skill carries the adaptation procedure.
+check_skill_pairing() {
+  local skill_home dir name skill paired missing extra
+  for skill_home in .agents/skills .codex/skills; do
+    dir="$TARGET/$skill_home"
+    [ -d "$dir" ] || continue
+    paired=""
+    missing=""
+    extra=""
+    for skill in "$TARGET/.claude/skills"/okf-*/; do
+      [ -d "$skill" ] || continue
+      name="$(basename "$skill")"
+      if [ -d "$dir/$name" ]; then
+        paired=1
+      else
+        missing="${missing:+$missing, }$name"
+      fi
+    done
+    for skill in "$dir"/okf-*/; do
+      [ -d "$skill" ] || continue
+      name="$(basename "$skill")"
+      [ -d "$TARGET/.claude/skills/$name" ] || extra="${extra:+$extra, }$name"
+    done
+    if { [ -n "$paired" ] || [ -n "$extra" ]; } && [ -n "$missing" ]; then
+      advisories+=("second-agent skill home $skill_home is missing: $missing — adapted skills are owner-managed and never synced by the kit; port the missing ones per the okf-second-agent skill to keep the sets paired")
+    fi
+    if [ -n "$extra" ]; then
+      advisories+=("second-agent skill home $skill_home carries okf-* skills with no .claude/skills counterpart: $extra")
+    fi
+  done
+}
+check_skill_pairing
+
 # The installed map records the detected layout so every kit tool follows it
 # from the first session; canonical layouts get the template unchanged.
 render_map() {
@@ -537,8 +664,26 @@ render_map() {
   fi
 }
 
+# A populated map is the owner's working mapping: the template candidate
+# beside it carries no mappings worth reviewing, so — as with a filled goal
+# below (ADR 0018) — none is written. The candidate still lands when layout
+# detection found a non-canonical tree the live map does not record, because
+# then it carries the layout: block every kit tool needs.
+map_is_populated() {
+  grep -qE '^[[:space:]]*-[[:space:]]*source:' "$TARGET/docs/okf-map.yml" 2>/dev/null
+}
+
+map_records_layout() {
+  [ "$CANONICAL_LAYOUT" -eq 1 ] && return 0
+  grep -qE '^layout:' "$TARGET/docs/okf-map.yml" 2>/dev/null
+}
+
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
-  write_numbered_content_candidate "$TARGET/docs/okf-map.yml" "docs/okf-map.yml" < <(render_map)
+  if map_is_populated && map_records_layout; then
+    skipped+=("docs/okf-map.yml already populated; no template candidate written (new map conventions are documented in the kit's okf-map.yml header)")
+  else
+    write_numbered_content_candidate "$TARGET/docs/okf-map.yml" "docs/okf-map.yml" < <(render_map)
+  fi
 else
   render_map > "$TARGET/docs/okf-map.yml"
   created+=("docs/okf-map.yml")
@@ -717,6 +862,7 @@ print_list 'Updated:' "${updated[@]}"
 print_list 'Skipped:' "${skipped[@]}"
 print_list 'Backed up:' "${backed_up[@]}"
 print_list 'Needs review:' "${review[@]}"
+print_list 'Advisories:' "${advisories[@]}"
 printf '\nVerification run:\n'
 printf '  - python3 -m json.tool .claude/settings.json\n'
 printf '  - bash -n scripts/okf\n'
