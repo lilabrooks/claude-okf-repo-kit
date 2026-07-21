@@ -15,6 +15,7 @@ set -euo pipefail
 # Canonical parser for the map's `layout:` block (ADR 0018). Byte-identical
 # in every kit script that carries it; `make parity` enforces the match.
 # Reads `-v key=<name>`; prints the cleaned value or nothing.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
 OKF_LAYOUT_AWK='
   function clean(s) {
     gsub(/#.*/, "", s)
@@ -40,6 +41,7 @@ OKF_LAYOUT_AWK='
 # Canonical parser for the map's top-level `mirrors:` list (ADR 0021).
 # Byte-identical in every kit script that carries it; `make parity` enforces
 # the match. Prints one cleaned repo-relative directory per line.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
 OKF_MIRRORS_AWK='
   function clean(s) {
     gsub(/#.*/, "", s)
