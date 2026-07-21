@@ -118,10 +118,10 @@ for adr in "$ROOT/$ADR_DIR_REL"/*.md; do
   esac
   status=$(grep -m1 -E '^status:' "$adr" 2>/dev/null | sed -E 's/^status:[[:space:]]*//; s/[[:space:]]+$//')
   if [ -z "$status" ]; then
-    status=$(grep -m1 -E '^[-*][[:space:]]*[Ss]tatus:' "$adr" 2>/dev/null | sed -E 's/^[-*][[:space:]]*[Ss]tatus:[[:space:]]*//; s/[[:space:]]+$//')
+    status=$(grep -m1 -iE '^[-*][[:space:]]*status:' "$adr" 2>/dev/null | sed -E 's/^[-*][[:space:]]*[Ss][Tt][Aa][Tt][Uu][Ss]:[[:space:]]*//; s/[[:space:]]+$//')
   fi
   if [ -z "$status" ]; then
-    status=$(awk 'found && NF { print; exit } /^#+[[:space:]]*[Ss]tatus[[:space:]]*$/ { found = 1 }' "$adr" 2>/dev/null)
+    status=$(awk 'found && NF { print; exit } tolower($0) ~ /^#+[[:space:]]*status[[:space:]]*$/ { found = 1 }' "$adr" 2>/dev/null)
   fi
   status=$(printf '%s' "$status" | awk '{ print tolower($1) }' | sed -E 's/[^a-z]+$//')
   [ "$status" = "proposed" ] && pending_count=$((pending_count + 1))
@@ -215,6 +215,11 @@ if [ -n "$undeclared_mirrors" ]; then
 fi
 
 if [ -n "$notes" ]; then
+  # JSON string escaping at the only interpolation boundary: note text embeds
+  # owner-controlled values (stamp path, candidate filenames, mirror dirs), so
+  # backslashes and double quotes must be escaped or one odd filename breaks
+  # the whole hook payload. Newlines cannot occur (notes are built line-wise).
+  notes=$(printf '%s' "$notes" | sed 's/\\/\\\\/g; s/"/\\"/g')
   cat <<EOF
 {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "$notes"}}
 EOF

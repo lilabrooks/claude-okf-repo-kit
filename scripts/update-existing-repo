@@ -350,6 +350,10 @@ map_layout_value() {
 # Second-agent hook mirrors (ADR 0021): a top-level `mirrors:` list in the
 # target's docs/okf-map.yml names the directories that keep byte-identical
 # copies of the two kit hooks for another agent. Declared, never detected.
+# Trailing slashes are stripped here, matching the SessionStart hook and
+# verify-install parsers, so `- .codex/hooks/` declares the same mirror as
+# `- .codex/hooks` for every consumer — including the undeclared-mirror
+# advisory below, which compares against this list verbatim.
 map_mirror_dirs() {
   local target_map="$TARGET/docs/okf-map.yml"
   [ -f "$target_map" ] || return 0
@@ -357,7 +361,7 @@ map_mirror_dirs() {
     function clean(s) {
       gsub(/#.*/, "", s)
       gsub(/^[[:space:]"'\'']+/, "", s)
-      gsub(/[[:space:]"'\'']+$/, "", s)
+      gsub(/[[:space:]"'\''\/]+$/, "", s)
       return s
     }
     /^mirrors:/ { in_mirrors = 1; next }
@@ -743,35 +747,64 @@ docs_index_content() {
   fi
 }
 
-if [ ! -f "$TARGET/docs/index.md" ]; then
+# In-place kit_version stamping (ADR 0019; the append_gitignore_entry
+# precedent for mechanical one-line additions). The stamp is corrected when it
+# differs, inserted after okf_version when that line exists, and otherwise
+# inserted right after the opening frontmatter fence — callers guarantee the
+# file opens with one.
+stamp_kit_version_in() {
+  local stamp_path="$1"
+  local rel="${stamp_path#"$TARGET"/}"
+  local existing_kit_version tmp_stamp
+  existing_kit_version="$(grep -m1 -E '^kit_version:' "$stamp_path" \
+    | sed -E 's/^kit_version:[[:space:]]*"?//; s/"?[[:space:]]*$//' || true)"
+  if [ "$existing_kit_version" = "$KIT_VERSION" ]; then
+    skipped+=("$rel already stamped kit_version $KIT_VERSION")
+    return 0
+  fi
+  backup_file "$stamp_path"
+  tmp_stamp="$(mktemp "$BACKUP_DIR/stamp.XXXXXX")"
+  if [ -n "$existing_kit_version" ]; then
+    sed -E "s/^kit_version:.*/kit_version: \"$KIT_VERSION\"/" \
+      "$stamp_path" > "$tmp_stamp"
+    mv "$tmp_stamp" "$stamp_path"
+    updated+=("$rel kit_version restamped $existing_kit_version -> $KIT_VERSION")
+  elif grep -qE '^okf_version:' "$stamp_path"; then
+    awk -v kv="kit_version: \"$KIT_VERSION\"" \
+      '{ print } /^okf_version:/ && !done { print kv; done = 1 }' \
+      "$stamp_path" > "$tmp_stamp"
+    mv "$tmp_stamp" "$stamp_path"
+    updated+=("$rel stamped kit_version $KIT_VERSION")
+  else
+    awk -v kv="kit_version: \"$KIT_VERSION\"" \
+      'NR == 1 { print; print kv; next } { print }' \
+      "$stamp_path" > "$tmp_stamp"
+    mv "$tmp_stamp" "$stamp_path"
+    updated+=("$rel stamped kit_version $KIT_VERSION")
+  fi
+}
+
+if [ "$STAMP_FILE" != "docs/index.md" ]; then
+  # Layout-relocated stamp (ADR 0018): the declared stamp_file is the version
+  # authority every kit tool reads, so the stamp lands there and only there —
+  # stamping the default path too would leave two stamps and a SessionStart
+  # drift note that never clears. The relocated file is the owner's: it is
+  # stamped in place when it opens with frontmatter, and otherwise reported,
+  # never replaced with a candidate. No docs/index.md bundle root is created
+  # beside an arrangement the owner deliberately relocated.
+  if [ ! -f "$TARGET/$STAMP_FILE" ]; then
+    skipped+=("$STAMP_FILE (layout stamp_file) not found; kit_version not stamped — create the file or fix the layout entry")
+  elif [ "$(head -n 1 "$TARGET/$STAMP_FILE")" = '---' ]; then
+    stamp_kit_version_in "$TARGET/$STAMP_FILE"
+  else
+    skipped+=("$STAMP_FILE (layout stamp_file) has no opening frontmatter block; add kit_version: \"$KIT_VERSION\" to it by hand")
+  fi
+elif [ ! -f "$TARGET/docs/index.md" ]; then
   docs_index_content > "$TARGET/docs/index.md"
   created+=("docs/index.md")
 elif [ "$(head -n 1 "$TARGET/docs/index.md")" = '---' ] \
   && grep -qE '^okf_version:' "$TARGET/docs/index.md"; then
-  # The bundle root already exists and declares okf_version in frontmatter:
-  # the only kit payload it is missing is the kit_version stamp, so stamp it
-  # in place instead of staging a whole-file replacement candidate (ADR 0019;
-  # the append_gitignore_entry precedent for mechanical one-line additions).
-  existing_kit_version="$(grep -m1 -E '^kit_version:' "$TARGET/docs/index.md" \
-    | sed -E 's/^kit_version:[[:space:]]*"?//; s/"?[[:space:]]*$//' || true)"
-  if [ "$existing_kit_version" = "$KIT_VERSION" ]; then
-    skipped+=("docs/index.md already stamped kit_version $KIT_VERSION")
-  elif [ -n "$existing_kit_version" ]; then
-    backup_file "$TARGET/docs/index.md"
-    tmp_stamp="$(mktemp "$BACKUP_DIR/stamp.XXXXXX")"
-    sed -E "s/^kit_version:.*/kit_version: \"$KIT_VERSION\"/" \
-      "$TARGET/docs/index.md" > "$tmp_stamp"
-    mv "$tmp_stamp" "$TARGET/docs/index.md"
-    updated+=("docs/index.md kit_version restamped $existing_kit_version -> $KIT_VERSION")
-  else
-    backup_file "$TARGET/docs/index.md"
-    tmp_stamp="$(mktemp "$BACKUP_DIR/stamp.XXXXXX")"
-    awk -v kv="kit_version: \"$KIT_VERSION\"" \
-      '{ print } /^okf_version:/ && !done { print kv; done = 1 }' \
-      "$TARGET/docs/index.md" > "$tmp_stamp"
-    mv "$tmp_stamp" "$TARGET/docs/index.md"
-    updated+=("docs/index.md stamped kit_version $KIT_VERSION")
-  fi
+  stamp_kit_version_in "$TARGET/docs/index.md"
 else
   write_numbered_content_candidate "$TARGET/docs/index.md" "docs/index.md" < <(docs_index_content)
 fi

@@ -148,11 +148,12 @@ matches_pattern() {
   [[ "$file" == $pattern ]]
 }
 
-# Workflow and agent-config paths check-stale skips entirely; .codex/ and
-# AGENTS.md cover a second agent run against the same checkout.
+# Workflow and agent-config paths check-stale skips entirely; .codex/,
+# .agents/ (a second agent's skill home), AGENTS.md, and Codex.local.md cover
+# a second agent run against the same checkout.
 is_workflow_file() {
   case "$1" in
-    docs/*|.claude/*|.codex/*|CLAUDE.md|CLAUDE.local.md|AGENTS.md|scripts/okf) return 0 ;;
+    docs/*|.claude/*|.codex/*|.agents/*|CLAUDE.md|CLAUDE.local.md|AGENTS.md|Codex.local.md|scripts/okf) return 0 ;;
   esac
   # Layout-relocated knowledge homes count as workflow files even when they
   # sit outside docs/.
@@ -272,14 +273,25 @@ language_counts() {
     | awk '{print "- " $2 ": " $1}'
 }
 
+# ripgrep when available, plain recursive grep otherwise — without the
+# fallback a machine with no rg silently reports "no clues found" and the
+# draft loses its most useful section.
 public_surface_clues() {
   target="$1"
-  rg -n --glob '!node_modules/**' --glob '!vendor/**' \
-    '(^export |^module\.exports|^class |^def |^func |^function |router\.|app\.(get|post|put|patch|delete)|@app\.route|GraphQL|openapi|proto3)' \
-    "$ROOT/$target" 2>/dev/null \
-    | head -n 40 \
-    | sed "s#$ROOT/##" \
-    | sed 's/^/- /'
+  clue_pattern='(^export |^module\.exports|^class |^def |^func |^function |router\.|app\.(get|post|put|patch|delete)|@app\.route|GraphQL|openapi|proto3)'
+  if command -v rg >/dev/null 2>&1; then
+    rg -n --glob '!node_modules/**' --glob '!vendor/**' \
+      "$clue_pattern" "$ROOT/$target" 2>/dev/null \
+      | head -n 40 \
+      | sed "s#$ROOT/##" \
+      | sed 's/^/- /'
+  else
+    grep -rEn --exclude-dir=node_modules --exclude-dir=vendor \
+      "$clue_pattern" "$ROOT/$target" 2>/dev/null \
+      | head -n 40 \
+      | sed "s#$ROOT/##" \
+      | sed 's/^/- /'
+  fi
 }
 
 draft_one() {
@@ -687,10 +699,10 @@ adr_status_of() {
   adr_file="$1"
   raw_status="$(grep -m1 -E '^status:' "$adr_file" 2>/dev/null | sed -E 's/^status:[[:space:]]*//; s/[[:space:]]+$//')"
   if [ -z "$raw_status" ]; then
-    raw_status="$(grep -m1 -E '^[-*][[:space:]]*[Ss]tatus:' "$adr_file" 2>/dev/null | sed -E 's/^[-*][[:space:]]*[Ss]tatus:[[:space:]]*//; s/[[:space:]]+$//')"
+    raw_status="$(grep -m1 -iE '^[-*][[:space:]]*status:' "$adr_file" 2>/dev/null | sed -E 's/^[-*][[:space:]]*[Ss][Tt][Aa][Tt][Uu][Ss]:[[:space:]]*//; s/[[:space:]]+$//')"
   fi
   if [ -z "$raw_status" ]; then
-    raw_status="$(awk 'found && NF { print; exit } /^#+[[:space:]]*[Ss]tatus[[:space:]]*$/ { found = 1 }' "$adr_file" 2>/dev/null)"
+    raw_status="$(awk 'found && NF { print; exit } tolower($0) ~ /^#+[[:space:]]*status[[:space:]]*$/ { found = 1 }' "$adr_file" 2>/dev/null)"
   fi
   printf '%s' "$raw_status" | awk '{ print tolower($1) }' | sed -E 's/[^a-z]+$//'
 }

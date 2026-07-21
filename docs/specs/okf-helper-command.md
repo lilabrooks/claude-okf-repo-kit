@@ -48,7 +48,9 @@ For each changed source file mapped in `docs/okf-map.yml`, the check passes when
 
 A changed `docs/log.md` also passes as the documented rationale path when no spec or ADR edit is warranted.
 
-The check ignores workflow and agent-config files: `docs/`, `.claude/`, `.codex/`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, and `scripts/okf`. A second agent's `.codex/` and `AGENTS.md` are config for the same checkout, not implementation, so they neither go stale nor appear in the unmapped note. Layout-relocated spec and ADR homes count as workflow files even when they sit outside `docs/`.
+The check ignores workflow and agent-config files: `docs/`, `.claude/`, `.codex/`, `.agents/`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `Codex.local.md`, and `scripts/okf`. A second agent's `.codex/`, `.agents/` (its skill home), `AGENTS.md`, and `Codex.local.md` are config for the same checkout, not implementation, so they neither go stale nor appear in the unmapped note. Layout-relocated spec and ADR homes count as workflow files even when they sit outside `docs/`.
+
+Map patterns match with shell globbing where `*` crosses `/` — `app/*` and `app/**` govern the same tree. This over-matches relative to gitignore intuition and never under-matches; write `**` for recursive intent anyway, so the map reads as it behaves.
 
 Outside hook mode, `check-stale` also prints a non-blocking note listing changed implementation files that match no mapping, so new source areas get mapped as they gain governing docs. Repo-meta files (README, changelog, license, ignore and editor config, `.env.example`) are excluded from the note, and unmapped files never change the exit status. Hook mode stays silent about unmapped files to avoid false blocks.
 
@@ -60,7 +62,7 @@ The workflow/agent-config exclusions and the repo-meta set are, together, exactl
 
 Drafts are review-only scaffolding. They must not be treated as accepted specs until a human or agent rewrites and promotes them into the spec home (`docs/specs/` by default).
 
-Drafts may include observable facts such as file counts, language extensions, public surface clues, tests found, and mapped docs.
+Drafts may include observable facts such as file counts, language extensions, public surface clues, tests found, and mapped docs. The public-surface scan prefers ripgrep and falls back to plain recursive `grep` when `rg` is not installed, so the clues section degrades gracefully instead of silently reporting nothing on machines without it.
 
 # ADR suggestion behavior
 
@@ -82,4 +84,4 @@ Both commands append an entry to the matching `index.md`, refuse to overwrite ex
 
 # Pending review behavior
 
-`pending` scans the ADR home's `*.md` files, excluding the index and installer-written numbered review candidates (`*.N.md`), which are not live ADRs. Status detection tolerates brownfield conventions (ADR 0018): frontmatter `status:` first, then a `- Status: X` body bullet, then the first word following a `# Status`/`## Status` heading — normalized to the lowercased first word, so `Accepted (2026-07-12)` reads as `accepted`. It lists files whose status is `proposed` with their titles (frontmatter `title:`, falling back to the first `#` heading), and separately flags files with no status in any recognized form, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero. The SessionStart hook's inbox count applies the same detection.
+`pending` scans the ADR home's `*.md` files, excluding the index and installer-written numbered review candidates (`*.N.md`), which are not live ADRs. Status detection tolerates brownfield conventions (ADR 0018): frontmatter `status:` first, then a `- Status: X` body bullet, then the first word following a `# Status`/`## Status` heading — bullet and heading matched case-insensitively (`- STATUS:` counts) and normalized to the lowercased first word, so `Accepted (2026-07-12)` reads as `accepted`. It lists files whose status is `proposed` with their titles (frontmatter `title:`, falling back to the first `#` heading), and separately flags files with no status in any recognized form, since those are invisible to the proposed-ADR review scan. It is informational and always exits zero. The SessionStart hook's inbox count applies the same detection.
