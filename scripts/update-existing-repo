@@ -322,60 +322,75 @@ PY
 # a layout block in an existing docs/okf-map.yml, then filesystem detection,
 # then the canonical defaults.
 
+# OKF-SHARED-BEGIN layout-awk
+# Canonical parser for the map's `layout:` block (ADR 0018). Byte-identical
+# in every kit script that carries it; `make parity` enforces the match.
+# Reads `-v key=<name>`; prints the cleaned value or nothing.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
+OKF_LAYOUT_AWK='
+  function clean(s) {
+    gsub(/#.*/, "", s)
+    gsub(/^[[:space:]"'\'']+/, "", s)
+    gsub(/[[:space:]"'\''\/]+$/, "", s)
+    return s
+  }
+  /^layout:/ { in_layout = 1; next }
+  /^[^[:space:]#]/ { in_layout = 0 }
+  in_layout {
+    line = $0
+    sub(/^[[:space:]]+/, "", line)
+    if (index(line, key ":") == 1) {
+      sub(key ":", "", line)
+      print clean(line)
+      exit
+    }
+  }
+'
+# OKF-SHARED-END layout-awk
+
 map_layout_value() {
   local key="$1"
   local target_map="$TARGET/docs/okf-map.yml"
   [ -f "$target_map" ] || return 0
-  awk -v key="$key" '
-    function clean(s) {
-      gsub(/#.*/, "", s)
-      gsub(/^[[:space:]"'\'']+/, "", s)
-      gsub(/[[:space:]"'\'']+$/, "", s)
-      return s
-    }
-    /^layout:/ { in_layout = 1; next }
-    /^[^[:space:]#]/ { in_layout = 0 }
-    in_layout {
-      line = $0
-      sub(/^[[:space:]]+/, "", line)
-      if (index(line, key ":") == 1) {
-        sub(key ":", "", line)
-        print clean(line)
-        exit
-      }
-    }
-  ' "$target_map"
+  awk -v key="$key" "$OKF_LAYOUT_AWK" "$target_map"
 }
+
+# OKF-SHARED-BEGIN mirrors-awk
+# Canonical parser for the map's top-level `mirrors:` list (ADR 0021).
+# Byte-identical in every kit script that carries it; `make parity` enforces
+# the match. Prints one cleaned repo-relative directory per line.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
+OKF_MIRRORS_AWK='
+  function clean(s) {
+    gsub(/#.*/, "", s)
+    gsub(/^[[:space:]"'\'']+/, "", s)
+    gsub(/[[:space:]"'\''\/]+$/, "", s)
+    return s
+  }
+  /^mirrors:/ { in_mirrors = 1; next }
+  /^[^[:space:]#]/ { in_mirrors = 0 }
+  in_mirrors {
+    line = $0
+    sub(/^[[:space:]]*/, "", line)
+    if (line ~ /^-/) {
+      sub(/^-[[:space:]]*/, "", line)
+      line = clean(line)
+      if (line != "") print line
+    }
+  }
+'
+# OKF-SHARED-END mirrors-awk
 
 # Second-agent hook mirrors (ADR 0021): a top-level `mirrors:` list in the
 # target's docs/okf-map.yml names the directories that keep byte-identical
 # copies of the two kit hooks for another agent. Declared, never detected.
-# Trailing slashes are stripped here, matching the SessionStart hook and
-# verify-install parsers, so `- .codex/hooks/` declares the same mirror as
-# `- .codex/hooks` for every consumer — including the undeclared-mirror
-# advisory below, which compares against this list verbatim.
+# The canonical parser strips trailing slashes, so `- .codex/hooks/` declares
+# the same mirror as `- .codex/hooks` for the sync loop and the
+# undeclared-mirror advisory alike.
 map_mirror_dirs() {
   local target_map="$TARGET/docs/okf-map.yml"
   [ -f "$target_map" ] || return 0
-  awk '
-    function clean(s) {
-      gsub(/#.*/, "", s)
-      gsub(/^[[:space:]"'\'']+/, "", s)
-      gsub(/[[:space:]"'\''\/]+$/, "", s)
-      return s
-    }
-    /^mirrors:/ { in_mirrors = 1; next }
-    /^[^[:space:]#]/ { in_mirrors = 0 }
-    in_mirrors {
-      line = $0
-      sub(/^[[:space:]]*/, "", line)
-      if (line ~ /^-/) {
-        sub(/^-[[:space:]]*/, "", line)
-        line = clean(line)
-        if (line != "") print line
-      }
-    }
-  ' "$target_map"
+  awk "$OKF_MIRRORS_AWK" "$target_map"
 }
 
 # Output capture instead of `| grep -q .`: the early-exit reader races the

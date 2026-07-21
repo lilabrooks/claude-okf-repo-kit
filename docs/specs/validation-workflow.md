@@ -20,7 +20,7 @@ The Makefile is for this repo only. It does not need to be copied into target re
 
 `README.md` must name `make test` as the source-kit verification command.
 
-`make check-docs` must provide a fast gate for documentation-only changes — ADR status flips, log-only edits — running the checks that actually cover `docs/` prose (the stale-reference/local-path scan and the Markdown link check) plus the OKF helper sanity checks (`check-stale`, `pending`), without the installer, hook, and helper smoke simulations that a documentation edit cannot affect. It is a convenience subset of `make test`, not a replacement: changes that touch scripts, templates, `settings.json`, or `VERSION` still require `make test`.
+`make check-docs` must provide a fast gate for documentation-only changes — ADR status flips, log-only edits — running the checks that actually cover `docs/` prose (the stale-reference/local-path scan, the parity gate, and the Markdown link check) plus the OKF helper sanity checks (`check-stale`, `pending`), without the installer, hook, and helper smoke simulations that a documentation edit cannot affect. It is a convenience subset of `make test`, not a replacement: changes that touch scripts, templates, `settings.json`, or `VERSION` still require `make test`.
 
 # Required checks
 
@@ -34,6 +34,7 @@ The validation workflow must include:
 - JSON validation for `settings.json`
 - stale-reference scanning for old names and local machine paths; the scan must run with ripgrep when installed, fall back to `grep -rnEI` otherwise, and fail rather than report success when the scanner itself cannot run
 - a pipefail hazard scan: any script under `scripts/` that sets `pipefail` must contain no non-comment `| grep -q` pipeline — the early-exit consumer races its writer (SIGPIPE), and under pipefail the race silently flips the pipeline's meaning (the kit 0.3.6 shim-classifier bug); capture output and test it instead
+- a parity gate (`make parity`, `scripts/check-parity.py`, stdlib-only) converting the specs' "must not drift" prose into build failures: the `OKF-SHARED` parser blocks (layout and mirrors awk) byte-identical across every script that carries them and present nowhere unlisted; the Stop hook's exclusion pattern set-equal to the union of `scripts/okf`'s workflow and meta sets; the `templates/skills/okf-*` roster named in the README install-artifacts table row, both installers (create-new-repo twice — copy plus manifest seed), `verify-install`, and the installer-scripts spec; and the ADR 0023 summary labels present, in pinned order, in the scripts that print them plus the spec and the ADR. The gate runs in `make test` and `make check-docs`
 - source-kit smoke checks
 - OKF source-kit stale mapping and ADR suggestion checks
 - new-repo install simulation

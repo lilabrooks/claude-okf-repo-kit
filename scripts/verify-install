@@ -33,31 +33,65 @@ if [ ! -d "$TARGET" ]; then
 fi
 TARGET="$(cd "$TARGET" && pwd)"
 
+# OKF-SHARED-BEGIN layout-awk
+# Canonical parser for the map's `layout:` block (ADR 0018). Byte-identical
+# in every kit script that carries it; `make parity` enforces the match.
+# Reads `-v key=<name>`; prints the cleaned value or nothing.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
+OKF_LAYOUT_AWK='
+  function clean(s) {
+    gsub(/#.*/, "", s)
+    gsub(/^[[:space:]"'\'']+/, "", s)
+    gsub(/[[:space:]"'\''\/]+$/, "", s)
+    return s
+  }
+  /^layout:/ { in_layout = 1; next }
+  /^[^[:space:]#]/ { in_layout = 0 }
+  in_layout {
+    line = $0
+    sub(/^[[:space:]]+/, "", line)
+    if (index(line, key ":") == 1) {
+      sub(key ":", "", line)
+      print clean(line)
+      exit
+    }
+  }
+'
+# OKF-SHARED-END layout-awk
+
+# OKF-SHARED-BEGIN mirrors-awk
+# Canonical parser for the map's top-level `mirrors:` list (ADR 0021).
+# Byte-identical in every kit script that carries it; `make parity` enforces
+# the match. Prints one cleaned repo-relative directory per line.
+# shellcheck disable=SC2016  # awk source text: $0 and friends are awk's, not shell's (older ShellChecks flag the assignment; 0.11.0 does not)
+OKF_MIRRORS_AWK='
+  function clean(s) {
+    gsub(/#.*/, "", s)
+    gsub(/^[[:space:]"'\'']+/, "", s)
+    gsub(/[[:space:]"'\''\/]+$/, "", s)
+    return s
+  }
+  /^mirrors:/ { in_mirrors = 1; next }
+  /^[^[:space:]#]/ { in_mirrors = 0 }
+  in_mirrors {
+    line = $0
+    sub(/^[[:space:]]*/, "", line)
+    if (line ~ /^-/) {
+      sub(/^-[[:space:]]*/, "", line)
+      line = clean(line)
+      if (line != "") print line
+    }
+  }
+'
+# OKF-SHARED-END mirrors-awk
+
 # Optional layout block (ADR 0018): verify the paths the target actually uses.
 layout_value() {
   key="$1"
   default="$2"
   value=""
   if [ -f "$TARGET/docs/okf-map.yml" ]; then
-    value="$(awk -v key="$key" '
-      function clean(s) {
-        gsub(/#.*/, "", s)
-        gsub(/^[[:space:]"'\'']+/, "", s)
-        gsub(/[[:space:]"'\'']+$/, "", s)
-        return s
-      }
-      /^layout:/ { in_layout = 1; next }
-      /^[^[:space:]#]/ { in_layout = 0 }
-      in_layout {
-        line = $0
-        sub(/^[[:space:]]+/, "", line)
-        if (index(line, key ":") == 1) {
-          sub(key ":", "", line)
-          print clean(line)
-          exit
-        }
-      }
-    ' "$TARGET/docs/okf-map.yml")"
+    value="$(awk -v key="$key" "$OKF_LAYOUT_AWK" "$TARGET/docs/okf-map.yml")"
   fi
   if [ -n "$value" ]; then
     printf '%s\n' "${value%/}"
@@ -248,25 +282,7 @@ fi
 # mirror is legitimate, the warning just keeps the drift visible.
 declared_mirrors=""
 if [ -f "$TARGET/docs/okf-map.yml" ]; then
-  declared_mirrors="$(awk '
-    function clean(s) {
-      gsub(/#.*/, "", s)
-      gsub(/^[[:space:]"'\'']+/, "", s)
-      gsub(/[[:space:]"'\''\/]+$/, "", s)
-      return s
-    }
-    /^mirrors:/ { in_mirrors = 1; next }
-    /^[^[:space:]#]/ { in_mirrors = 0 }
-    in_mirrors {
-      line = $0
-      sub(/^[[:space:]]*/, "", line)
-      if (line ~ /^-/) {
-        sub(/^-[[:space:]]*/, "", line)
-        line = clean(line)
-        if (line != "") print line
-      }
-    }
-  ' "$TARGET/docs/okf-map.yml")"
+  declared_mirrors="$(awk "$OKF_MIRRORS_AWK" "$TARGET/docs/okf-map.yml")"
 fi
 if [ -n "$declared_mirrors" ]; then
   while IFS= read -r mirror_dir; do

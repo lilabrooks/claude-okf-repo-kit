@@ -47,6 +47,7 @@ The source repo also keeps local validation and project knowledge:
 - `scripts/verify-install`
 - `scripts/check-placeholders`
 - `scripts/check-md-links.py`
+- `scripts/check-parity.py` (sync gate for the specs' must-not-drift rules: shared parser blocks, exclusion-list union, skill roster, summary labels; validation-workflow spec)
 - `scripts/harvest-dogfood` (maintainer tool; its registry is machine-local and git-ignored, per ADR 0014)
 - `.github/workflows/test.yml`
 - `.github/workflows/pages.yml`

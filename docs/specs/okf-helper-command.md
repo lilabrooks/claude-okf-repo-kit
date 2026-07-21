@@ -38,7 +38,7 @@ In this source-kit repo, it may also read root `okf-map.yml` as the install temp
 
 The map file may carry an optional top-level `layout:` block relocating the knowledge homes for repos that already keep specs or ADRs elsewhere (ADR 0018). Recognized keys, with defaults: `specs_dir` (`docs/specs`; drafts live in `<specs_dir>/_drafts`), `adr_dir` (`docs/adr`; the index lives at `<adr_dir>/index.md`), and `stamp_file` (`docs/index.md`; read by the SessionStart hook, not this helper). Every command resolves its paths through the block; absent keys fall back to the defaults, so canonical repos behave exactly as before.
 
-The parser is a small awk routine over flat `key: value` lines, tolerant of quotes and comments. Inline copies live in `check-okf-version.sh`, `verify-install`, `update-existing-repo`, and `harvest-dogfood` so each tool stands alone (hooks especially, when mirrored into another agent's config); the copies must stay in sync with this helper's.
+The parser is a small awk routine over flat `key: value` lines, tolerant of quotes and comments. Inline copies live in `check-okf-version.sh`, `verify-install`, `update-existing-repo`, and `harvest-dogfood` so each tool stands alone (hooks especially, when mirrored into another agent's config); the copies must stay in sync with this helper's. The shared programs — the layout parser and the mirrors parser — are shell string constants wrapped in `OKF-SHARED-BEGIN`/`OKF-SHARED-END` markers, and `make parity` asserts every copy is byte-identical to the canonical block, so parser divergence fails the build instead of shipping (two of the three bugs the 0.3.9 audit confirmed lived in exactly this divergence).
 
 # Stale mapping behavior
 
@@ -54,7 +54,7 @@ Map patterns match with shell globbing where `*` crosses `/` — `app/*` and `ap
 
 Outside hook mode, `check-stale` also prints a non-blocking note listing changed implementation files that match no mapping, so new source areas get mapped as they gain governing docs. Repo-meta files (README, changelog, license, ignore and editor config, `.env.example`) are excluded from the note, and unmapped files never change the exit status. Hook mode stays silent about unmapped files to avoid false blocks.
 
-The workflow/agent-config exclusions and the repo-meta set are, together, exactly the Stop hook's non-implementation list (Claude hooks spec); the two lists must not drift.
+The workflow/agent-config exclusions and the repo-meta set are, together, exactly the Stop hook's non-implementation list (Claude hooks spec); the two lists must not drift, and `make parity` asserts their set-equality.
 
 # Draft behavior
 
