@@ -26,7 +26,7 @@ jobs:
       # step ever cannot provision the floor version, that is the signal
       # to raise the floor, not to drop the step.
       - name: Set up floor Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
 
