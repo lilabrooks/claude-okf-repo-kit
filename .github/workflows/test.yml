@@ -4,6 +4,12 @@ on:
   push:
   pull_request:
 
+env:
+  # Single source for the kit's Python floor (ADR 0026): the version the
+  # floor pass provisions and the version it asserts it actually got, so the
+  # two can never disagree.
+  FLOOR_PYTHON: '3.9'
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -28,9 +34,16 @@ jobs:
       - name: Set up floor Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.9'
+          python-version: ${{ env.FLOOR_PYTHON }}
 
+      # The assert guards a different property than the pass itself: that the
+      # pass is genuinely running at the floor. Newer-than-floor syntax still
+      # has to die at parse time inside `make test` (a runtime check cannot
+      # catch it), but without this a changed input or a future action
+      # resolving differently would silently turn the floor pass into a
+      # duplicate of the run above, and nothing would say so.
       - name: Run validation under the floor Python
         run: |
           python3 --version
+          python3 -c "import sys; want = tuple(int(p) for p in '$FLOOR_PYTHON'.split('.')); got = sys.version_info[:len(want)]; assert got == want, 'floor pass ran under Python %s, not the $FLOOR_PYTHON floor' % '.'.join(map(str, got))"
           make test

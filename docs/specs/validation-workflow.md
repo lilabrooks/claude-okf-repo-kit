@@ -47,7 +47,7 @@ The validation workflow must include:
 - install/verify/placeholder helper smoke checks
 - hook behavior checks
 - `scripts/okf` command smoke checks
-- GitHub Actions validation that runs `make test` on push and pull request, then reruns it under a provisioned Python 3.9 — the kit's Python floor (ADR 0026 amendment) — so newer-than-floor syntax in any kit Python tool fails CI instead of a stock machine; a runner that can no longer provision the floor version is the signal to raise the floor, not to drop the pass
+- GitHub Actions validation that runs `make test` on push and pull request, then reruns it under a provisioned Python 3.9 — the kit's Python floor (ADR 0026 amendment) — so newer-than-floor syntax in any kit Python tool fails CI instead of a stock machine; a runner that can no longer provision the floor version is the signal to raise the floor, not to drop the pass. The floor version is declared once as a workflow-level `FLOOR_PYTHON` variable feeding both the `setup-python` input and a runtime assert that the interpreter actually is the floor, so the pass cannot silently degrade into a duplicate of the run above when an input changes or a future action resolves differently. That assert guards a different property than the pass itself — newer-than-floor syntax still dies at parse time inside `make test`, which no runtime check can catch
 - Dependabot configuration at `.github/dependabot.yml` that keeps GitHub Actions workflow action versions current on a weekly schedule
 
 # Smoke test expectations
