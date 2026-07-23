@@ -288,9 +288,65 @@ def check_python_floor_conventions() -> None:
     ok(f"python floor conventions hold across {len(python_files)} kit Python files")
 
 
+def check_agents_template() -> None:
+    """The Codex playbook template must not drift back into a find-and-replace port.
+
+    Every failure below was observed in a real hand-written AGENTS.md draft:
+    it claimed Codex resolves `@` imports, named kit files that do not exist,
+    and wrote `.Codex` for `.codex`. These are objective and cheap to check,
+    so they are build failures rather than review notes.
+    """
+    rel = "templates/AGENTS.md"
+    path = ROOT / rel
+    if not path.is_file():
+        fail(f"{rel}: missing (the okf-second-agent skill renders it)")
+        return
+    text = path.read_text(encoding="utf-8")
+
+    imports = [
+        line for line in text.splitlines() if line.startswith("@")
+    ]
+    if imports or "imports resolve" in text:
+        fail(f"{rel}: claims Claude-style @ imports; Codex resolves none")
+
+    if ".Codex" in text:
+        fail(f"{rel}: uses '.Codex'; the config directory is lowercase '.codex'")
+
+    missing = sorted(
+        {
+            ref
+            for ref in re.findall(r"`((?:templates|scripts|docs)/[A-Za-z0-9._/-]+)`", text)
+            if "*" not in ref and not (ROOT / ref).exists()
+        }
+    )
+    if missing:
+        fail(f"{rel}: references kit files that do not exist: {', '.join(missing)}")
+
+    # Structural parity with the Claude playbook: same sections, so a change to
+    # one is visible as a gap in the other. The context section is the one
+    # deliberate rename (imports -> session-start reads).
+    def headings(p: Path) -> list[str]:
+        return [ln for ln in p.read_text(encoding="utf-8").splitlines() if ln.startswith("# ")]
+
+    claude = [h for h in headings(ROOT / "templates/CLAUDE.md") if h != "# Preloaded context"]
+    agents = [h for h in headings(path) if h != "# Session-start context"]
+    if claude != agents:
+        only_claude = [h for h in claude if h not in agents]
+        only_agents = [h for h in agents if h not in claude]
+        fail(
+            f"{rel}: section drift vs templates/CLAUDE.md"
+            + (f"; only in CLAUDE.md: {only_claude}" if only_claude else "")
+            + (f"; only in AGENTS.md: {only_agents}" if only_agents else "")
+        )
+
+    if not failures:
+        ok("Codex playbook template is port-correct and structurally paired")
+
+
 def main() -> int:
     print("kit parity gate:")
     check_shared_blocks()
+    check_agents_template()
     check_exclusion_union()
     check_skill_roster()
     check_summary_labels()

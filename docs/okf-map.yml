@@ -37,6 +37,11 @@ mappings:
       # check-stale lists it among the "update one of" options.
       - "site/index.html"
 
+  - source: "templates/AGENTS.md"
+    docs:
+      - "docs/specs/repo-kit-packaging.md"
+      - "docs/adr/0024-second-agent-port-skill.md"
+
   - source: "templates/GOAL.md"
     docs:
       - "docs/specs/repo-kit-packaging.md"
