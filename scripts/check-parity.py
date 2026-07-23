@@ -53,6 +53,10 @@ SHARED_BLOCKS = {
         "scripts/update-existing-repo",
         "scripts/harvest-dogfood",
     ],
+    "playbook-placeholders": [
+        "scripts/check-placeholders",
+        "scripts/update-existing-repo",
+    ],
 }
 
 UPDATER_LABELS = [

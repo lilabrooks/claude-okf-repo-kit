@@ -62,6 +62,7 @@ Every factual claim about kit behavior must be traceable to a kit ADR, a spec, o
 - **Relative paths only** (ADR 0016): asset, navigation, and redirect targets are relative so the same files render at both the apex and the project base; `compact-theme.css` and its `./fonts/` references are relative. Absolute `canonical`, Open Graph, and schema.org URLs point at the apex.
 - Fonts are IBM Plex Sans (body) and IBM Plex Mono (display), self-hosted under the SIL Open Font License (`fonts/LICENSE.txt`). Retain the theme's BSD-2-Clause terms in `compact-theme-LICENSE.txt` and `compact-theme-COPYRIGHT.txt` and the SPDX headers in the CSS/JS.
 - Keep the author metadata and visible footer naming Lila Brooks; the home page carries `SoftwareSourceCode` schema, the dogfood page `TechArticle`. When the dogfood page changes, update its `dateModified` and `article:modified_time`.
+- The content pages' visible footer (`index.html`, `how-it-works/`, `dogfood/`, `404.html`) states the reservation of rights matching `LICENSE`: `© <year>`, `All rights reserved`, and the third-party carve-out for the vendored `site/` assets (Compact Theme under BSD 2-Clause, IBM Plex under the SIL Open Font License). The repo is proprietary (`repo-kit-packaging` spec); the footer must not imply an open-source or reuse grant. The redirect stubs carry no footer.
 
 # Keeping the site current
 
