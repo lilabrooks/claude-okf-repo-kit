@@ -35,24 +35,37 @@ add_issue() {
   issues+=("$1")
 }
 
+# OKF-SHARED-BEGIN playbook-placeholders
+# Canonical list of the installed playbook's unfilled-template blanks — the
+# bracketed spots the goal interview fills in. Byte-identical in every kit
+# script that carries it; `make parity` enforces the match. Curated rather
+# than scanned out of the template, because the template also carries brackets
+# that stay legitimate in a filled playbook: the `tags: [...]` frontmatter
+# list and the `[paths...]`/`[title]` argument spellings in the helper usage
+# lines. A bare `\[.*\]` scan matches those and calls every playbook unfilled.
+OKF_PLAYBOOK_PLACEHOLDERS='[what exists today, 1-2 sentences]
+[what done looks like, concrete nouns]
+[governing ADRs and specs by path]
+[verifiable criteria: test command, contract coverage, removals]
+[test command]
+[command]
+[command, if separate]'
+# OKF-SHARED-END playbook-placeholders
+
 if [ ! -f "$TARGET/CLAUDE.md" ]; then
   add_issue "CLAUDE.md is missing"
 else
   if grep -q 'Template. Fill every \[bracket\]' "$TARGET/CLAUDE.md"; then
     add_issue "CLAUDE.md still has the template comment"
   fi
-  for pattern in \
-    '[what exists today, 1-2 sentences]' \
-    '[what done looks like, concrete nouns]' \
-    '[governing ADRs and specs by path]' \
-    '[verifiable criteria: test command, contract coverage, removals]' \
-    '[test command]' \
-    '[command]' \
-    '[command, if separate]'; do
+  while IFS= read -r pattern; do
+    [ -n "$pattern" ] || continue
     if grep -qF "$pattern" "$TARGET/CLAUDE.md"; then
       add_issue "CLAUDE.md still contains placeholder: $pattern"
     fi
-  done
+  done <<EOF
+$OKF_PLAYBOOK_PLACEHOLDERS
+EOF
 fi
 
 if [ ! -f "$TARGET/docs/GOAL.md" ]; then

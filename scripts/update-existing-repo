@@ -217,10 +217,16 @@ write_numbered_content_candidate() {
 # is preserved, with the kit version staged as a numbered candidate for
 # review instead (ADR 0013). Identical content records itself so pre-manifest
 # installs opt in after one run.
+# An optional fourth argument supplies a second accepted provenance digest:
+# content proven unedited by something other than the manifest. The declared
+# mirror sync uses it, because a mirror adopted by hand (the owner moves the
+# numbered candidate over the original) never enters the manifest and would
+# otherwise be re-staged as a candidate on every later upgrade.
 install_kit_script() {
   local src="$1"
   local dest="$2"
   local label="$3"
+  local proof="${4:-}"
   local rel="${dest#"$TARGET"/}"
   local digest
   mkdir -p "$(dirname "$dest")"
@@ -236,6 +242,13 @@ install_kit_script() {
     return 0
   fi
   digest="$(file_digest "$dest")"
+  if [ -n "$proof" ] && [ "$digest" = "$proof" ]; then
+    backup_file "$dest"
+    cp "$src" "$dest"
+    manifest_record "$dest"
+    updated+=("$rel")
+    return 0
+  fi
   if manifest_has "$digest" "$rel"; then
     backup_file "$dest"
     cp "$src" "$dest"
@@ -503,6 +516,61 @@ render_playbook() {
     "$KIT_DIR/templates/CLAUDE.md" | render_owner
 }
 
+# OKF-SHARED-BEGIN playbook-placeholders
+# Canonical list of the installed playbook's unfilled-template blanks — the
+# bracketed spots the goal interview fills in. Byte-identical in every kit
+# script that carries it; `make parity` enforces the match. Curated rather
+# than scanned out of the template, because the template also carries brackets
+# that stay legitimate in a filled playbook: the `tags: [...]` frontmatter
+# list and the `[paths...]`/`[title]` argument spellings in the helper usage
+# lines. A bare `\[.*\]` scan matches those and calls every playbook unfilled.
+OKF_PLAYBOOK_PLACEHOLDERS='[what exists today, 1-2 sentences]
+[what done looks like, concrete nouns]
+[governing ADRs and specs by path]
+[verifiable criteria: test command, contract coverage, removals]
+[test command]
+[command]
+[command, if separate]'
+# OKF-SHARED-END playbook-placeholders
+
+# A playbook carrying none of those blanks is the owner's finished prose, not
+# a half-filled template (the filled-goal reasoning of ADR 0018, applied to
+# the playbook). Remaining blanks are the whole test: the template's
+# "delete this comment" reminder is deliberately not a disqualifier, because a
+# playbook can be fully written while that housekeeping line lingers, and
+# staging 190 bracketed lines against finished prose helps no reviewer either
+# way. The lingering comment is its own signal, reported by check-placeholders.
+# Landmark headings the kit playbook defines. A live playbook carrying several
+# of them derives from the kit template, so a template delta describes changes
+# it can actually absorb. One carrying none is the repo's own playbook (a
+# brownfield AGENTS.md with its own structure, say): the delta would describe
+# a document it never had, so that playbook still gets the whole template
+# staged. Ports rename a section or two, so this is a threshold, not a match.
+PLAYBOOK_LANDMARKS='^#+ (Master objective|Grounding rules|Decision policy|Guardrails|Workflow for each task|Verification commands|Kit version policy|OKF helper commands)'
+PLAYBOOK_LANDMARK_MIN=4
+
+playbook_is_kit_derived() {
+  local f="$1" n
+  [ -f "$f" ] || return 1
+  n="$(grep -cE "$PLAYBOOK_LANDMARKS" "$f" 2>/dev/null || true)"
+  [ -n "$n" ] || n=0
+  [ "$n" -ge "$PLAYBOOK_LANDMARK_MIN" ]
+}
+
+playbook_is_filled() {
+  local f="$1" pattern
+  [ -f "$f" ] || return 1
+  while IFS= read -r pattern; do
+    [ -n "$pattern" ] || continue
+    if grep -qF "$pattern" "$f"; then
+      return 1
+    fi
+  done <<EOF
+$OKF_PLAYBOOK_PLACEHOLDERS
+EOF
+  return 0
+}
+
 is_import_shim() {
   local f="$1"
   [ -f "$f" ] || return 1
@@ -542,32 +610,53 @@ is_import_shim() {
 # skill's manual technique. The raw templates are diffed, not the rendered
 # output — the delta describes what the kit changed, and rendering only
 # substitutes the owner name identically on both sides.
+# Returns 0 and sets PLAYBOOK_DELTA_PATH when a kit-only delta was written;
+# returns 1 when any ingredient is missing or the template did not change, so
+# callers can fall back to staging the whole template.
+PLAYBOOK_DELTA_PATH=""
 write_playbook_template_delta() {
   local commit release_commit="" old_template delta
-  [ -n "$PRIOR_KIT_VERSION" ] || return 0
-  [ "$PRIOR_KIT_VERSION" != "$KIT_VERSION" ] || return 0
-  git -C "$KIT_DIR" rev-parse --git-dir >/dev/null 2>&1 || return 0
+  PLAYBOOK_DELTA_PATH=""
+  [ -n "$PRIOR_KIT_VERSION" ] || return 1
+  [ "$PRIOR_KIT_VERSION" != "$KIT_VERSION" ] || return 1
+  git -C "$KIT_DIR" rev-parse --git-dir >/dev/null 2>&1 || return 1
   while IFS= read -r commit; do
     if [ "$(git -C "$KIT_DIR" show "$commit:VERSION" 2>/dev/null)" = "$PRIOR_KIT_VERSION" ]; then
       release_commit="$commit"
       break
     fi
   done < <(git -C "$KIT_DIR" log --format=%H -- VERSION 2>/dev/null)
-  [ -n "$release_commit" ] || return 0
+  [ -n "$release_commit" ] || return 1
   old_template="$(mktemp "$BACKUP_DIR/template.XXXXXX")"
   if ! git -C "$KIT_DIR" show "$release_commit:templates/CLAUDE.md" > "$old_template" 2>/dev/null; then
     rm -f "$old_template"
-    return 0
+    return 1
   fi
   delta="$BACKUP_DIR/CLAUDE.md.template-delta.diff"
   if diff -u --label "templates/CLAUDE.md@$PRIOR_KIT_VERSION" \
     --label "templates/CLAUDE.md@$KIT_VERSION" \
     "$old_template" "$KIT_DIR/templates/CLAUDE.md" > "$delta"; then
     rm -f "$delta"
-  else
-    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; the kit-only delta is at ${delta#"$TARGET"/} — merge that delta into the live playbook instead of re-deriving what changed (okf-kit-upgrade candidate-review step)")
+    rm -f "$old_template"
+    return 1
   fi
   rm -f "$old_template"
+  PLAYBOOK_DELTA_PATH="$delta"
+  return 0
+}
+
+# Filled-playbook candidate suppression: staging the kit's bracketed template
+# beside a playbook with no blanks left reviews to nothing — the live file is
+# finished prose, and the reviewer's real question is what the kit changed
+# since the stamped release. The delta answers exactly that, so when it is
+# available it replaces the whole-template candidate rather than accompanying
+# it. Falls through to the candidate when no delta can be built, since then
+# there is nothing better to offer.
+suppress_playbook_candidate() {
+  playbook_is_kit_derived "$1" || return 1
+  playbook_is_filled "$1" || return 1
+  write_playbook_template_delta || return 1
+  return 0
 }
 
 # The delta is written only when this run actually staged or refreshed a
@@ -575,9 +664,14 @@ write_playbook_template_delta() {
 playbook_review_count="${#review[@]}"
 
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then
-  # Process substitution, not a pipe: the candidate machinery mutates the
-  # summary arrays and must run in this shell.
-  write_numbered_content_candidate "$TARGET/AGENTS.md" "AGENTS.md (kit playbook; this repo is AGENTS.md-first)" < <(render_playbook)
+  if suppress_playbook_candidate "$TARGET/AGENTS.md"; then
+    skipped+=("AGENTS.md is filled; kit template staged as a delta, not a whole-file candidate")
+    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; AGENTS.md carries no template blanks, so no whole-template candidate was written — review the kit-only delta at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} and merge what applies into AGENTS.md (okf-kit-upgrade candidate-review step)")
+  else
+    # Process substitution, not a pipe: the candidate machinery mutates the
+    # summary arrays and must run in this shell.
+    write_numbered_content_candidate "$TARGET/AGENTS.md" "AGENTS.md (kit playbook; this repo is AGENTS.md-first)" < <(render_playbook)
+  fi
   if [ ! -f "$TARGET/CLAUDE.md" ]; then
     {
       printf '@AGENTS.md\n'
@@ -590,17 +684,45 @@ if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shi
     skipped+=("CLAUDE.md import shim left untouched; kit playbook staged beside AGENTS.md")
   fi
 elif [ -f "$TARGET/CLAUDE.md" ]; then
-  write_numbered_content_candidate "$TARGET/CLAUDE.md" "CLAUDE.md" < <(render_playbook)
+  if suppress_playbook_candidate "$TARGET/CLAUDE.md"; then
+    skipped+=("CLAUDE.md is filled; kit template staged as a delta, not a whole-file candidate")
+    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; CLAUDE.md carries no template blanks, so no whole-template candidate was written — review the kit-only delta at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} and merge what applies into CLAUDE.md (okf-kit-upgrade candidate-review step)")
+  else
+    write_numbered_content_candidate "$TARGET/CLAUDE.md" "CLAUDE.md" < <(render_playbook)
+  fi
 else
   render_playbook > "$TARGET/CLAUDE.md"
   created+=("CLAUDE.md")
 fi
 
-if [ "${#review[@]}" -gt "$playbook_review_count" ]; then
-  write_playbook_template_delta
+if [ "${#review[@]}" -gt "$playbook_review_count" ] && write_playbook_template_delta; then
+  advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; the kit-only delta is at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} — merge that delta into the live playbook instead of re-deriving what changed (okf-kit-upgrade candidate-review step)")
 fi
 
 merge_settings
+
+# Digests of the .claude/hooks originals as they stood before this run
+# refreshed them. A declared mirror still byte-identical to its pre-refresh
+# original is a faithful mirror rather than an owner edit — the only
+# provenance a hand-adopted mirror ever carries, since moving a numbered
+# candidate over the original never touches the manifest (ADR 0021 requires
+# declared mirrors to equal the .claude hook, so that adoption is the expected
+# resolution, not a deviation).
+PRE_HOOK_DIGEST_DOCS_SYNC=""
+PRE_HOOK_DIGEST_OKF_VERSION=""
+if [ -f "$TARGET/.claude/hooks/check-docs-sync.sh" ]; then
+  PRE_HOOK_DIGEST_DOCS_SYNC="$(file_digest "$TARGET/.claude/hooks/check-docs-sync.sh")"
+fi
+if [ -f "$TARGET/.claude/hooks/check-okf-version.sh" ]; then
+  PRE_HOOK_DIGEST_OKF_VERSION="$(file_digest "$TARGET/.claude/hooks/check-okf-version.sh")"
+fi
+
+pre_refresh_hook_digest() {
+  case "$1" in
+    check-docs-sync.sh) printf '%s\n' "$PRE_HOOK_DIGEST_DOCS_SYNC" ;;
+    check-okf-version.sh) printf '%s\n' "$PRE_HOOK_DIGEST_OKF_VERSION" ;;
+  esac
+}
 
 install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/.claude/hooks/check-docs-sync.sh" ".claude/hooks/check-docs-sync.sh"
 install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/.claude/hooks/check-okf-version.sh" ".claude/hooks/check-okf-version.sh"
@@ -617,8 +739,19 @@ while IFS= read -r mirror_dir; do
     /*|*../*|*/..|..) skipped+=("mirror $mirror_dir ignored (must be a repo-relative path without ..)"); continue ;;
     .claude/hooks) skipped+=("mirror .claude/hooks ignored (it is the original, not a mirror)"); continue ;;
   esac
-  install_kit_script "$KIT_DIR/scripts/check-docs-sync.sh" "$TARGET/$mirror_dir/check-docs-sync.sh" "$mirror_dir/check-docs-sync.sh"
-  install_kit_script "$KIT_DIR/scripts/check-okf-version.sh" "$TARGET/$mirror_dir/check-okf-version.sh" "$mirror_dir/check-okf-version.sh"
+  for mirror_hook in check-docs-sync.sh check-okf-version.sh; do
+    # The pre-refresh proof only applies once the .claude original actually
+    # carries the kit content this run installs. When that original was itself
+    # preserved (owner-edited, staged as its own candidate), the mirror is
+    # preserved with it — refreshing one side alone would break the very
+    # byte-identical invariant the declaration exists to keep.
+    mirror_proof=""
+    if cmp -s "$KIT_DIR/scripts/$mirror_hook" "$TARGET/.claude/hooks/$mirror_hook"; then
+      mirror_proof="$(pre_refresh_hook_digest "$mirror_hook")"
+    fi
+    install_kit_script "$KIT_DIR/scripts/$mirror_hook" \
+      "$TARGET/$mirror_dir/$mirror_hook" "$mirror_dir/$mirror_hook" "$mirror_proof"
+  done
 done < <(map_mirror_dirs)
 
 install_kit_script "$KIT_DIR/scripts/okf" "$TARGET/scripts/okf" "scripts/okf"

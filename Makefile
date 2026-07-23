@@ -529,6 +529,38 @@ smoke-candidates:
 	printf '%s\n' 'TEMPLATE V5 MARKER' >> "$$kit/templates/CLAUDE.md"; \
 	output=$$(bash "$$kit/scripts/update-existing-repo" "$$target"); \
 	[[ "$$output" != *'playbook template changed since kit'* ]]; \
+	: 'a filled playbook gets the kit-only delta instead of a whole-template candidate'; \
+	git -C "$$kit" add -A; \
+	git -C "$$kit" -c user.email=a@example.com -c user.name=A commit -q -m release2; \
+	ftarget="$$tmp/filled"; \
+	mkdir -p "$$ftarget"; \
+	git -C "$$ftarget" init -q; \
+	bash "$$kit/scripts/update-existing-repo" "$$ftarget" >/dev/null; \
+	grep -vF -e '[what exists today, 1-2 sentences]' -e '[what done looks like, concrete nouns]' \
+		-e '[governing ADRs and specs by path]' -e '[command, if separate]' \
+		-e '[verifiable criteria: test command, contract coverage, removals]' \
+		-e '[test command]' -e '[command]' "$$ftarget/CLAUDE.md" > "$$ftarget/CLAUDE.tmp"; \
+	mv "$$ftarget/CLAUDE.tmp" "$$ftarget/CLAUDE.md"; \
+	printf '%s\n' '9.9.10-test' > "$$kit/VERSION"; \
+	printf '%s\n' 'TEMPLATE V6 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$ftarget"); \
+	test ! -f "$$ftarget/CLAUDE.2.md"; \
+	[[ "$$output" == *'CLAUDE.md is filled; kit template staged as a delta'* ]]; \
+	fdelta=$$(ls "$$ftarget"/.okf-kit-backups/*/CLAUDE.md.template-delta.diff); \
+	grep -q 'TEMPLATE V6 MARKER' "$$fdelta"; \
+	: 'an unfilled playbook still gets the whole template to fill from'; \
+	utarget="$$tmp/unfilled"; \
+	mkdir -p "$$utarget"; \
+	git -C "$$utarget" init -q; \
+	printf '%s\n' '9.9.9-test' > "$$kit/VERSION"; \
+	bash "$$kit/scripts/update-existing-repo" "$$utarget" >/dev/null; \
+	grep -qF '[test command]' "$$utarget/CLAUDE.md"; \
+	printf '%s\n' 'TEMPLATE V7 MARKER' >> "$$kit/templates/CLAUDE.md"; \
+	printf '%s\n' '9.9.10-test' > "$$kit/VERSION"; \
+	bash "$$kit/scripts/update-existing-repo" "$$utarget" >/dev/null; \
+	test -f "$$utarget/CLAUDE.2.md"; \
+	grep -qF '[test command]' "$$utarget/CLAUDE.2.md"; \
+	grep -q 'TEMPLATE V7 MARKER' "$$utarget/CLAUDE.2.md"; \
 	printf 'candidate refresh smoke ok\n'
 
 smoke-mirrors:
@@ -593,6 +625,30 @@ smoke-mirrors:
 	[[ "$$output" == *'differs from .claude/hooks/check-okf-version.sh'* ]]; \
 	: 'mappings after a mirrors block stay clean in check-stale'; \
 	bash scripts/okf check-stale >/dev/null; \
+	: 'hand-made mirror (no manifest provenance) is adopted, not re-staged forever'; \
+	htarget="$$tmp/hand-mirror"; \
+	mkdir -p "$$htarget"; \
+	cd "$$htarget"; \
+	git init -q; \
+	bash "$$kit/scripts/update-existing-repo" "$$htarget" >/dev/null; \
+	mkdir -p .codex/hooks; \
+	cp .claude/hooks/check-docs-sync.sh .claude/hooks/check-okf-version.sh .codex/hooks/; \
+	printf '%s\n' '' 'mirrors:' '  - .codex/hooks' >> docs/okf-map.yml; \
+	printf '%s\n' '# kit vHM1' >> "$$kit/scripts/check-okf-version.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$htarget" >/dev/null; \
+	test ! -e .codex/hooks/check-okf-version.2.sh; \
+	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \
+	: 'and again on the next release, the case that recurred in live upgrades'; \
+	printf '%s\n' '# kit vHM2' >> "$$kit/scripts/check-okf-version.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$htarget" >/dev/null; \
+	test ! -e .codex/hooks/check-okf-version.2.sh; \
+	cmp -s .claude/hooks/check-okf-version.sh .codex/hooks/check-okf-version.sh; \
+	: 'a .claude original preserved for review does not refresh its mirror alone'; \
+	printf 'owner edit\n' >> .claude/hooks/check-docs-sync.sh; \
+	printf '%s\n' '# kit vHM3' >> "$$kit/scripts/check-docs-sync.sh"; \
+	bash "$$kit/scripts/update-existing-repo" "$$htarget" >/dev/null; \
+	grep -q 'owner edit' .claude/hooks/check-docs-sync.sh; \
+	! grep -q 'kit vHM3' .codex/hooks/check-docs-sync.sh; \
 	printf 'second-agent mirror smoke ok\n'
 
 smoke-paths:
