@@ -148,6 +148,9 @@ smoke-install:
 	! test -e VERSION; \
 	! test -e Makefile; \
 	! test -e docs/specs/site-content.md; \
+	: 'the Codex playbook template is opt-in: rendered by the port skill, never installed'; \
+	! test -e AGENTS.md; \
+	! test -e templates/AGENTS.md; \
 	! test -e docs/adr/0009-github-pages-website.md; \
 	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
 	! grep -q 'site/' docs/okf-map.yml; \
@@ -258,6 +261,9 @@ smoke-existing:
 	! test -e site; \
 	! test -e .github/workflows/pages.yml; \
 	! test -e docs/specs/site-content.md; \
+	: 'the Codex playbook template is opt-in: rendered by the port skill, never installed'; \
+	! test -e AGENTS.md; \
+	! test -e templates/AGENTS.md; \
 	! test -e docs/adr/0009-github-pages-website.md; \
 	! test -e docs/adr/0016-apex-mirror-editorial-site.md; \
 	! grep -q 'site/' docs/okf-map.yml; \

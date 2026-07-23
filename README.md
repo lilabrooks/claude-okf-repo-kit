@@ -404,7 +404,7 @@ For a repository that already has code and documentation, the installed `okf-ado
 
 The kit is built for Claude Code, and the goal loop — the interview, milestones, proposed ADRs, and guardrails — stays with it. Optionally, you can point a second agent (Codex CLI, for example) at the same installed repo for commodity chores: a license, CI, dependency-update automation, badges, repository metadata. Both dogfood repos used exactly this split, and the docs discipline held — chore commits still landed their `docs/log.md` entries and ADRs.
 
-The installed `okf-second-agent` skill walks Claude Code through this port end to end — every dogfood repo that added a second agent converged on the same shape, so the procedure is now kit-owned. The bullets below are the compressed form.
+The installed `okf-second-agent` skill walks Claude Code through this port end to end — every dogfood repo that added a second agent converged on the same shape, so the procedure is now kit-owned. It renders the kit's curated `templates/AGENTS.md` (source-only and opt-in: the installers never write it) and carries your filled Master objective and Verification commands across from `CLAUDE.md`, rather than hand-translating the Claude playbook — a find-and-replace port is how an `AGENTS.md` ends up claiming Codex resolves `@` imports, naming kit files that don't exist, and writing `.Codex` for `.codex`. The bullets below are the compressed form.
 
 If you do this:
 
