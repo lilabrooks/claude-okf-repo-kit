@@ -554,6 +554,15 @@ smoke-candidates:
 	[[ "$$output" == *'CLAUDE.md is filled; kit template staged as a delta'* ]]; \
 	fdelta=$$(ls "$$ftarget"/.okf-kit-backups/*/CLAUDE.md.template-delta.diff); \
 	grep -q 'TEMPLATE V6 MARKER' "$$fdelta"; \
+	: 'a filled playbook whose template did not change gets neither candidate nor delta'; \
+	git -C "$$kit" add -A; \
+	git -C "$$kit" -c user.email=a@example.com -c user.name=A commit -q -m release3; \
+	printf '%s\n' '9.9.11-test' > "$$kit/VERSION"; \
+	output=$$(bash "$$kit/scripts/update-existing-repo" "$$ftarget"); \
+	test ! -f "$$ftarget/CLAUDE.2.md"; \
+	[[ "$$output" == *'unchanged since 9.9.10-test'* ]]; \
+	[[ "$$output" != *'staged as a delta'* ]]; \
+	[[ "$$output" != *'playbook template changed since kit'* ]]; \
 	: 'an unfilled playbook still gets the whole template to fill from'; \
 	utarget="$$tmp/unfilled"; \
 	mkdir -p "$$utarget"; \
