@@ -64,6 +64,7 @@ Source-only files:
 
 - The spec and ADR indexes are preloaded by the imports above. Before changing files, read the mapped governing docs in `docs/okf-map.yml` for the files being touched.
 - When code and docs disagree, flag the mismatch. Do not silently pick a side.
+- When two knowledge files disagree — an accepted ADR and a spec giving different requirements for the same thing — that is a defect in the documentation, not a question of which kind of file outranks the other. Reconcile it in the change that introduces it: update the spec to match the accepted decision, or supersede the ADR. Do not leave the two contradicting each other.
 - If a change conflicts with an accepted ADR, stop and ask before editing. Superseding an ADR requires a new ADR.
 - Keep the root install template and this repo's project instructions distinct. Do not put project-specific source-kit goals into `templates/CLAUDE.md`.
 - Keep `README.md`, `Claude Code OKF Kit Guide.md`, specs, ADRs, scripts, and Makefile behavior in sync.

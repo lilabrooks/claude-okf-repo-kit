@@ -2,6 +2,35 @@
 
 ## 2026-07-24
 
+- Kit 0.3.13: the playbook now says what to do when two knowledge files disagree,
+  at the owner's direction. The grounding rules already carried "when code and
+  docs disagree, flag the mismatch, don't silently pick a side" — the code-vs-doc
+  case — but said nothing about an accepted ADR and a spec giving different
+  requirements for the same thing. The gap surfaced in the spec-drift dogfood
+  repo, where a tool built on the kit had to decide what to report for exactly
+  that arrangement, and the owner's answer settled it: a contradiction is a defect
+  in the documentation, not a precedence question, and the repair is to reconcile
+  it in the change that introduces it — update the spec to match the accepted
+  decision, or supersede the ADR — never to rank one kind of file above the other.
+  Ranking would have been the tempting design, and it contradicts the kit's own
+  grounding rule: a standing precedence between file kinds is silently picking a
+  side, applied automatically and invisibly, and it would let a stale ADR quietly
+  overrule a legitimately updated spec.
+- The rule is added to all three playbooks so they cannot drift: `templates/CLAUDE.md`
+  and `templates/AGENTS.md` (owner-voiced, "which way is my call"), and this repo's
+  own `CLAUDE.md`, since the kit is governed by the same discipline it ships.
+  `make parity` confirms the Codex template stays structurally paired.
+- The tool half of this decision lives in spec-drift (its ADR 0007: contradictory
+  governing documents are reported as `insufficient-evidence` naming the conflict,
+  never resolved), verified there against a live provider. This entry is the
+  repository-governance half — what a person does once the tool has flagged it.
+- `VERSION` 0.3.13 per ADR 0010: `templates/CLAUDE.md` is an installed artifact.
+  Site reviewed per ADR 0016 — the only version strings on the site are the
+  historical narrative in dogfood story 06, which describes the 0.3.10 → 0.3.12
+  upgrade accurately and is not a current-version claim; no page states the
+  grounding rules; no copy change. Publish per ADR 0016: project-base Pages
+  redeploys on push, then the owner bumps the apex submodule. Verified: `make test`.
+
 - ADR 0018 amended at the owner's direction, correcting the reader list flagged in
   the mapping change below. The correction needed no new judgment, because **the
   ADR already contained the right list**: its Consequences section names the
