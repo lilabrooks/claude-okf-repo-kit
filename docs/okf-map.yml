@@ -75,6 +75,7 @@ mappings:
       - "docs/adr/0003-claude-hook-guardrails.md"
       - "docs/adr/0010-kit-version-stamp.md"
       - "docs/adr/0024-second-agent-port-skill.md"
+      - "docs/adr/0018-brownfield-layout-tolerance.md"
 
   - source: "VERSION"
     docs:
@@ -85,6 +86,7 @@ mappings:
     docs:
       - "docs/specs/okf-helper-command.md"
       - "docs/adr/0002-repo-local-bash-helper.md"
+      - "docs/adr/0018-brownfield-layout-tolerance.md"
 
   - source: "scripts/create-new-repo"
     docs:
@@ -103,6 +105,7 @@ mappings:
       - "docs/adr/0011-env-read-denial.md"
       - "docs/adr/0012-candidate-refresh-manifest.md"
       - "docs/adr/0013-script-provenance-refresh.md"
+      - "docs/adr/0018-brownfield-layout-tolerance.md"
 
   - source: "okf-map.yml"
     docs:
@@ -163,7 +166,7 @@ mappings:
       - "docs/adr/0005-safe-installer-scripts.md"
       - "docs/adr/0011-env-read-denial.md"
       - "docs/adr/0024-second-agent-port-skill.md"
-
+      - "docs/adr/0018-brownfield-layout-tolerance.md"
 
   - source: "scripts/check-placeholders"
     docs:
@@ -175,3 +178,4 @@ mappings:
     docs:
       - "docs/specs/dogfood-harvest.md"
       - "docs/adr/0014-dogfood-harvest-registry.md"
+      - "docs/adr/0018-brownfield-layout-tolerance.md"

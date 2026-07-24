@@ -2,6 +2,34 @@
 
 ## 2026-07-24
 
+- ADR 0018 mapped to the scripts it binds, at the owner's direction, closing the
+  gap the spec-drift dogfood story left open. The finding was not "the installer
+  is unmapped" but something wider: **an accepted ADR governing five scripts was
+  mapped to nothing at all**, so `check-stale` never required it to move with any
+  of them and no doc-aware reader ever received it. Measured rather than assumed —
+  layout-block readers by inspection: `scripts/okf` (2 parser hits),
+  `check-okf-version.sh` (2), `verify-install` (2), `harvest-dogfood` (2), and
+  `update-existing-repo` (2 parser hits plus 11 stamp-file references, the
+  heaviest reader of all). All five now carry the ADR. `check-docs-sync.sh` is
+  deliberately **not** mapped: it reads no layout at all, and mapping it would
+  manufacture the noise the map header warns against. Verified with both parsers —
+  the kit's own `check-stale` reports current, and spec-drift's stricter reader
+  parses all 26 mappings and resolves ADR 0018 for the updater but not for the
+  docs-sync hook.
+- **Flagged, not fixed** (an accepted ADR is the owner's): ADR 0018's point 2
+  carries a reader list — "Read by `scripts/okf`, both hooks …, `verify-install`,
+  and `harvest-dogfood`" — that is inaccurate in both directions. It omits
+  `update-existing-repo`, which reads the block and has stamped through it since
+  0.3.9, and it claims "both hooks" when `check-docs-sync.sh` reads no layout.
+  The mapping stands on its own regardless, because point 3 of the same decision
+  is explicitly "Brownfield adoption in `update-existing-repo`" — the ADR does
+  bind the installer, only that one sentence under-describes its own surface. The
+  omission is a plausible contributor to the eight-day stamp drift: the sentence a
+  reviewer would consult to ask "must the installer follow layout?" said no. An
+  amendment correcting the list is recommended and left for the owner.
+- No `VERSION` bump: `docs/okf-map.yml` at the kit root is this repo's own map, is
+  source-only, and no installed artifact changed (ADR 0010). Verified: `make test`.
+
 - Dogfood story 06 added for spec-drift (site-only), at the owner's direction. The
   repository is the first dogfood target that checks the kit *back*: a CLI built
   inside the kit's loop that reads a diff against the specs and ADRs governing it.
