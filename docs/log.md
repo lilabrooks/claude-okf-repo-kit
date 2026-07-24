@@ -2,6 +2,25 @@
 
 ## 2026-07-24
 
+- ADR 0018 amended at the owner's direction, correcting the reader list flagged in
+  the mapping change below. The correction needed no new judgment, because **the
+  ADR already contained the right list**: its Consequences section names the
+  duplication sites as "helper, SessionStart hook, `verify-install`, updater,
+  harvest" — exactly the five scripts measured in the code, with the hook singular
+  — while decision point 2 named a different set that omitted `update-existing-repo`
+  and claimed both hooks. The ADR contradicted itself, and point 2 was the outlier.
+  Recorded as an amendment at the end of Consequences per the ADR 0013 and 0021
+  house style, leaving the original decision text as the historical record and
+  naming the duplication line as authoritative. The amendment also states why the
+  omission was not harmless — the sentence a reviewer consults to ask whether the
+  installer must follow the declared layout answered no, and the installer stamped
+  a hardcoded `docs/index.md` for eight days before the 0.3.9 audit caught it, a
+  drift `check-stale` could not see either because the ADR was mapped to nothing —
+  and confirms the decision itself is untouched: three keys, declared not detected,
+  absent block meaning today's paths, with point 3 always binding the updater for
+  brownfield detection. No `VERSION` bump: an ADR is source-only and no installed
+  artifact changed (ADR 0010). Verified: `make check-docs`.
+
 - ADR 0018 mapped to the scripts it binds, at the owner's direction, closing the
   gap the spec-drift dogfood story left open. The finding was not "the installer
   is unmapped" but something wider: **an accepted ADR governing five scripts was
