@@ -18,7 +18,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Claude OKF repo kit: Keep goal-directed Claude Code work reviewable in Git. Lila Brooks.">
   <meta property="article:author" content="https://github.com/lilabrooks">
-  <meta property="article:modified_time" content="2026-07-21">
+  <meta property="article:modified_time" content="2026-07-24">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Dogfood findings | Claude OKF repo kit">
   <meta name="twitter:description" content="Lila Brooks documents 3 repositories, the gaps they exposed, and the changes carried back into the kit.">
@@ -59,7 +59,7 @@
         "url": "https://lilabrooks.github.io/dogfood/",
         "headline": "What changed after the kit met real work",
         "description": "How Spec Agent CLI, Repo Pulse, and Skywatch exposed gaps and changed the Claude OKF repo kit.",
-        "dateModified": "2026-07-21",
+        "dateModified": "2026-07-24",
         "author": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
         "creator": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
         "publisher": { "@id": "https://lilabrooks.github.io/#lila-brooks" },
@@ -98,7 +98,7 @@
   <main id="content">
     <div class="compact-hero compact-shell">
       <div>
-        <p class="compact-eyebrow">Dogfood record · four repositories, five stories</p>
+        <p class="compact-eyebrow">Dogfood record · five repositories, six stories</p>
         <h1 class="compact-title">What changed after the kit met real work.</h1>
       </div>
       <div>
@@ -292,6 +292,60 @@
             <span class="compact-tag">What changed in the kit</span>
             <h3 class="compact-card-title">Owner-rendered templates</h3>
             <p>Kit 0.3.1: both installers render the owner-carrying templates instead of copying them, substituting the target’s <code>git config user.name</code> wherever they are written; the goal template’s milestone mechanics shrink to a pointer at the playbook plus the one backlog-local rule; and the template and the <code>okf-adopt</code> skill now name the empty-backlog idiom for repositories adopted at their target state.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="compact-section" aria-labelledby="spec-drift-title">
+      <div class="compact-shell">
+        <div class="compact-section-head">
+          <p class="compact-eyebrow">06 · A repository that checks the kit back</p>
+          <div>
+            <h2 class="compact-section-title" id="spec-drift-title">Spec Drift</h2>
+            <p class="compact-section-copy">A CLI built inside the kit’s loop that reads a diff against the specs and ADRs governing it — so this round the dogfood repository could be pointed at the kit itself. <a href="https://github.com/lilabrooks/spec-drift">View repository ↗</a></p>
+          </div>
+        </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">What it tested</span>
+            <h3 class="compact-card-title">Two upgrades in one day</h3>
+            <p>The repository crossed 0.3.5 → 0.3.10 and then 0.3.10 → 0.3.12, and its earlier friction was the stated reason 0.3.11 existed — so the release fixing that friction met the repository it came from.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it found</span>
+            <h3 class="compact-card-title">Findings</h3>
+            <ul>
+              <li>The mirror fix held: the hook mirror that had drawn a pointless candidate at every prior release refreshed in place, none staged.</li>
+              <li>The filled-playbook suppression did not fire — on the very repository whose friction motivated it. It asks for a template delta, and <code>diff</code> exits zero when two files are identical, so “the template did not change” took the same branch as “the delta could not be computed” and the whole bracketed template was staged again.</li>
+              <li>Those two cases want opposite handling: an uncomputable delta leaves a reviewer nothing, so the template is still worth staging; an empty one is proof there is nothing to review.</li>
+            </ul>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What changed in the kit</span>
+            <h3 class="compact-card-title">Empty is not uncomputable</h3>
+            <p>The delta helper now reports the identical case distinctly, suppression accepts it as an answer in its own right, and the summary states the template is unchanged since the stamped release rather than pointing at a delta file that was never written. Smoke coverage gained the version-crossing, template-unchanged case; the uncomputable path keeps its own.</p>
+          </article>
+        </div>
+        <div class="compact-grid">
+          <article class="compact-card">
+            <span class="compact-tag">What happened</span>
+            <h3 class="compact-card-title">The tool turned on the kit</h3>
+            <p>A bug from the kit’s own history supplied the test: a decision record declared a relocatable stamp file, the installer kept writing the default path, and eight days and ten commits later a full audit — every script line-read — found it. Reintroduced as an ordinary-looking change, it went to the tool with the governing records beside it.</p>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it found</span>
+            <h3 class="compact-card-title">Caught, with two limits</h3>
+            <ul>
+              <li>One model call returned drift and described the same consequence the audit had recorded — a second stamp and a drift note that never clears.</li>
+              <li>It judges the change in front of it. The original arrangement — a record adding a claim about code that never moved — has no diff to read, and no diff-driven reader can see it.</li>
+              <li>It reasons only over records the map points at, and the map did not point the installer at that decision record. Without the entry, the record never reaches the reader.</li>
+            </ul>
+          </article>
+          <article class="compact-card">
+            <span class="compact-tag">What it surfaced for the kit</span>
+            <h3 class="compact-card-title">Mapping is the prerequisite</h3>
+            <p>The gap is the kit’s own map, not the tool: a decision that binds the installer is not mapped to it, so nothing mechanical carries it into review. That entry is still open — recorded here rather than quietly fixed, because the finding is the map discipline the kit asks of every adopter applying to the kit itself.</p>
           </article>
         </div>
       </div>
