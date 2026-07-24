@@ -611,8 +611,13 @@ is_import_shim() {
 # output — the delta describes what the kit changed, and rendering only
 # substitutes the owner name identically on both sides.
 # Returns 0 and sets PLAYBOOK_DELTA_PATH when a kit-only delta was written;
-# returns 1 when any ingredient is missing or the template did not change, so
-# callers can fall back to staging the whole template.
+# returns PLAYBOOK_DELTA_UNCHANGED when the template is provably identical
+# between the stamped release and this one; returns 1 when an ingredient is
+# missing so the delta could not be computed at all. The last two are different
+# answers and callers must not conflate them: an uncomputable delta leaves the
+# reviewer with nothing, so the whole template is still worth staging, while an
+# empty one is proof there is nothing to review.
+PLAYBOOK_DELTA_UNCHANGED=2
 PLAYBOOK_DELTA_PATH=""
 write_playbook_template_delta() {
   local commit release_commit="" old_template delta
@@ -636,9 +641,11 @@ write_playbook_template_delta() {
   if diff -u --label "templates/CLAUDE.md@$PRIOR_KIT_VERSION" \
     --label "templates/CLAUDE.md@$KIT_VERSION" \
     "$old_template" "$KIT_DIR/templates/CLAUDE.md" > "$delta"; then
+    # diff exits 0 when the two files are identical, so this branch means the
+    # template did not change across the releases — not that the delta failed.
     rm -f "$delta"
     rm -f "$old_template"
-    return 1
+    return "$PLAYBOOK_DELTA_UNCHANGED"
   fi
   rm -f "$old_template"
   PLAYBOOK_DELTA_PATH="$delta"
@@ -648,15 +655,31 @@ write_playbook_template_delta() {
 # Filled-playbook candidate suppression: staging the kit's bracketed template
 # beside a playbook with no blanks left reviews to nothing — the live file is
 # finished prose, and the reviewer's real question is what the kit changed
-# since the stamped release. The delta answers exactly that, so when it is
-# available it replaces the whole-template candidate rather than accompanying
-# it. Falls through to the candidate when no delta can be built, since then
-# there is nothing better to offer.
+# since the stamped release. Two answers satisfy that question, so both
+# suppress the candidate: a delta naming what changed, or proof that nothing
+# changed at all (an unchanged template across the releases). Only an
+# *uncomputable* delta falls through to the whole-template candidate, since
+# only then is there nothing better to offer.
 suppress_playbook_candidate() {
+  local status=0
   playbook_is_kit_derived "$1" || return 1
   playbook_is_filled "$1" || return 1
-  write_playbook_template_delta || return 1
-  return 0
+  # Guarded call: a bare invocation would abort the run under `set -e`.
+  write_playbook_template_delta || status=$?
+  [ "$status" -eq 0 ] || [ "$status" -eq "$PLAYBOOK_DELTA_UNCHANGED" ]
+}
+
+# Summary lines for a suppressed playbook candidate. A delta gets an advisory
+# pointing at it; an unchanged template has no file to point at and needs none,
+# because "nothing changed" is the whole review.
+note_playbook_suppressed() {
+  local name="$1"
+  if [ -n "$PLAYBOOK_DELTA_PATH" ]; then
+    skipped+=("$name is filled; kit template staged as a delta, not a whole-file candidate")
+    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; $name carries no template blanks, so no whole-template candidate was written — review the kit-only delta at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} and merge what applies into $name (okf-kit-upgrade candidate-review step)")
+  else
+    skipped+=("$name is filled and the kit playbook template is unchanged since $PRIOR_KIT_VERSION; no candidate written")
+  fi
 }
 
 # The delta is written only when this run actually staged or refreshed a
@@ -665,8 +688,7 @@ playbook_review_count="${#review[@]}"
 
 if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shim "$TARGET/CLAUDE.md"; }; then
   if suppress_playbook_candidate "$TARGET/AGENTS.md"; then
-    skipped+=("AGENTS.md is filled; kit template staged as a delta, not a whole-file candidate")
-    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; AGENTS.md carries no template blanks, so no whole-template candidate was written — review the kit-only delta at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} and merge what applies into AGENTS.md (okf-kit-upgrade candidate-review step)")
+    note_playbook_suppressed "AGENTS.md"
   else
     # Process substitution, not a pipe: the candidate machinery mutates the
     # summary arrays and must run in this shell.
@@ -685,8 +707,7 @@ if [ -f "$TARGET/AGENTS.md" ] && { [ ! -f "$TARGET/CLAUDE.md" ] || is_import_shi
   fi
 elif [ -f "$TARGET/CLAUDE.md" ]; then
   if suppress_playbook_candidate "$TARGET/CLAUDE.md"; then
-    skipped+=("CLAUDE.md is filled; kit template staged as a delta, not a whole-file candidate")
-    advisories+=("playbook template changed since kit $PRIOR_KIT_VERSION; CLAUDE.md carries no template blanks, so no whole-template candidate was written — review the kit-only delta at ${PLAYBOOK_DELTA_PATH#"$TARGET"/} and merge what applies into CLAUDE.md (okf-kit-upgrade candidate-review step)")
+    note_playbook_suppressed "CLAUDE.md"
   else
     write_numbered_content_candidate "$TARGET/CLAUDE.md" "CLAUDE.md" < <(render_playbook)
   fi
