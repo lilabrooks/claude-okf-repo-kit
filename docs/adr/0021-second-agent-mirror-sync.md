@@ -3,7 +3,7 @@ type: ADR
 title: Kit-managed second-agent mirror sync
 description: Teach the updater to refresh declared second-agent hook mirrors in place, byte-identical to the .claude/hooks originals, removing the manual re-sync step; skills stay owner-managed.
 tags: [adr, second-agent, installer, mirrors]
-timestamp: 2026-07-14T19:02:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-14T19:02:00Z }
 status: accepted
 ---
 

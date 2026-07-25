@@ -3,7 +3,7 @@ type: ADR
 title: Source kit layout
 description: Keep source-kit files reviewable at repo paths while documenting target install destinations.
 tags: [packaging, layout]
-timestamp: 2026-07-05T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-05T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

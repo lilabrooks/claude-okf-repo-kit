@@ -3,7 +3,7 @@ type: ADR
 title: Claude hook guardrails
 description: Use Claude Code hooks to enforce docs sync and OKF version awareness.
 tags: [claude-code, hooks, docs]
-timestamp: 2026-07-05T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-05T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

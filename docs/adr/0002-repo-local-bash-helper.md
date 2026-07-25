@@ -3,7 +3,7 @@ type: ADR
 title: Repo-local Bash helper
 description: Implement OKF helper commands as scripts/okf instead of a global CLI or prompt-only workflow.
 tags: [bash, okf, tooling]
-timestamp: 2026-07-05T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-05T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

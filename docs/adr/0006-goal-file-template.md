@@ -3,7 +3,7 @@ type: ADR
 title: Goal file template
 description: Capture the target repo's goal and milestone backlog in an installed docs/GOAL.md.
 tags: [goal, template, iteration]
-timestamp: 2026-07-07T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-07T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

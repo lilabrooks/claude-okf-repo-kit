@@ -3,7 +3,7 @@ type: ADR
 title: Source-kit validation Makefile
 description: Use a Makefile to consolidate validation checks for the source kit.
 tags: [makefile, validation]
-timestamp: 2026-07-05T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-05T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

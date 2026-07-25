@@ -1,5 +1,52 @@
 # Log
 
+## 2026-07-25 — this repo's own bundle migrated to OKF 0.2
+
+- **Discharges the follow-up that accepted
+  [ADR 0027](adr/0027-okf-0.2-frontmatter-emission.md) named.** 0.3.14 stopped the
+  kit *emitting* v0.1 frontmatter; this migrates the bundle the kit keeps for
+  itself. Source-only, so **`VERSION` stays at 0.3.14** — no installed artifact
+  changed, and ADR 0010 bumps only on installed behavior.
+- **`timestamp:` → `generated: { by, at }` in 34 files** — [GOAL.md](GOAL.md), all
+  27 ADRs, and the specs. `at` carries the legacy `timestamp` **verbatim**: a
+  field rename, not a recomputed last-change time, so no new provenance fact is
+  asserted.
+- **`by` is per-file, read from git rather than guessed.** Every one of the 34
+  files had a `Co-Authored-By` trailer on its newest non-merge commit, so each
+  records the model that actually drafted it: `claude-code/fable-5` (23),
+  `claude-code/opus-4.8` (10), `claude-code/opus-5` (1). Mapped to §7's
+  `<producer>/<version>` form.
+- **`okf_version: "0.1"` → `"0.2"`** in [index.md](index.md). The kit's
+  SessionStart drift note for this repo is now clear in principle — though this
+  repo has no `.claude/hooks/`, so it never ran here anyway (see the `kit_version`
+  note below).
+- **The root `CLAUDE.md` was nearly missed the same way spec-drift's `AGENTS.md`
+  was.** It carries OKF frontmatter deliberately (`type: Playbook`) but sits
+  outside `docs/`, so a `docs/`-scoped sweep skips it. It now reads
+  `generated: { by: "human:lilabrooks", at: 2026-07-08T00:00:00Z }` — the `human:`
+  actor because a playbook is hand-maintained, not machine-produced (§7; §5.3
+  derives trust tiers from the prefix). Found only by re-running the sweep across
+  **every tracked Markdown file**, null-delimited — the first attempt used an
+  unquoted loop and choked on `Claude Code OKF Kit Guide.md`, whose spaces split
+  into five bogus filenames. That file has no frontmatter, so nothing was missed,
+  but the broken loop could equally have hidden a real one.
+- `# Citations` → `sources` (§13.1) needed no work: no document here ever carried
+  a `# Citations` body list. The additive 0.2 families stay unadopted, as in
+  spec-drift — `verified` would assert confirmation events that have not happened.
+- The remaining "OKF v0.1" strings in this log and in ADR 0027 are historical
+  prose describing the state that was, and stay as written. ADR 0027's
+  Consequences section noted this migration as tracked follow-up; completing it
+  and logging it here is what that section asked for, so the accepted ADR needs no
+  edit.
+- **Still flagged, still not changed:** this bundle root declares
+  `kit_version: "0.3.0"` against a published 0.3.14. Whether the source kit should
+  carry that stamp at all is the owner's call — ADR 0010 makes `VERSION`
+  source-only and has installers stamp *targets*, not the kit.
+- Verification: all 35 migrated frontmatter blocks parsed with PyYAML, each
+  `generated` a real two-key mapping; `make test` green (14 smoke targets, parity,
+  links, shellcheck, json); `check-stale` current; `adr-suggest` clean; `pending`
+  empty.
+
 ## 2026-07-25 — declare the `status:` vocabulary divergence
 
 - **The owner's decision: keep `status:` as ADR workflow state, deliberately.**

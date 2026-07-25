@@ -3,7 +3,7 @@ type: Spec
 title: Installer scripts
 description: Safe automation for creating new repos and updating existing repos with this kit.
 tags: [installer, bash, safety]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-08T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

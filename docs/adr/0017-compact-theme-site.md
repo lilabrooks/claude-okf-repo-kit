@@ -3,7 +3,7 @@ type: ADR
 title: Adopt Compact Theme for the website
 description: Rebuild the site on the vendored Compact Theme (compact-theme.css/.js) for a maintained design system with light/dark modes, replacing the bespoke styles.css.
 tags: [website, theme, dark-mode, styling]
-timestamp: 2026-07-12T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-12T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

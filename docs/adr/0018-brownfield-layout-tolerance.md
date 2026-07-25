@@ -3,7 +3,7 @@ type: ADR
 title: Brownfield layout tolerance and adoption
 description: Tolerate existing docs arrangements — tolerant status and numbering detection, a minimal layout block in the map, and an adopting updater — instead of forcing the canonical tree.
 tags: [adr, brownfield, layout, installer, hooks]
-timestamp: 2026-07-13T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-13T00:00:00Z }
 status: accepted
 ---
 

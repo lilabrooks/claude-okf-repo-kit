@@ -3,7 +3,7 @@ type: ADR
 title: Installer completion summary as a stable interface
 description: Pin the installers' completion-summary section labels as a stable output contract, because downstream stack templates relay and test against them.
 tags: [adr, installer, output-contract, stack-templates]
-timestamp: 2026-07-18T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-18T00:00:00Z }
 status: accepted
 ---
 

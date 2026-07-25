@@ -3,7 +3,7 @@ type: ADR
 title: Workflow procedures as installed skills
 description: Deliver the four episodic workflow procedures as installed Claude Code skills that load on demand, with binding one-liners staying resident in the installed CLAUDE.md.
 tags: [adr, skills, context, template]
-timestamp: 2026-07-12T01:36:05Z
+generated: { by: claude-code/fable-5, at: 2026-07-12T01:36:05Z }
 status: accepted
 ---
 

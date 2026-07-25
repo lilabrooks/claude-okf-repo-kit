@@ -3,7 +3,7 @@ type: Playbook
 title: Claude Code OKF kit repo instructions
 description: Project-specific objective, grounding rules, and workflow for maintaining this source kit.
 tags: [claude-code, okf, agent-instructions, adr, specs]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: "human:lilabrooks", at: 2026-07-08T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

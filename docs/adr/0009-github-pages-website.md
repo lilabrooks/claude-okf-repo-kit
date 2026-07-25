@@ -3,7 +3,7 @@ type: ADR
 title: GitHub Pages website from main via Actions
 description: Publish the kit's website from a site/ folder on main with the official GitHub Actions Pages deployment.
 tags: [website, github-pages, deployment]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-08T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

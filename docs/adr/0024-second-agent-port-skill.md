@@ -3,7 +3,7 @@ type: ADR
 title: Second-agent port as an installed skill
 description: Ship the recurring second-agent port procedure as a sixth installed skill, okf-second-agent, with undeclared-mirror advisories in verify-install and the SessionStart hook.
 tags: [adr, skills, second-agent, mirrors]
-timestamp: 2026-07-20T01:04:05Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-20T01:04:05Z }
 status: accepted
 ---
 

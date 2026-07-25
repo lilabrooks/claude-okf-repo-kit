@@ -3,7 +3,7 @@ type: Spec
 title: OKF helper command
 description: Expected behavior for the repo-local scripts/okf helper.
 tags: [okf, bash, cli]
-timestamp: 2026-07-05T00:00:00Z
+generated: { by: claude-code/opus-5, at: 2026-07-05T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

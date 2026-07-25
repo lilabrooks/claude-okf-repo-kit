@@ -3,7 +3,7 @@ type: ADR
 title: Kit version stamp and drift reporting
 description: Stamp installed repos with the kit release that produced them and report drift at session start, so template improvements reach existing installs.
 tags: [versioning, upgrade, hooks, installer]
-timestamp: 2026-07-09T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-09T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

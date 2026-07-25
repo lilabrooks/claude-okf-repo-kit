@@ -3,7 +3,7 @@ type: ADR
 title: Rewrite kit-side installer tools in Python stdlib
 description: Move the source-kit-side installer tools to Python stdlib behind the existing smoke suite, while the target-installed surface (hooks, scripts/okf) stays standalone bash.
 tags: [adr, installer, bash, python, maintainability]
-timestamp: 2026-07-21T22:45:04Z
+generated: { by: claude-code/fable-5, at: 2026-07-21T22:45:04Z }
 status: accepted
 ---
 

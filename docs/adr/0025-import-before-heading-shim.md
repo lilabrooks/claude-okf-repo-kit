@@ -3,7 +3,7 @@ type: ADR
 title: Import-before-heading shim classification
 description: A heading disqualifies a CLAUDE.md shim only when the @AGENTS.md import sits under it, and the shim budget grows to 15 non-blank lines, so shims carrying the preloaded-context block classify correctly.
 tags: [adr, brownfield, shim, installer]
-timestamp: 2026-07-20T02:25:28Z
+generated: { by: claude-code/fable-5, at: 2026-07-20T02:25:28Z }
 status: accepted
 ---
 

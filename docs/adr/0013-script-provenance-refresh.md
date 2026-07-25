@@ -3,7 +3,7 @@ type: ADR
 title: Kit-managed script refresh via manifest provenance
 description: The updater refreshes kit-managed scripts in place only when their content is provably unedited kit output; owner-edited scripts are preserved with the kit version staged as a numbered candidate.
 tags: [adr, installer, safety]
-timestamp: 2026-07-11T21:33:56Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-11T21:33:56Z }
 status: accepted
 ---
 

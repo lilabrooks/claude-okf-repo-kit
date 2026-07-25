@@ -3,7 +3,7 @@ type: ADR
 title: Commented @-import shims count as shims
 description: Treat a CLAUDE.md that imports AGENTS.md plus short heading-free prose as an import shim, so AGENTS.md-first repos get an AGENTS.2.md candidate instead of a competing CLAUDE.2.md.
 tags: [adr, installer, brownfield, agents-md, shim]
-timestamp: 2026-07-18T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-18T00:00:00Z }
 status: accepted
 ---
 

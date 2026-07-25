@@ -3,7 +3,7 @@ type: ADR
 title: Apex mirror of the kit site via submodule; editorial site as the kit site
 description: Make site/ the single governed source of an editorial site, mirrored to the owner's apex user-site repo through a git submodule, with relative paths so the same files render at both bases.
 tags: [website, github-pages, submodule, deployment]
-timestamp: 2026-07-12T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-12T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted
