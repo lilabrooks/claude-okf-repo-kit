@@ -1,6 +1,5 @@
 ---
 okf_version: "0.2"
-kit_version: "0.3.0"
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
@@ -14,6 +13,21 @@ This bundle governs the Claude Code OKF repo kit.
 - [ADRs](adr/index.md)
 - [Change log](log.md)
 - [Source map](okf-map.yml)
+
+## Why this bundle root declares no `kit_version`
+
+The kit's release version lives in the root [`VERSION`](../VERSION) file, and
+that is its only authority (ADR 0010). `kit_version` records *the kit release
+that produced an install*, so it belongs in repos installed **from** this kit,
+where both installers write it — never here. This repo was not produced by an
+install, so the field would have nothing true to say.
+
+Please do not add it back. It carried `0.3.0` for fourteen releases before anyone
+noticed, precisely because no tool reads it here: the installers read the
+*target's* stamp, `verify-install` only ever runs against an install target, and
+the SessionStart hook stays silent when the field is absent. A second copy of the
+release number is a drift surface with no reader. `make test` now asserts its
+absence.
 
 ## The `status:` field in this bundle
 
