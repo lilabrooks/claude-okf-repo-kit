@@ -1,5 +1,17 @@
 # Log
 
+## 2026-07-25 — ADR 0027 accepted
+
+- [ADR 0027](adr/0027-okf-0.2-frontmatter-emission.md) is **accepted** at the
+  owner's direction. `status: proposed` → `status: accepted`, the body `# Status`
+  section records the date, and the index entry drops its **proposed** marker.
+- No implementation change: under the propose-then-implement policy the work
+  shipped in 0.3.14 already. Acceptance makes it binding — the emitted provenance
+  contract (`generated: { by: process:okf-scaffold, at: <ISO 8601 UTC> }`, the
+  `process:<id>` actor choice, and installers stamping `okf_version: "0.2"`) now
+  governs future work until a new ADR supersedes it.
+- `bash scripts/okf pending` reports no proposed ADRs.
+
 ## 2026-07-25
 
 - Kit 0.3.14: the kit stops emitting retired OKF v0.1 frontmatter. OKF 0.2
