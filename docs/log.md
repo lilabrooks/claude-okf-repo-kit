@@ -1,5 +1,25 @@
 # Log
 
+## 2026-07-25 — updater write containment, partial `KIT-P0-1` remediation
+
+- `scripts/update-existing-repo` now validates the target map and all effective
+  `layout:` paths before its first mutation. Absolute, traversal, empty/dot,
+  control-character, and symlink-escape paths fail before the backup home is
+  created. `make smoke-paths` exercises traversal, absolute-path, and symlink
+  escapes for `specs_dir`, `adr_dir`, and `stamp_file`, asserting a clean target
+  and an empty outside directory after every rejection. It also rejects a
+  target-map symlink resolving outside the target and proves the external map
+  was unchanged.
+- This closes only the updater write vector. The installed `scripts/okf` helper
+  still needs the roadmap's containment rewrite, so the umbrella `KIT-P0-1`
+  finding remains open. No completion record may claim otherwise.
+- `VERSION` remains 0.3.14 because no installed artifact changed. ADR 0028
+  accepts `source-v0.3.14-r1` as the source-only release identity, subject to a
+  later signed annotated tag and remote verification. This change does not
+  create or publish that tag.
+- Verification: `make smoke-paths`, `make test`, `bash scripts/okf
+  check-stale`, and `bash scripts/okf adr-suggest`.
+
 ## 2026-07-25 — the source kit stops stamping itself with `kit_version`
 
 - **Removed `kit_version` from this repo's bundle root**, at the owner's

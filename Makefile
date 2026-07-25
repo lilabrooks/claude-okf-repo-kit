@@ -692,6 +692,51 @@ smoke-paths:
 	bash scripts/okf check-stale >/dev/null; \
 	output=$$(CLAUDE_PROJECT_DIR="$$etarget" bash .claude/hooks/check-okf-version.sh </dev/null); \
 	[[ "$$output" == *'Kit candidate review:'* ]]; \
+	: 'unsafe layout values fail before the updater creates a backup or writes anywhere'; \
+	for mode in traversal absolute symlink; do \
+		for key in specs_dir adr_dir stamp_file; do \
+			utarget="$$tmp/unsafe-$$mode-$$key"; \
+			outside="$$tmp/outside-$$mode-$$key"; \
+			mkdir -p "$$utarget/docs" "$$outside"; \
+			case "$$mode" in \
+				traversal) value="../outside-$$mode-$$key" ;; \
+				absolute) value="$$outside/value" ;; \
+				symlink) \
+					ln -s "$$outside" "$$utarget/linked"; \
+					value="linked/value" ;; \
+			esac; \
+			printf '%s\n' 'layout:' "  $$key: $$value" '' 'mappings:' > "$$utarget/docs/okf-map.yml"; \
+			git -C "$$utarget" init -q; \
+			git -C "$$utarget" add .; \
+			git -C "$$utarget" -c user.email=a@example.com -c user.name=A commit -q -m init; \
+			if output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$utarget" 2>&1); then \
+				printf 'unsafe %s %s layout unexpectedly succeeded\n' "$$mode" "$$key" >&2; \
+				exit 1; \
+			fi; \
+			[[ "$$output" == *"unsafe layout $$key:"* ]]; \
+			test -z "$$(git -C "$$utarget" status --porcelain)"; \
+			test ! -e "$$utarget/.okf-kit-backups"; \
+			test -z "$$(find "$$outside" -mindepth 1 -print -quit)"; \
+		done; \
+	done; \
+	utarget="$$tmp/unsafe-map-symlink"; \
+	outside="$$tmp/outside-map-symlink"; \
+	mkdir -p "$$utarget/docs" "$$outside"; \
+	printf '%s\n' 'layout:' '  specs_dir: docs/specs' '' 'mappings:' > "$$outside/okf-map.yml"; \
+	ln -s "$$outside/okf-map.yml" "$$utarget/docs/okf-map.yml"; \
+	git -C "$$utarget" init -q; \
+	git -C "$$utarget" add .; \
+	git -C "$$utarget" -c user.email=a@example.com -c user.name=A commit -q -m init; \
+	before=$$(sha256sum "$$outside/okf-map.yml" 2>/dev/null || shasum -a 256 "$$outside/okf-map.yml"); \
+	if output=$$(bash "$(KIT_DIR)/scripts/update-existing-repo" "$$utarget" 2>&1); then \
+		printf 'outside-root target map symlink unexpectedly succeeded\n' >&2; \
+		exit 1; \
+	fi; \
+	[[ "$$output" == *'unsafe target map location:'* ]]; \
+	test -z "$$(git -C "$$utarget" status --porcelain)"; \
+	test ! -e "$$utarget/.okf-kit-backups"; \
+	test "$$before" = "$$(sha256sum "$$outside/okf-map.yml" 2>/dev/null || shasum -a 256 "$$outside/okf-map.yml")"; \
+	test "$$(find "$$outside" -type f | wc -l | tr -d ' ')" = 1; \
 	printf 'special-character path smoke ok\n'
 
 smoke-scripts:

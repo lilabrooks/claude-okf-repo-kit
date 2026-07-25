@@ -63,6 +63,13 @@ Per ADR 0016, `site/` is the single governed source and is also mirrored to the 
 
 The source repo publishes its release version in a root `VERSION` file (semver, one line) on `main`. It is source-only — never copied to targets — and must be bumped when installed behavior changes, because installed repos compare their stamped `kit_version` against it at session start (ADR 0010).
 
+When an urgent repair changes only source-repo tooling, tests, or governance and
+leaves every installed artifact unchanged, `VERSION` stays fixed. Publish that
+state with a signed annotated `source-v<installed-version>-r<n>` tag under ADR
+0028. The tag is a source release identity, not a target stamp. Its release log
+must state any partial-remediation boundary, and publishing is complete only
+after the remote tag object, signature, and peeled commit are verified.
+
 A `VERSION` bump signals that installed behavior changed, which is exactly when the website can go stale. Any release that bumps `VERSION` must therefore include a review of `site/`: re-read each site claim against the change and update the copy where behavior moved, keeping the editorial voice and honesty framing per the site-content spec. This review step is the real assurance that the site tracks the kit; the `site/index.html` entries in `docs/okf-map.yml` (mapped alongside `templates/CLAUDE.md` and `templates/skills/**`) are only a soft `check-stale` reminder. After updating `site/`, publish per ADR 0016: the project-base Pages redeploys on push, then bump the apex submodule in the `lilabrooks.github.io` repo.
 
 The source repo is proprietary: `LICENSE` reserves all rights, with the source repo's own work under "All Rights Reserved" and carve-outs preserving the third-party licenses of the vendored `site/` assets (Compact Theme under BSD 2-Clause, IBM Plex fonts under the SIL Open Font License).
