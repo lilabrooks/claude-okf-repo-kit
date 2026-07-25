@@ -1,5 +1,34 @@
 # Log
 
+## 2026-07-25 — declare the `status:` vocabulary divergence
+
+- **The owner's decision: keep `status:` as ADR workflow state, deliberately.**
+  OKF 0.2 §5.4 specifies `status` as a lifecycle field (`draft` / `stable` /
+  `deprecated`), which collides with the 27 `accepted` ADRs here and with the
+  `proposed`/`accepted` values that `scripts/okf pending` and
+  `check-okf-version.sh` read — in this repo and in every repo installed from it.
+  Reconciling the two would break both readers everywhere. Declined, and now
+  declared in [index.md](index.md) instead of left implicit.
+- **Conformance is unaffected**: §11 requires only parseable frontmatter, a
+  non-empty `type`, and reserved filenames matching §8/§9, none of which involve
+  `status`.
+- **Why declaring it matters.** §4.1 requires consumers to tolerate unknown
+  *types*, and §11 forbids rejecting a bundle over unknown `type` *values* or
+  unknown *keys* — neither covers an out-of-vocabulary value of a *known* key, and
+  §5.4 defines its vocabulary without saying how to treat anything outside it. The
+  behavior is undefined rather than protected, so a consumer filtering on
+  lifecycle could read `accepted` as "not stable". Nothing does today.
+- Recorded for a future revisit: if machine-readable lifecycle is wanted, add a
+  separate key rather than renaming (§4.1 protects additive keys). Revisit
+  triggers are a real OKF consumer filtering on `status`, or OKF 0.3 adding
+  conformance requirements around lifecycle.
+- **Noticed, not changed:** this bundle root declares `kit_version: "0.3.0"` while
+  the kit publishes 0.3.14. It has gone unnoticed because this repo has no
+  `.claude/hooks/`, so its own SessionStart drift check never runs. Whether the
+  source kit should carry a `kit_version` stamp at all is a real question — ADR
+  0010 makes `VERSION` source-only and has installers stamp *targets* — so it is
+  left for the owner rather than silently corrected here.
+
 ## 2026-07-25 — ADR 0027 accepted
 
 - [ADR 0027](adr/0027-okf-0.2-frontmatter-emission.md) is **accepted** at the
