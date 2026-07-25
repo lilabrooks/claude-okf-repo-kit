@@ -1,5 +1,37 @@
 # Log
 
+## 2026-07-25 — the source kit stops stamping itself with `kit_version`
+
+- **Removed `kit_version` from this repo's bundle root**, at the owner's
+  direction, rather than correcting it. It read `0.3.0` against a published
+  0.3.14, but the staleness was the symptom: `kit_version` records *the kit
+  release that produced an install* ([ADR 0010](adr/0010-kit-version-stamp.md)),
+  and this repo was not produced by an install. Correcting it to 0.3.14 would have
+  made it accurate and still meaningless, and renewed a per-release chore.
+- **Nothing read it here**, which is why it drifted fourteen releases unnoticed:
+  both installers read the *target's* stamp (`update-existing-repo` reads
+  `$TARGET/$STAMP_FILE`), every `verify-install` invocation in the Makefile is
+  against an install target rather than this root, and
+  `check-okf-version.sh` gates on `[ -n "$kit_declared" ]` so absence is a
+  designed silent state, not an edge case. `VERSION` is the single release
+  authority per ADR 0010; a second copy was a drift surface with no reader.
+- No ADR: removing the field **conforms** to ADR 0010 rather than contradicting
+  it. `VERSION` stays 0.3.14 — this is source-only and changes no installed
+  artifact.
+- **Two guards against a well-meaning re-add.** [index.md](index.md) gains a
+  section explaining why the field is absent and asking that it not be restored,
+  and `scripts/check-parity.py` gains
+  `check_source_bundle_declares_no_kit_version`, which fails the parity gate with
+  the offending line number if it reappears.
+- The guard was **verified to fail before being kept**: re-adding
+  `kit_version: "0.3.14"` makes `check-parity.py` exit 1 and `make parity` exit
+  non-zero, naming `docs/index.md:3`. A first check of that exit code was
+  misleading because the pipe to `tail` masked it, so it was re-measured
+  unpiped — a guard that cannot fail is worse than none.
+- Verification: `make test` green (14 smoke targets, parity now 10 checks, links,
+  shellcheck, json); `bash scripts/okf check-stale`; `bash scripts/okf
+  adr-suggest`.
+
 ## 2026-07-25 — this repo's own bundle migrated to OKF 0.2
 
 - **Discharges the follow-up that accepted

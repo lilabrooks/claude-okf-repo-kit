@@ -273,6 +273,31 @@ def check_bash_boundary() -> None:
     ok(f"installed surface ({len(INSTALLED_SURFACE)} files) stays standalone bash")
 
 
+def check_source_bundle_declares_no_kit_version() -> None:
+    """The source kit's own bundle root must not carry a kit_version stamp.
+
+    `kit_version` records the kit release that produced an *install* (ADR 0010),
+    so it belongs in target repos, never here. Nothing in the kit reads it here —
+    the installers read the target's stamp, verify-install only ever runs against
+    a target, and the SessionStart hook is silent when the field is absent — so a
+    copy in this bundle root is a drift surface with no reader. It sat at 0.3.0
+    for fourteen releases before anyone noticed, which is why this is pinned
+    rather than left to review.
+    """
+    rel = "docs/index.md"
+    for number, line in enumerate(read(rel).splitlines(), 1):
+        if line.startswith("---") and number > 1:
+            break
+        if re.match(r"^kit_version:", line):
+            fail(
+                f"{rel}:{number}: the source kit's bundle root must not declare"
+                " kit_version — VERSION is the release authority (ADR 0010), and"
+                " kit_version belongs only in repos installed from this kit"
+            )
+            return
+    ok(f"{rel} declares no kit_version (VERSION is the release authority)")
+
+
 def check_python_floor_conventions() -> None:
     python_files = sorted(
         p.relative_to(ROOT).as_posix()
@@ -351,6 +376,7 @@ def main() -> int:
     check_skill_roster()
     check_summary_labels()
     check_bash_boundary()
+    check_source_bundle_declares_no_kit_version()
     check_python_floor_conventions()
     if failures:
         print("\nparity failures:")
