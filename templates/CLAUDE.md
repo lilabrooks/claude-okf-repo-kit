@@ -3,14 +3,14 @@ type: Playbook
 title: Claude Code repo instructions
 description: Master objective, grounding rules, and workflow for Claude Code in this repository.
 tags: [claude-code, agent-instructions, adr, specs]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: "human:[owner name]", at: 2026-07-08T00:00:00Z }
 owner: "[owner name]"
 deciders: ["[owner name]"]
 ---
 
-<!-- Template. Fill every [bracket], update the timestamp, then delete this comment.
+<!-- Template. Fill every [bracket], update generated.at, then delete this comment.
      Claude Code ignores the frontmatter; it exists to make this file a valid OKF
-     concept (type is the only required field, per OKF v0.1). -->
+     concept (type is the only required field, per OKF v0.2). -->
 
 # Master objective
 
@@ -72,11 +72,11 @@ docs/
 
 ```yaml
 ---
-okf_version: "0.1"
+okf_version: "0.2"
 ---
 ```
 
-Every new spec or ADR file gets YAML frontmatter with at least a `type:` field (OKF v0.1), plus `title` and `description`. Keep each `index.md` current when files are added or renamed.
+Every new spec or ADR file gets YAML frontmatter with at least a `type:` field (OKF v0.2), plus `title` and `description`. Keep each `index.md` current when files are added or renamed.
 
 `docs/okf-map.yml` maps source globs to the specs and ADRs that govern them. Keep it current when modules move or new source areas get their own contracts.
 
@@ -116,7 +116,7 @@ Everything else agent-related is committed: `CLAUDE.md`, `.claude/settings.json`
 A SessionStart hook compares `okf_version` in `docs/index.md` against the latest spec version on the official OKF repo. When it reports drift:
 
 1. Read the current spec at https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/main/okf/SPEC.md and identify what changed.
-2. Minor bump (e.g. 0.1 → 0.2): backward-compatible. Migrate automatically, before the first task of the session: update `okf_version` in `docs/index.md`, apply any new formatting or structural conventions across `/docs`, log the migration in `/docs/log.md`. No approval needed.
+2. Minor bump (e.g. 0.2 → 0.3): backward-compatible. Migrate automatically, before the first task of the session: update `okf_version` in `docs/index.md`, apply any new formatting or structural conventions across `/docs`, log the migration in `/docs/log.md`. No approval needed.
 3. Major bump (e.g. 0.x → 1.0): may contain breaking changes. Stop and present me a migration summary before changing any `/docs` files.
 
 Never modify spec or ADR content as part of a version migration; only formatting, frontmatter, and structure.

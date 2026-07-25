@@ -902,7 +902,7 @@ bundle_link() {
 }
 
 docs_index_content() {
-  printf -- '---\nokf_version: "0.1"\nkit_version: "%s"\n---\n\n# Knowledge bundle\n\n' "$KIT_VERSION"
+  printf -- '---\nokf_version: "0.2"\nkit_version: "%s"\n---\n\n# Knowledge bundle\n\n' "$KIT_VERSION"
   printf -- '- [Goal](GOAL.md)\n'
   printf -- '- [Specs](%s/index.md)\n' "$(bundle_link "$SPECS_DIR")"
   printf -- '- [ADRs](%s/index.md)\n' "$(bundle_link "$ADR_DIR")"

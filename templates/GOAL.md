@@ -3,12 +3,12 @@ type: Goal
 title: Project goal
 description: The goal, success criteria, and milestone backlog Claude Code iterates toward in this repo.
 tags: [goal, milestones]
-timestamp: 2026-07-07T00:00:00Z
+generated: { by: "human:[owner name]", at: 2026-07-07T00:00:00Z }
 owner: "[owner name]"
 deciders: ["[owner name]"]
 ---
 
-<!-- Template. Fill every [bracket], update the timestamp, then delete this comment.
+<!-- Template. Fill every [bracket], update generated.at, then delete this comment.
      This file is the goal Claude Code iterates toward. Keep milestones ordered and
      check one off only when its verification passes. -->
 

@@ -1,5 +1,75 @@
 # Log
 
+## 2026-07-25
+
+- Kit 0.3.14: the kit stops emitting retired OKF v0.1 frontmatter. OKF 0.2
+  supersedes `timestamp` with `generated.at` (SPEC.md §13.1), and the kit was on
+  the wrong side of it in three places at once — `scripts/okf` wrote `timestamp:`
+  from all three scaffold sites (`draft`, `new-adr`, `new-spec`), the three
+  templates carried `timestamp:` in their own frontmatter and documented
+  `okf_version: "0.1"` and "OKF v0.1", and **both** installers hardcoded
+  `okf_version: "0.1"` when writing a bundle root. Recorded as proposed
+  [ADR 0027](adr/0027-okf-0.2-frontmatter-emission.md); the owner accepts,
+  amends, or reverts.
+- The compounding was the point. A repo installed from 0.3.13 was born stamped
+  0.1 and fired an OKF drift note on its first session, and a repo that had
+  already migrated to 0.2 was dragged back to v0.1 field names by its next
+  `okf new-adr`. The spec-drift dogfood repo migrated its bundle to 0.2 earlier
+  the same day and would have regressed on its next scaffolded document — this is
+  the half of that migration that no downstream repo can fix for itself.
+- The emitted form is
+  `generated: { by: process:okf-scaffold, at: <ISO 8601 UTC> }`. The instant
+  recorded is unchanged; only the field shape moves. The actor is the §7
+  `process:<id>` form because a scaffold skeleton is machine-produced — ADR 0027
+  records why `<producer>/<version>` lost (`VERSION` is source-only and never
+  installed per ADR 0010, so the helper would have to parse a `kit_version` stamp
+  that ADR 0018 lets brownfield repos omit) and why `human:` lost (§7 reserves
+  the prefix for hand-authored content because §5.3 derives trust tiers from it,
+  so claiming it would inflate every generated draft to human-reviewed).
+- Verified by scaffolding, not by inspection: `okf new-adr` and `okf new-spec`
+  were run against this repo and the emitted frontmatter was parsed with PyYAML,
+  which returned a real two-key mapping (`by` a string, `at` a datetime) — the
+  unquoted `process:okf-scaffold` was the risk, since a colon inside a flow
+  mapping can parse as a nested key. The probe documents were then removed. That
+  same parse caught broken YAML in ADR 0027's own `description`, where an
+  unquoted `generated: { by, at }` in prose was being read as a nested mapping;
+  the description is now quoted.
+- The template frontmatter uses `by: "human:[owner name]"` rather than the
+  scaffolder's process actor: those files are hand-maintained playbooks, not
+  generated skeletons. The quoting is load-bearing — an unquoted `[owner name]`
+  placeholder parses as a YAML list.
+- Templates also had two stale instructions the field rename exposed: the header
+  comment told the owner to "update the timestamp", and the version-policy
+  section used "0.1 → 0.2" as its worked example of a minor bump, which now reads
+  as a pending migration rather than an illustration. Both corrected.
+- `docs/specs/okf-helper-command.md` gains an **Emitted provenance** section
+  stating the contract for all three scaffolders in one place, including that
+  nothing in the helper rewrites existing documents — a repo carrying legacy
+  `timestamp` keys is left alone and migrates on its own schedule.
+- `docs/okf-map.yml` now maps ADR 0027 onto the six sources whose emitted
+  frontmatter it governs (`scripts/okf`, both installers, all three templates).
+  This clears `check-stale` for those files by recording real governance rather
+  than leaning on the blanket `docs/log.md` escape hatch.
+- **`VERSION` rationale (no doc change warranted).** `check-stale` also flags the
+  0.3.13 → 0.3.14 bump against `docs/specs/repo-kit-packaging.md` and
+  [ADR 0010](adr/0010-kit-version-stamp.md). Neither needs editing: both describe
+  the stamping *mechanism*, which is unchanged, and neither names a version. The
+  bump itself is ADR 0010 doing its job — installed behavior changed, so the
+  release version moves.
+- **ADR 0016 site review (required by the `VERSION` bump): no change needed.**
+  `site/` refers to the Open Knowledge Format by name with a link to the spec and
+  never states a version, so nothing on the site became inaccurate. The one
+  version string in `site/dogfood/index.html` narrates the 0.3.5 → 0.3.12 history
+  in past tense and stays correct.
+- Not in scope, deliberately: the `# Citations` → `sources` half of §13.1 (the
+  scaffolders never emitted a `# Citations` body list), the additive 0.2 families,
+  and **this repo's own `docs/` bundle** — 34 files still carry `timestamp:` and
+  `docs/index.md` still declares `okf_version: "0.1"`. That is source-only, ships
+  in no install, and bumps no version, so it is sequenced after the installed
+  fix. Follow-up work.
+- Verification: `make test` (14 smoke targets, parity, links, shellcheck, json),
+  `bash scripts/okf check-stale`, `bash scripts/okf adr-suggest`.
+
 ## 2026-07-24
 
 - Kit 0.3.13: the playbook now says what to do when two knowledge files disagree,

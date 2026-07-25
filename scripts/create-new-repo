@@ -128,7 +128,7 @@ copy_created "$KIT_DIR/templates/skills/okf-second-agent/SKILL.md" "$TARGET/.cla
 
 cat > "$TARGET/docs/index.md" <<EOF
 ---
-okf_version: "0.1"
+okf_version: "0.2"
 kit_version: "$KIT_VERSION"
 ---
 
