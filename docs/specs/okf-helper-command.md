@@ -56,6 +56,12 @@ Outside hook mode, `check-stale` also prints a non-blocking note listing changed
 
 The workflow/agent-config exclusions and the repo-meta set are, together, exactly the Stop hook's non-implementation list (Claude hooks spec); the two lists must not drift, and `make parity` asserts their set-equality.
 
+# Emitted provenance
+
+Every scaffolder — `draft`, `new-adr`, and `new-spec` — records when it produced the skeleton as an OKF 0.2 provenance mapping, `generated: { by: process:okf-scaffold, at: <ISO 8601 UTC> }` (ADR 0027). The retired v0.1 `timestamp` key is not emitted. The actor is the `process:<id>` form because a scaffold skeleton is machine-produced; whoever fills the document in may overwrite `by` with their own actor, and the helper does not require it. The mapping is written in YAML flow form on one line, which parses as a two-key mapping and keeps one line per frontmatter key.
+
+Nothing in the helper rewrites the frontmatter of documents that already exist, so a repo carrying legacy `timestamp` keys is left alone and migrates on its own schedule under the OKF version policy.
+
 # Draft behavior
 
 `draft` must write to the drafts folder — `<specs_dir>/_drafts/`, which is `docs/specs/_drafts/` by default.
@@ -76,7 +82,7 @@ It should stay quiet for local refactors, formatting, test-only changes, and bug
 
 # Scaffolding behavior
 
-`new-adr` scaffolds into the ADR home and follows whatever numbering already exists there (ADRs 0018, 0019): the next number is the highest existing numeric prefix plus one, zero-padded to the widest existing prefix width — a repo with `001-*.md` ADRs gets `017-`, never a parallel `0001-` sequence — and four digits when the directory holds no numbered ADRs. Bare-numeric names take precedence; when none exist and every alpha-prefixed name (`adr-0001-*.md`: an alphabetic word, hyphen, digits, hyphen) shares one prefix word, that convention is continued instead (`adr-0011-<slug>.md`). Mixed prefixes fall back to the four-digit default. The scan ignores `index.md` and installer-written `*.N.md` review candidates, matching the pending scan. It writes frontmatter with at least `type: ADR`, a title, a timestamp, and `status: proposed`, and lays out the required sections: status, context, decision, alternatives considered, consequences, and rollback/revisit trigger.
+`new-adr` scaffolds into the ADR home and follows whatever numbering already exists there (ADRs 0018, 0019): the next number is the highest existing numeric prefix plus one, zero-padded to the widest existing prefix width — a repo with `001-*.md` ADRs gets `017-`, never a parallel `0001-` sequence — and four digits when the directory holds no numbered ADRs. Bare-numeric names take precedence; when none exist and every alpha-prefixed name (`adr-0001-*.md`: an alphabetic word, hyphen, digits, hyphen) shares one prefix word, that convention is continued instead (`adr-0011-<slug>.md`). Mixed prefixes fall back to the four-digit default. The scan ignores `index.md` and installer-written `*.N.md` review candidates, matching the pending scan. It writes frontmatter with at least `type: ADR`, a title, a `generated` provenance mapping, and `status: proposed`, and lays out the required sections: status, context, decision, alternatives considered, consequences, and rollback/revisit trigger.
 
 `new-spec` writes `<specs_dir>/<slug>.md` with `type: Spec` frontmatter and purpose, contract, and verification sections; the contract section prompts for the example interactions users actually give the surface, including a rejected or edge input. When the spec home's sole numbered convention is an alpha-prefixed ID sequence (`spec-000-*.md`), the sequence is continued (`spec-009-<slug>.md`); bare-numeric chapter names (`01-overview.md`) are deliberately not followed, since chapter position is an editorial decision, and those repos keep plain `<slug>.md` (ADR 0019).
 
