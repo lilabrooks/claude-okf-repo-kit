@@ -3,7 +3,7 @@ type: Spec
 title: Dogfood harvest helper
 description: Registry and delta-report contract for tracking installed dogfood repos from the source kit.
 tags: [spec, dogfooding, maintenance]
-timestamp: 2026-07-11T22:00:37Z
+generated: { by: claude-code/fable-5, at: 2026-07-11T22:00:37Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

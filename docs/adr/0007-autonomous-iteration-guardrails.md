@@ -3,7 +3,7 @@ type: ADR
 title: Autonomous iteration guardrails
 description: Let the installed template run the goal loop unattended - proposed ADRs for decisions, plus test, security, and destructive-action guardrails.
 tags: [autonomy, guardrails, template, security]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-08T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

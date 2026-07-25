@@ -3,7 +3,7 @@ type: ADR
 title: Dogfood harvest via a machine-local registry
 description: Track installed dogfood repos with a git-ignored registry of harvest high-water marks and a source-only helper that reports deltas from fixed probes.
 tags: [adr, dogfooding, maintenance]
-timestamp: 2026-07-11T22:00:37Z
+generated: { by: claude-code/fable-5, at: 2026-07-11T22:00:37Z }
 status: accepted
 ---
 

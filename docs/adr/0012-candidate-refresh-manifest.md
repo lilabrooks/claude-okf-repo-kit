@@ -3,7 +3,7 @@ type: ADR
 title: Stale-candidate refresh via digest manifest
 description: Let the updater refresh numbered candidates it can prove it wrote, tracked by content digest, instead of numbering past them each kit release.
 tags: [installer, candidates, upgrade, safety]
-timestamp: 2026-07-09T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-09T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

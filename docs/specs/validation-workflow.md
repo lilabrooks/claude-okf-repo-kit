@@ -3,7 +3,7 @@ type: Spec
 title: Validation workflow
 description: Makefile validation contract for the source kit.
 tags: [makefile, validation, smoke-tests]
-timestamp: 2026-07-08T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-08T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

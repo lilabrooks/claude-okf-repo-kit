@@ -3,7 +3,7 @@ type: ADR
 title: Brownfield naming-convention tolerance
 description: Follow alpha-prefixed ADR/spec numbering (adr-0001-, spec-000-), decline to append bullets into table-style indexes, and stamp kit_version into an existing bundle root instead of staging a replacement candidate.
 tags: [adr, brownfield, naming, installer, helper]
-timestamp: 2026-07-14T00:17:11Z
+generated: { by: claude-code/fable-5, at: 2026-07-14T00:17:11Z }
 status: accepted
 ---
 

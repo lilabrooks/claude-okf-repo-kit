@@ -3,7 +3,7 @@ type: Spec
 title: Site content and style
 description: What the kit's website in site/ must say and how it must read, so updates stay accurate and keep the editorial voice.
 tags: [website, content, style]
-timestamp: 2026-07-12T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-12T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

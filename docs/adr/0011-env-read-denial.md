@@ -3,7 +3,7 @@ type: ADR
 title: Env-file read denial in shipped settings
 description: Ship permissions.deny Read rules for local env files in settings.json, converting part of the secrets guardrail from instruction to enforcement.
 tags: [security, permissions, settings, secrets]
-timestamp: 2026-07-09T00:00:00Z
+generated: { by: claude-code/fable-5, at: 2026-07-09T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 status: accepted

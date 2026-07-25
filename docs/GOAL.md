@@ -3,7 +3,7 @@ type: Goal
 title: Source-kit goal
 description: The goal, success criteria, and milestone backlog for the Claude Code OKF repo kit itself.
 tags: [goal, milestones, source-kit]
-timestamp: 2026-07-07T00:00:00Z
+generated: { by: claude-code/opus-4.8, at: 2026-07-07T00:00:00Z }
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---

@@ -3,7 +3,7 @@ type: ADR
 title: Guided brownfield adoption as an installed skill
 description: Deliver the thorough first-time adoption pass — inventory, map, backfill, validate — as an installed okf-adopt skill with adapt-in-place as the default and migration to canonical as an owner-directed option, instead of growing the installer into a converter.
 tags: [adr, brownfield, adoption, skills]
-timestamp: 2026-07-14T00:55:38Z
+generated: { by: claude-code/fable-5, at: 2026-07-14T00:55:38Z }
 status: accepted
 ---
 
