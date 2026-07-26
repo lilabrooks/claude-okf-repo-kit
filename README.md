@@ -1,7 +1,14 @@
 # Claude OKF repo kit
 
-[![Status](https://img.shields.io/badge/status-preview-blue)](#project-status)
-[![Website](https://img.shields.io/badge/website-live-5D3FD3)](https://lilabrooks.github.io/claude-okf-repo-kit/)
+> [!WARNING]
+> **Experiment concluding.** This kit is being retired, and its website will
+> also be retired. The code and history will remain available as a historical
+> reference, but new adoption is not recommended. A smaller cross-agent,
+> skill-based successor is being evaluated and will be linked here only if it
+> passes its acceptance checks.
+
+[![Status](https://img.shields.io/badge/status-concluding-orange)](#project-status)
+[![Website](https://img.shields.io/badge/website-retiring-orange)](https://lilabrooks.github.io/claude-okf-repo-kit/)
 [![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml)
 [![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](#daily-use-after-installation)
 [![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)

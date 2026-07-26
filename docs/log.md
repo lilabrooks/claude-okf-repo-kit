@@ -1,5 +1,11 @@
 # Log
 
+## 2026-07-26 — announce experiment retirement
+
+- The README now identifies the kit as a concluding experiment, discourages
+  new adoption, and states that the website will retire. No governing spec
+  changed because this notice does not change installed kit behavior.
+
 ## 2026-07-26 — accept ADR 0029, the shared layout guard
 
 - **Accepted ADR 0029** at the owner's direction with CI green. The decision
