@@ -1,5 +1,23 @@
 # Log
 
+## 2026-07-26 — record the approved integration architecture scope
+
+- Added owner-approved success criteria to `docs/GOAL.md`: one shared kit
+  path-safety primitive with no second validator copy, installed helpers
+  refusing unsafe layout values before reading or writing, the versioned map
+  contract v1 with a `legacy` compatibility reader and migration report, and
+  the source-README Spec Drift interoperability note.
+- Added two milestones: the shared path-safety primitive with installed-helper
+  containment, which closes the remaining half of the updater containment work,
+  and map contract v1 with its conformance corpus.
+- Scope source: the owner's recorded direction in Appendix B of the Spec Drift
+  and OKF kit integration roadmap, task `DARCH.15`. This records decisions the
+  owner already made; it does not make new ones.
+- No script or installed artifact changed, so `VERSION` stays 0.3.14. The
+  installed-helper containment milestone will change installed behavior and
+  needs its own `VERSION` bump and site review under ADRs 0010 and 0016.
+- `KIT-P0-1` remains open: `scripts/okf` still follows unsafe layout values.
+
 ## 2026-07-25 — updater write containment, partial `KIT-P0-1` remediation
 
 - `scripts/update-existing-repo` now validates the target map and all effective
