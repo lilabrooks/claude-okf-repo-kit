@@ -1,5 +1,35 @@
 # Log
 
+## 2026-07-26 — propose ADR 0029, the shared layout guard
+
+- **Proposed ADR 0029.** `scripts/okf` still follows unsafe `layout:` values:
+  with `adr_dir: ../outside` in a target map, `okf new-adr` writes the ADR and
+  its index entry outside the repository root. Reproduced against the current
+  `main`. This is the open half of `KIT-P0-1`; the updater half closed earlier.
+- The obvious repair is blocked from two directions. ADR 0026 keeps the
+  installed surface standalone Bash with no companion files and `make parity`
+  asserts it never mentions `python3`, so the updater's inline Python
+  validation cannot move into `scripts/okf`. The integration roadmap's `K1.5`
+  forbids a second copy of the validator, so reimplementing the rules there is
+  also out.
+- The decision reuses machinery this kit already has. `OKF-SHARED` marked
+  blocks already carry the `layout-awk` parser byte-identically across
+  `scripts/okf`, `update-existing-repo`, `verify-install`,
+  `check-okf-version.sh`, and `harvest-dogfood`, gated by
+  `scripts/check-parity.py`. Layout parsing already crosses the installed and
+  source boundary as one definition; only validation does not. ADR 0029 adds a
+  `layout-guard` block beside it, registered in `SHARED_BLOCKS`.
+- For the ADR 0026 migration path, the ADR names a shared conformance corpus
+  as the behavioral authority. A tool rewritten in Python drops the Bash block
+  and proves equivalence against the corpus instead.
+- Authored ahead of implementation on purpose. The roadmap blocks `K1`
+  implementation until its contract and fixture packages freeze, but the
+  decision is not blocked, so having it settled means the fix can land as soon
+  as those clear rather than starting a design discussion then.
+- Implementation will change installed behavior and therefore needs a
+  `VERSION` bump under ADR 0010 and a `site/` review under ADR 0016. Nothing
+  was implemented in this change; no script or installed artifact was touched.
+
 ## 2026-07-26 — record two declined additions as non-goals
 
 Both were assessed and declined. Recording the reasoning so neither has to be
