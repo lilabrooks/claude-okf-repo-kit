@@ -33,7 +33,8 @@ Solution: A reviewable source kit that installs a complete Claude Code OKF workf
 - Every kit-side tool that reads or writes a layout, mirror, source-root, or governing path validates it through one shared path-safety primitive. No tool carries a second copy of the validator, and an installed helper is never the safety authority for the updater.
 - Installed helpers refuse an unsafe layout value before reading or writing, so a target whose map is edited after install cannot make `okf draft`, `new-spec`, or `new-adr` write outside the repository root.
 - The kit publishes a versioned map contract: map v1 uses segment-scoped `*` and recursive `**`, a map with no `map_version` is `legacy`, and the compatibility reader ships with a read-only migration report comparing legacy and v1 match sets.
-- The source README carries a short Spec Drift interoperability note linking the compatibility table and operator runbook. It stays out of default installed files and skills.
+- The source README carries a short Spec Drift interoperability safety note stating the current replay-only and P0 boundary. It stays out of default installed files and skills.
+- Once Spec Drift has reserved its stable operator-runbook path, the same note carries a cross-link to it, added before the kit candidate commit is recorded so no post-candidate edit forces another acceptance rerun.
 
 # Non-goals
 
@@ -45,7 +46,9 @@ Solution: A reviewable source kit that installs a complete Claude Code OKF workf
 
 - Specs: `docs/specs/repo-kit-packaging.md`, `docs/specs/installer-scripts.md`, `docs/specs/okf-helper-command.md`, `docs/specs/claude-hooks.md`, `docs/specs/validation-workflow.md`, `docs/specs/dogfood-harvest.md`.
 - ADRs: all accepted ADRs in `docs/adr/`.
-- Bash-only tooling; no runtime dependency manifests.
+- The target-installed surface — both hooks and `scripts/okf` — stays standalone Bash with no companion files, and `make parity` asserts it never mentions python3.
+- Source-only kit tools may be Python under accepted ADR 0026: stdlib only, single files, no packaging, floor Python 3.9, `from __future__ import annotations` in every file, and no 3.10+ runtime syntax. CI runs the full suite a second time under a provisioned Python 3.9 to enforce the floor.
+- No runtime dependency manifests anywhere in the kit.
 
 # Milestones
 
@@ -80,4 +83,3 @@ owner's decision.
 - [x] Reject unsafe existing-repo layout paths before the updater's first write, with traversal, absolute-path, and symlink-escape fixtures for every layout key. Verified: `make smoke-paths` and `make test`; this is partial remediation only while the installed helper remains unsafe.
 - [ ] One shared kit path-safety primitive, with installed helpers refusing unsafe layout values. Consolidate the updater's inline layout and map validation into a single trusted primitive that every kit-side tool invokes before its first read or write, and make `scripts/okf` refuse an unsafe layout value rather than following it. Verification: `make test` and `make smoke-paths`, including a fixture proving `okf new-adr`, `new-spec`, and `draft` write nothing outside the repository root under a hostile `layout:`, plus a parity check that no second validator exists. This closes the remaining half of the updater containment milestone above.
 - [ ] Versioned map contract v1 with a legacy compatibility reader. Publish the map contract and conformance corpus, implement segment-scoped `*` and recursive `**` for v1, treat a `map_version`-less map as `legacy`, and ship the read-only migration report. Verification: `make test` plus the shared conformance corpus passing for both readers with the recorded corpus digest.
-- [ ] (backlog empty — new milestones are added here by the owner)

@@ -1,5 +1,29 @@
 # Log
 
+## 2026-07-26 — reconcile the goal with ADR 0026 and the runbook sequence
+
+- **Constraint corrected.** `docs/GOAL.md` said `Bash-only tooling; no runtime
+  dependency manifests`, which contradicted accepted ADR 0026's Python stdlib
+  rewrite of the source-only kit tools. Split into three constraints that match
+  the ADR: the target-installed surface (both hooks and `scripts/okf`) stays
+  standalone Bash and `make parity` asserts it never mentions python3;
+  source-only tools may be Python stdlib, single file, no packaging, floor 3.9,
+  `from __future__ import annotations`, no 3.10+ runtime syntax; and no runtime
+  dependency manifests anywhere. Found by a read-only consistency audit of the
+  integration roadmap; no code changed.
+- **Interoperability note split.** The success criterion required the source
+  README to link the Spec Drift operator runbook. That runbook is drafted
+  during Spec Drift's candidate phase and published at its final tag, both of
+  which depend transitively on this kit's own repair milestone, so the link
+  could not exist when the note was written. The criterion is now two: an early
+  safety note stating the replay-only and P0 boundary, and a later cross-link
+  added once Spec Drift reserves the stable runbook path, before the kit
+  candidate commit is recorded.
+- **Removed the empty-backlog sentinel.** Two real milestones sit unchecked
+  above it, so the line was false. It returns when the backlog is genuinely
+  empty.
+- No script, installed artifact, or `VERSION` change. `KIT-P0-1` remains open.
+
 ## 2026-07-26 — record the approved integration architecture scope
 
 - Added owner-approved success criteria to `docs/GOAL.md`: one shared kit
