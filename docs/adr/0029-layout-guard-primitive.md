@@ -4,14 +4,17 @@ title: One shared layout path-safety primitive
 description: Carry layout path validation as an OKF-SHARED block beside the existing layout parser, with a conformance corpus as the authority once a tool migrates to Python.
 tags: [adr, security, layout, parity, installer]
 generated: { by: process:okf-scaffold, at: 2026-07-26T03:06:13Z }
-status: proposed
+status: accepted
 owner: Lila Brooks
 deciders: [Lila Brooks]
 ---
 
 # Status
 
-Proposed (authored per the decision policy; awaiting owner review).
+Accepted 2026-07-26 by the owner. Binds the `K1` path-safety work: the shared
+guard is the only permitted containment mechanism for layout values, and no
+tool may carry a second validator. Implementation remains pending until the
+integration roadmap's contract and fixture packages freeze.
 
 # Context
 

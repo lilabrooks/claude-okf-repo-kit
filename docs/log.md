@@ -1,5 +1,13 @@
 # Log
 
+## 2026-07-26 — accept ADR 0029, the shared layout guard
+
+- **Accepted ADR 0029** at the owner's direction with CI green. The decision
+  now binds `K1`: the shared `layout-guard` block is the only permitted
+  containment mechanism for layout values, and no tool may carry a second
+  validator. Implementation stays pending until the integration roadmap's
+  contract and fixture packages freeze, so `KIT-P0-1` remains open.
+
 ## 2026-07-26 — propose ADR 0029, the shared layout guard
 
 - **Proposed ADR 0029.** `scripts/okf` still follows unsafe `layout:` values:
