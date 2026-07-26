@@ -1,5 +1,57 @@
 # Log
 
+## 2026-07-26 — record two declined additions as non-goals
+
+Both were assessed and declined. Recording the reasoning so neither has to be
+re-argued: the instinct behind each is a common one, and the reasons they fail
+here are specific to this kit rather than general.
+
+**A per-change `design.md` in the installed bundle.** The proposed contents
+already have homes: data models and API contracts belong in specs, where the
+map header already treats JSON Schema, OpenAPI, and proto as governing docs;
+the reasoning behind a shape belongs in an ADR; the record of what happened
+belongs here. What was new was the granularity — scoped to one change rather
+than a module.
+
+That granularity is the problem. Every other file in the bundle is standing
+knowledge, but a document describing one change stops being true when the
+change lands. Map it and `check-stale` mechanically demands it co-change with
+its source area forever, which the map header already warns turns the signal
+into noise. Leave it unmapped and it is not governance, just a file.
+
+There is also a consumer consequence. Spec Drift treats owner-approved goals,
+accepted ADRs, and `current` or `stable` specs as binding; a document with a
+status outside that set produces a no-call outcome requiring owner review. A
+`design.md` would therefore block judgment on the code it covers rather than
+sharpen it. That interaction is recorded here rather than in `docs/GOAL.md`,
+because it depends on a Spec Drift rule that may still change; the non-goal
+stands on the lifetime argument alone.
+
+`<specs_dir>/_drafts`, fed by `bash scripts/okf draft`, already covers the real
+need and has the exit a design doc lacks: a draft either graduates into a spec,
+becoming durable mappable knowledge, or is discarded with the change. Drafts
+are also non-binding, so they never enter a governing-document set.
+
+**Claude Code's `/loop` command in installed files.** Assessed as a way to
+drive the installed template's existing loop-until-done contract, where
+"continue" already means take the first unchecked milestone, verify, check off,
+log, and move on (ADR 0007). The mechanic works — dynamic self-paced mode
+matches the contract's semantic stop conditions, and the Stop hook forces every
+iteration through the docs-sync check — but it is a Claude Code feature with no
+Codex equivalent. Putting it in `templates/CLAUDE.md` would place an
+instruction in the installed contract that a second agent cannot honor, and a
+declared hook mirror would carry it into that agent's config as dead text.
+`make parity` already asserts the installed surface stays standalone Bash.
+
+The template's existing wording, "when asked to continue or iterate", is
+agent-neutral and sufficient. Operators who use `/loop continue` need no kit
+support to do so. If real dogfood runs later show a source-side note is worth
+adding, that is a source-only README change, not an installed one.
+
+Both non-goals sit under a third recording the general rule, so the next such
+proposal is measured against the principle rather than re-argued case by case.
+No script, template, installed artifact, or `VERSION` change.
+
 ## 2026-07-26 — reconcile the goal with ADR 0026 and the runbook sequence
 
 - **Constraint corrected.** `docs/GOAL.md` said `Bash-only tooling; no runtime

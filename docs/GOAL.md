@@ -41,6 +41,9 @@ Solution: A reviewable source kit that installs a complete Claude Code OKF workf
 - An official or global OKF CLI; `scripts/okf` is a repo-local Bash helper only.
 - Enforcing strict OKF document-schema validation in target repos; targets own stricter checks when needed.
 - Managing target-repo application code, dependencies, or CI beyond the installed kit files.
+- Growing the installed surface without evidence. A new installed file must carry a need that no existing artifact — spec, ADR, draft, map, or log — can hold, and must work for every agent that reads the bundle rather than one vendor's tool.
+- A per-change design document in the installed bundle. Durable structure belongs in specs and the decisions behind it in ADRs; granular work in progress lives in `<specs_dir>/_drafts` until it graduates into a spec or is discarded with the change.
+- Vendor-specific automation in installed files, including loop, scheduling, or background-task commands. The installed surface is read by more than one agent, and `make parity` keeps it standalone Bash.
 
 # Constraints
 
