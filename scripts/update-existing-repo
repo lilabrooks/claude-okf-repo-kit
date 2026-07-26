@@ -43,7 +43,6 @@ TARGET="$(cd "$TARGET" && pwd)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="$TARGET/.okf-kit-backups/$STAMP"
 MANIFEST="$TARGET/.okf-kit-backups/candidate-manifest"
-mkdir -p "$BACKUP_DIR"
 created=()
 updated=()
 skipped=()
@@ -437,6 +436,53 @@ detect_adr_dir() {
   printf 'docs/adr\n'
 }
 
+validate_target_map_location() {
+  local target_map="$TARGET/docs/okf-map.yml"
+  [ -e "$target_map" ] || [ -L "$target_map" ] || return 0
+  python3 - "$TARGET" "$target_map" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1]).resolve()
+map_path = Path(sys.argv[2])
+try:
+    resolved = map_path.resolve(strict=True)
+    resolved.relative_to(root)
+except (OSError, RuntimeError, ValueError) as error:
+    raise SystemExit(f"unsafe target map location: {map_path}: {error}")
+if not resolved.is_file():
+    raise SystemExit(f"unsafe target map location: {map_path}: not a regular file")
+PY
+}
+
+validate_layout_path() {
+  local key="$1"
+  local value="$2"
+  [ -n "$value" ] || return 0
+  python3 - "$TARGET" "$key" "$value" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1]).resolve()
+key = sys.argv[2]
+raw = sys.argv[3]
+segments = raw.split("/")
+if raw.startswith("/"):
+    raise SystemExit(f"unsafe layout {key}: absolute path is not allowed: {raw}")
+if any(segment in {"", ".", ".."} for segment in segments):
+    raise SystemExit(f"unsafe layout {key}: empty, '.' and '..' path segments are not allowed: {raw}")
+if any(ord(char) < 32 or ord(char) == 127 for char in raw):
+    raise SystemExit(f"unsafe layout {key}: control characters are not allowed")
+try:
+    resolved = (root / raw).resolve(strict=False)
+    resolved.relative_to(root)
+except (OSError, RuntimeError, ValueError) as error:
+    raise SystemExit(f"unsafe layout {key}: path escapes the target: {raw}: {error}")
+PY
+}
+
+validate_target_map_location
+
 SPECS_DIR="$(map_layout_value specs_dir)"
 [ -n "$SPECS_DIR" ] || SPECS_DIR="$(detect_specs_dir)"
 SPECS_DIR="${SPECS_DIR%/}"
@@ -454,6 +500,15 @@ fi
 # candidate review must diff against (see write_playbook_template_delta).
 STAMP_FILE="$(map_layout_value stamp_file)"
 [ -n "$STAMP_FILE" ] || STAMP_FILE="docs/index.md"
+
+validate_layout_path specs_dir "$SPECS_DIR"
+validate_layout_path adr_dir "$ADR_DIR"
+validate_layout_path stamp_file "$STAMP_FILE"
+
+# No target mutation may happen before the existing map and all layout paths
+# pass the preflight above. A rejection must leave even the backup home absent.
+mkdir -p "$BACKUP_DIR"
+
 PRIOR_KIT_VERSION=""
 if [ -f "$TARGET/$STAMP_FILE" ]; then
   PRIOR_KIT_VERSION="$(grep -m1 -E '^kit_version:' "$TARGET/$STAMP_FILE" \

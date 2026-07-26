@@ -1,5 +1,43 @@
 # Log
 
+## 2026-07-26 — record the approved integration architecture scope
+
+- Added owner-approved success criteria to `docs/GOAL.md`: one shared kit
+  path-safety primitive with no second validator copy, installed helpers
+  refusing unsafe layout values before reading or writing, the versioned map
+  contract v1 with a `legacy` compatibility reader and migration report, and
+  the source-README Spec Drift interoperability note.
+- Added two milestones: the shared path-safety primitive with installed-helper
+  containment, which closes the remaining half of the updater containment work,
+  and map contract v1 with its conformance corpus.
+- Scope source: the owner's recorded direction in Appendix B of the Spec Drift
+  and OKF kit integration roadmap, task `DARCH.15`. This records decisions the
+  owner already made; it does not make new ones.
+- No script or installed artifact changed, so `VERSION` stays 0.3.14. The
+  installed-helper containment milestone will change installed behavior and
+  needs its own `VERSION` bump and site review under ADRs 0010 and 0016.
+- `KIT-P0-1` remains open: `scripts/okf` still follows unsafe layout values.
+
+## 2026-07-25 — updater write containment, partial `KIT-P0-1` remediation
+
+- `scripts/update-existing-repo` now validates the target map and all effective
+  `layout:` paths before its first mutation. Absolute, traversal, empty/dot,
+  control-character, and symlink-escape paths fail before the backup home is
+  created. `make smoke-paths` exercises traversal, absolute-path, and symlink
+  escapes for `specs_dir`, `adr_dir`, and `stamp_file`, asserting a clean target
+  and an empty outside directory after every rejection. It also rejects a
+  target-map symlink resolving outside the target and proves the external map
+  was unchanged.
+- This closes only the updater write vector. The installed `scripts/okf` helper
+  still needs the roadmap's containment rewrite, so the umbrella `KIT-P0-1`
+  finding remains open. No completion record may claim otherwise.
+- `VERSION` remains 0.3.14 because no installed artifact changed. ADR 0028
+  accepts `source-v0.3.14-r1` as the source-only release identity, subject to a
+  later signed annotated tag and remote verification. This change does not
+  create or publish that tag.
+- Verification: `make smoke-paths`, `make test`, `bash scripts/okf
+  check-stale`, and `bash scripts/okf adr-suggest`.
+
 ## 2026-07-25 — the source kit stops stamping itself with `kit_version`
 
 - **Removed `kit_version` from this repo's bundle root**, at the owner's

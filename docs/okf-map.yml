@@ -84,6 +84,7 @@ mappings:
     docs:
       - "docs/specs/repo-kit-packaging.md"
       - "docs/adr/0010-kit-version-stamp.md"
+      - "docs/adr/0028-source-only-repair-tags.md"
 
   - source: "scripts/okf"
     docs:
@@ -112,6 +113,7 @@ mappings:
       - "docs/adr/0013-script-provenance-refresh.md"
       - "docs/adr/0018-brownfield-layout-tolerance.md"
       - "docs/adr/0027-okf-0.2-frontmatter-emission.md"
+      - "docs/adr/0028-source-only-repair-tags.md"
 
   - source: "okf-map.yml"
     docs:

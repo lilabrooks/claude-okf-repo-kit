@@ -84,6 +84,14 @@ Brownfield adoption simulation must verify, against a target with an `AGENTS.md`
 
 Special-character path simulation must run `create-new-repo`, `update-existing-repo` (twice, for idempotency), and `verify-install` against target paths containing glob characters (square brackets) and spaces, plus a helper and SessionStart-hook run in the existing-repo target — guarding against quoting and glob-expansion regressions observed in downstream template tooling.
 
+The same simulation must verify the existing-repo updater's first-write
+preflight. For each of `layout.specs_dir`, `layout.adr_dir`, and
+`layout.stamp_file`, traversal, absolute, and existing-symlink escape values must
+fail with a named unsafe-layout error while leaving the target git-clean,
+creating no `.okf-kit-backups/`, and writing nothing outside the target. A
+`docs/okf-map.yml` symlink resolving outside the target must fail with the same
+no-write guarantees.
+
 Second-agent mirror simulation must verify, across a simulated kit release (ADR 0021): a target with no `mirrors:` declaration grows no second-agent directories; an undeclared byte-identical hook copy draws the advisory from `verify-install`, the SessionStart hook (valid JSON), and the updater's own `Advisories:` section — which names the `mirrors:` declaration to add — and the declaration silences all three (ADR 0024); declaring a mirror directory — with a trailing slash, proving the declaration normalizes identically for the sync and the advisory — makes the updater write both hooks there byte-identical to `.claude/hooks/`, idempotently; a kit hook change refreshes an unedited mirror in place with no candidate; an owner-edited mirror keeps its content with the kit version staged as a numbered candidate; `verify-install` reports matching mirrors and warns on drifted ones; and `check-stale` stays clean with a `mirrors:` block in the map (the mappings parser must not leak a following top-level list's items into the last mapping's docs).
 
 Second-agent mirror simulation must also verify the hand-made-mirror path (ADR 0013 amendment): a mirror copied into place by hand, with no manifest provenance, is refreshed in place on a kit release with no candidate staged and stays byte-identical to `.claude/hooks/`, and the same holds across a second consecutive release — the recurrence observed in live upgrades. It must further verify that a `.claude` original preserved for review (owner-edited) does not leave its mirror refreshed alone.
