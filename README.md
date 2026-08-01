@@ -1,14 +1,20 @@
 # Claude OKF repo kit
 
 > [!WARNING]
-> **Experiment concluding.** This kit is being retired, and its website will
-> also be retired. The code and history will remain available as a historical
-> reference, but new adoption is not recommended. A smaller cross-agent,
-> skill-based successor is being evaluated and will be linked here only if it
-> passes its acceptance checks.
+> **Experiment concluded.** This kit is retired, this repository is archived and
+> read-only, and its website is frozen at the same message. The code and history
+> remain available as historical reference, but new adoption is not recommended.
+>
+> **No successor was retained.** A smaller cross-agent, skill-based successor
+> was built and evaluated against pre-registered acceptance checks. It failed
+> them and was archived. The producer half worked; the claim that failed was
+> that a future agent in a separate task would respect the records it wrote.
+> Advisory repository instructions turned out not to be an enforcement boundary.
+> The full decision record, including the dogfood and regression evidence, lives
+> in `spec-drift-okf-integration-roadmap`, a local planning repository.
 
-[![Status](https://img.shields.io/badge/status-concluding-orange)](#project-status)
-[![Website](https://img.shields.io/badge/website-retiring-orange)](https://lilabrooks.github.io/claude-okf-repo-kit/)
+[![Status](https://img.shields.io/badge/status-concluded-inactive)](#project-status)
+[![Website](https://img.shields.io/badge/website-frozen-inactive)](https://lilabrooks.github.io/claude-okf-repo-kit/)
 [![Tests](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml/badge.svg)](https://github.com/lilabrooks/claude-okf-repo-kit/actions/workflows/test.yml)
 [![Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-5D3FD3)](#daily-use-after-installation)
 [![OKF](https://img.shields.io/badge/docs-OKF%200.1-blue)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
