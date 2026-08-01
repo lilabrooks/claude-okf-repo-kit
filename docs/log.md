@@ -1,5 +1,20 @@
 # Log
 
+## 2026-08-01 — withdraw the site from search; apex mirror ends
+
+- The apex `lilabrooks.github.io` no longer mirrors `site/`. It dropped the
+  `_kit` submodule and now redirects to `lilabrooks.github.io/lila-agent-skills/`,
+  so the project base is this site's only home.
+- Repointed every absolute `canonical`, Open Graph, Twitter, and schema.org URL
+  in `site/` from the apex to `https://lilabrooks.github.io/claude-okf-repo-kit/`.
+  They previously claimed apex URLs that no longer serve this content.
+- Added `<meta name="robots" content="noindex, follow">` to all 11 pages in
+  `site/`. The archive stays reachable; it just leaves search results. A
+  root `robots.txt` `Disallow` could not do this — `robots.txt` is read only at
+  the domain root, and blocking the crawl would also hide the `noindex`.
+- Updated the site-content spec's path and publishing rules to match. No
+  installed kit behavior changed.
+
 ## 2026-07-26 — announce experiment retirement
 
 - The README now identifies the kit as a concluding experiment, discourages
